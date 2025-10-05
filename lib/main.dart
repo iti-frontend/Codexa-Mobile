@@ -1,4 +1,4 @@
-import 'package:codexa_mobile/Ui/home_page/home_page/homeScreen.dart';
+import 'package:codexa_mobile/Ui/home_page/home_page/home_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -11,9 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      routes:{
-        '/':(context) => Homescreen(),
-      },
+      home: HomeScreen(),
     );
   }
 }
