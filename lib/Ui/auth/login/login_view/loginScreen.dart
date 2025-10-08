@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../utils/widgets/custom_text_field.dart';
 import '../../../utils/widgets/custom_button.dart';
 import '../../../utils/widgets/custom_social_icon.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class RegisterScreen extends StatelessWidget {
-  const RegisterScreen({super.key});
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,34 +26,14 @@ class RegisterScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Register',
+                    'Login',
                     style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontFamily: 'Gilroy'),
                   ),
                   const SizedBox(height: 24),
-
-                  // Full Name
-                  const Text(
-                    'Full Name',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  const SizedBox(height: 6),
-                  const CustomTextField(hintText: 'Full Name'),
-                  const SizedBox(height: 16),
-
-                  // User Name
-                  const Text(
-                    'User Name',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  const SizedBox(height: 6),
-                  const CustomTextField(hintText: 'User Name'),
-                  const SizedBox(height: 16),
-
-                  // Email
                   const Text(
                     'Email',
                     style: TextStyle(color: Colors.white70),
@@ -62,25 +43,32 @@ class RegisterScreen extends StatelessWidget {
                       hintText: 'username@gmail.com',
                       keyboardType: TextInputType.emailAddress),
                   const SizedBox(height: 16),
-
-                  // Password
                   const Text(
                     'Password',
                     style: TextStyle(color: Colors.white70),
                   ),
                   const SizedBox(height: 6),
                   const CustomTextField(
-                      hintText: 'Password', obscureText: true),
-                  const SizedBox(height: 16),
-
-                  // Register Button
+                    hintText: 'Password',
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: () {},
+                      child: const Text(
+                        'Forgot Password?',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   CustomButton(
-                    text: 'Register',
+                    text: 'Sign in',
                     onPressed: () {},
                   ),
                   const SizedBox(height: 20),
-
-                  // OR text
                   const Center(
                     child: Text(
                       'or continue with',
@@ -88,37 +76,26 @@ class RegisterScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Social Icons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: const [
-                      CustomSocialIcon(assetPath: 'assets/images/google.png'),
-                      CustomSocialIcon(assetPath: 'assets/images/github.png'),
-                      CustomSocialIcon(assetPath: 'assets/images/facebook.png'),
+                      CustomSocialIcon(assetPath: 'assets/google.png'),
+                      CustomSocialIcon(assetPath: 'assets/github.png'),
+                      CustomSocialIcon(assetPath: 'assets/facebook.png'),
                     ],
                   ),
                   const SizedBox(height: 24),
-
                   Center(
                     child: RichText(
                       text: TextSpan(
-                        text: "Already Have An Account ? ",
+                        text: "Don't have an account yet? ",
                         style: const TextStyle(color: Colors.white),
                         children: [
-                          WidgetSpan(
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
-                              child: const Text(
-                                'Login Now',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
-                                  color: Color(0xFF1A73E8),
-                                ),
-                              ),
+                          TextSpan(
+                            text: 'Register for free',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
                             ),
                           ),
                         ],
