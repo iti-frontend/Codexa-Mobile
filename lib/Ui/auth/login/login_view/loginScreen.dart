@@ -1,3 +1,4 @@
+import 'package:codexa_mobile/Ui/home_page/home_screen/homeScreen.dart';
 import 'package:flutter/material.dart';
 import '../../../utils/widgets/custom_text_field.dart';
 import '../../../utils/widgets/custom_button.dart';
@@ -6,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
-
+  static const String routeName = '/login';
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,7 +67,9 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   CustomButton(
                     text: 'Sign in',
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(context, HomeScreen.routeName);
+                    },
                   ),
                   const SizedBox(height: 20),
                   const Center(
@@ -79,9 +82,9 @@ class LoginScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: const [
-                      CustomSocialIcon(assetPath: 'assets/google.png'),
-                      CustomSocialIcon(assetPath: 'assets/github.png'),
-                      CustomSocialIcon(assetPath: 'assets/facebook.png'),
+                      CustomSocialIcon(assetPath: 'assets/images/google.png'),
+                      CustomSocialIcon(assetPath: 'assets/images/github.png'),
+                      CustomSocialIcon(assetPath: 'assets/images/facebook.png'),
                     ],
                   ),
                   const SizedBox(height: 24),

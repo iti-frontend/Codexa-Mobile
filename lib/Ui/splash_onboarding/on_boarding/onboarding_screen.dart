@@ -1,3 +1,4 @@
+import 'package:codexa_mobile/Ui/auth/register/register_view/registerScreen.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/homeScreen.dart';
 import 'package:flutter/material.dart';
 import 'onboarding_page_1.dart';
@@ -25,7 +26,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      Navigator.pushReplacementNamed(context, HomeScreen.routeName);
+      Navigator.pushReplacementNamed(context, RegisterScreen.routeName);
     }
   }
 

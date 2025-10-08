@@ -21,6 +21,7 @@ class _HomescreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: AppColorsDark.seconderyBackground,
         title: CustomAppbar(profileImage: "assets/images/review-1.jpg"),
       ),

@@ -13,6 +13,7 @@ class CustomAppbar extends StatelessWidget {
   Widget build(BuildContext context) {
     var provider = Provider.of<ThemeProvider>(context);
     return AppBar(
+      automaticallyImplyLeading: false,
       backgroundColor: AppColorsDark.seconderyBackground,
       title: Row(
         // ! Appbar background

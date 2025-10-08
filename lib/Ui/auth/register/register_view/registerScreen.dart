@@ -1,3 +1,4 @@
+import 'package:codexa_mobile/Ui/auth/login/login_view/loginScreen.dart';
 import 'package:flutter/material.dart';
 import '../../../utils/widgets/custom_text_field.dart';
 import '../../../utils/widgets/custom_button.dart';
@@ -5,6 +6,7 @@ import '../../../utils/widgets/custom_social_icon.dart';
 
 class RegisterScreen extends StatelessWidget {
   const RegisterScreen({super.key});
+  static const String routeName = '/register';
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +78,9 @@ class RegisterScreen extends StatelessWidget {
                   // Register Button
                   CustomButton(
                     text: 'Register',
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(context, LoginScreen.routeName);
+                    },
                   ),
                   const SizedBox(height: 20),
 
