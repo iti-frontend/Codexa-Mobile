@@ -1,4 +1,4 @@
-import 'package:codexa_mobile/Ui/home_page/home_screen/homeScreen.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
@@ -16,8 +16,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-
-    // الانتقال بعد 2 ثانية
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pushReplacementNamed(context, OnboardingScreen.routeName);
     });
