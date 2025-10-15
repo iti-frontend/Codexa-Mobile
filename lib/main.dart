@@ -1,17 +1,33 @@
-import 'package:codexa_mobile/Ui/home_page/home_page/home_screen.dart';
+import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
+import 'package:codexa_mobile/Ui/auth/register/register_view/register_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
+import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
+import 'package:codexa_mobile/Ui/splash_onboarding/splash_screen/splash_screen.dart';
+import 'package:codexa_mobile/Ui/utils/provider_ui/theme_provider.dart';
+import 'package:codexa_mobile/Ui/utils/theme/app_theme_data.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(ChangeNotifierProvider(
+      create: (context) => ThemeProvider(), child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: HomeScreen(),
+      debugShowCheckedModeBanner: false,
+      routes: {
+        SplashScreen.routeName: (_) => SplashScreen(),
+        OnboardingScreen.routeName: (_) => OnboardingScreen(),
+        RegisterScreen.routeName: (_) => RegisterScreen(),
+        LoginScreen.routeName: (_) => LoginScreen(),
+        HomeScreen.routeName: (_) => HomeScreen(),
+      },
+      theme: AppThemeData.lightTheme,
+      darkTheme: AppThemeData.darkTheme,
+      themeMode: ThemeMode.dark,
     );
   }
 }
