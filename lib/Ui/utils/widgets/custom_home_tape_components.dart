@@ -2,10 +2,17 @@ import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class DashboardCard extends StatelessWidget {
-  final String title;
+  final String? title;
   final Widget child;
+  final bool haveBanner; //this flag added to control cards have banner or not
 
-  const DashboardCard({super.key, required this.title, required this.child});
+  const DashboardCard({
+    super.key,
+    this.title,
+    required this.child,
+    //this flag set to true cause this will be the most scenario we will be faced
+    this.haveBanner = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,12 +27,17 @@ class DashboardCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(
-                  color: AppColorsDark.secondaryText,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16)),
-          const SizedBox(height: 12),
+          // if card doesn't have banner you need when calling to call the flag and set it to false
+          haveBanner
+              // nullable expression
+              ? Text(title ?? '',
+                  style: const TextStyle(
+                      color: AppColorsDark.secondaryText,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16))
+              : SizedBox(),
+          // empty size box to remove space entirely
+          haveBanner ? const SizedBox(height: 12) : SizedBox(),
           child,
         ],
       ),
@@ -38,17 +50,37 @@ class CourseProgressItem extends StatelessWidget {
   final double progress;
   final Color color;
 
+  // those added to control category card
+  final bool hasCategory;
+  final String? categoryTitle;
+  final String? categoryPercentage;
+
   const CourseProgressItem({
     super.key,
     required this.title,
     required this.progress,
     required this.color,
+    this.categoryTitle,
+    this.categoryPercentage,
+    this.hasCategory = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Responsive font sizes based on screen width
+    double titleFontSize = screenWidth < 400
+        ? 12
+        : screenWidth < 600
+            ? 14
+            : 16;
+
+    double categoryFontSize = screenWidth < 400 ? 10 : 12;
+
     return Row(
       children: [
+        // image card until replaced with original one
         Container(
           width: 50,
           height: 50,
@@ -62,11 +94,50 @@ class CourseProgressItem extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      color: AppColorsDark.secondaryText,
-                      fontWeight: FontWeight.w600)),
-              const SizedBox(height: 6),
+              // category header
+              if (hasCategory) ...[
+                Text(
+                  categoryTitle ?? '',
+                  style: TextStyle(
+                    fontSize: categoryFontSize,
+                    color: AppColorsDark.accentGreen,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 10.0),
+              ],
+
+              // course title + percentage
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Wrap title in Flexible + TextOverflow.ellipsis
+                  Flexible(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        color: AppColorsDark.secondaryText,
+                        fontWeight: FontWeight.w600,
+                        fontSize: titleFontSize,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      softWrap: false,
+                    ),
+                  ),
+
+                  // optional category percentage
+                  if (hasCategory)
+                    Text(
+                      categoryPercentage ?? '',
+                      style: TextStyle(
+                        color: AppColorsDark.accentGreen,
+                        fontSize: categoryFontSize,
+                      ),
+                    ),
+                ],
+              ),
+              SizedBox(height: hasCategory ? 15.0 : 6),
               LinearProgressIndicator(
                 value: progress,
                 color: color,
@@ -76,7 +147,7 @@ class CourseProgressItem extends StatelessWidget {
               ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
