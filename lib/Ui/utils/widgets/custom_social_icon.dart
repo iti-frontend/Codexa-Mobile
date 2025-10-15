@@ -11,7 +11,7 @@ class CustomSocialIcon extends StatelessWidget {
     required this.assetPath,
     this.onTap,
     this.height = 50,
-    this.width = 90,
+    this.width = 70,
   });
 
   @override

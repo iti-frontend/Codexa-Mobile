@@ -8,6 +8,7 @@ class AppColorsDark {
   static const Color secondaryText = Color(0xFFABB3BD);
   static const Color accentGreen = Color(0xFF4ADE80);
   static const Color accentBlue = Color(0xFF4CA5FF);
+  static const Color accentBlueAuth = Color(0xFF94B9F8);
   static const Color visualPurple = Color(0xFF70509E);
 }
 

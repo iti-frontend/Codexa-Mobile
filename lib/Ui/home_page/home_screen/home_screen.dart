@@ -20,11 +20,20 @@ class _HomescreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: AppColorsDark.seconderyBackground,
-        title: CustomAppbar(profileImage: "assets/images/review-1.jpg"),
-      ),
+      appBar: selectedIndex == 3
+          ? AppBar(
+              automaticallyImplyLeading: false,
+              title: Text(
+                'Settings',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: AppColorsDark.seconderyBackground,
+            )
+          : AppBar(
+              automaticallyImplyLeading: false,
+              backgroundColor: AppColorsDark.seconderyBackground,
+              title: CustomAppbar(profileImage: "assets/images/review-1.jpg"),
+            ),
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: selectedIndex,
         onItemTapped: (index) {
