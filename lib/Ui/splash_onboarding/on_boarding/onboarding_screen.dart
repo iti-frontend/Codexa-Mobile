@@ -1,5 +1,5 @@
-import 'package:codexa_mobile/Ui/auth/register/register_view/registerScreen.dart';
-import 'package:codexa_mobile/Ui/home_page/home_screen/homeScreen.dart';
+import 'package:codexa_mobile/Ui/auth/register/register_view/register_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'onboarding_page_1.dart';
 import 'onboarding_page_2.dart';

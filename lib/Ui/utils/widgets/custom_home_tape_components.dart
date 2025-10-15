@@ -224,8 +224,8 @@ class SkillCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 150,
-      padding: const EdgeInsets.all(12),
+      width: double.infinity,
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: AppColorsDark.cardBackground,
         borderRadius: BorderRadius.circular(12),

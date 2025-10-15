@@ -75,7 +75,7 @@ class HomeTab extends StatelessWidget {
                 title: "Skill Development",
                 child: Wrap(
                   spacing: 10,
-                  runSpacing: 10,
+                  runSpacing: 5,
                   children: const [
                     SkillCard(
                         title: "Python", level: "Advanced", progress: 0.9),

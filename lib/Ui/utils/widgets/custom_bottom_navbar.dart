@@ -8,7 +8,8 @@ class CustomBottomNavBar extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
 
-  CustomBottomNavBar({
+  const CustomBottomNavBar({
+    super.key,
     required this.selectedIndex,
     required this.onItemTapped,
   });
@@ -19,10 +20,26 @@ class CustomBottomNavBar extends StatefulWidget {
 
 class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
   final List<Map<String, dynamic>> items = const [
-    {"icon": CupertinoIcons.home, "label": "Home"},
-    {"icon": CupertinoIcons.book, "label": "Courses"},
-    {"icon": CupertinoIcons.person_2, "label": "Community"},
-    {"icon": CupertinoIcons.settings, "label": "Settings"},
+    {
+      "icon": CupertinoIcons.home,
+      "activeIcon": CupertinoIcons.house_fill,
+      "label": "Home",
+    },
+    {
+      "icon": CupertinoIcons.book,
+      "activeIcon": CupertinoIcons.book_fill,
+      "label": "Courses",
+    },
+    {
+      "icon": CupertinoIcons.person_2,
+      "activeIcon": CupertinoIcons.person_2_fill,
+      "label": "Community",
+    },
+    {
+      "icon": CupertinoIcons.settings,
+      "activeIcon": CupertinoIcons.settings_solid,
+      "label": "Settings",
+    },
   ];
 
   @override
@@ -41,12 +58,14 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
           final isActive = widget.selectedIndex == index;
           final color =
               isActive ? AppColorsDark.accentBlue : AppColorsDark.secondaryText;
+          final iconData =
+              isActive ? items[index]['activeIcon'] : items[index]['icon'];
           return GestureDetector(
             onTap: () => widget.onItemTapped(index),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(items[index]['icon'], color: color),
+                Icon(iconData, color: color),
                 const SizedBox(height: 4),
                 Text(
                   items[index]['label'],
