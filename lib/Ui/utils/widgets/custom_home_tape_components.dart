@@ -257,8 +257,19 @@ class SkillCard extends StatelessWidget {
 class StatBox extends StatelessWidget {
   final String title;
   final String subtitle;
+  final double titleFontSize;
+  final double subtitleFontSize;
+  final Color titleColor;
+  final Color subtitleColor;
 
-  const StatBox({super.key, required this.title, required this.subtitle});
+  const StatBox(
+      {super.key,
+      required this.title,
+      required this.subtitle,
+      required this.titleFontSize,
+      required this.subtitleFontSize,
+      required this.titleColor,
+      required this.subtitleColor});
 
   @override
   Widget build(BuildContext context) {
@@ -272,14 +283,14 @@ class StatBox extends StatelessWidget {
         child: Column(
           children: [
             Text(title,
-                style: const TextStyle(
-                    color: AppColorsDark.secondaryText,
-                    fontSize: 18,
+                style: TextStyle(
+                    color: titleColor,
+                    fontSize: titleFontSize,
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Text(subtitle,
                 style: TextStyle(
-                    color: AppColorsDark.secondaryText, fontSize: 12)),
+                    color: subtitleColor, fontSize: subtitleFontSize)),
           ],
         ),
       ),
