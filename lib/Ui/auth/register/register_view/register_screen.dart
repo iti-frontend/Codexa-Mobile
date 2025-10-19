@@ -5,9 +5,17 @@ import '../../../utils/widgets/custom_text_field.dart';
 import '../../../utils/widgets/custom_button.dart';
 import '../../../utils/widgets/custom_social_icon.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
   static const String routeName = '/register';
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  bool isStudent = false;
+  bool isInstructor = false;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +41,37 @@ class RegisterScreen extends StatelessWidget {
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Stack(
+                      children: [
+                        const CircleAvatar(
+                          radius: 45,
+                          backgroundColor: Colors.white24,
+                          backgroundImage: null,
+                          child: Icon(
+                            Icons.person,
+                            size: 50,
+                            color: Colors.white70,
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Colors.blueAccent,
+                            child: Icon(
+                              Icons.edit,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -78,6 +117,36 @@ class RegisterScreen extends StatelessWidget {
                       hintText: 'Password', obscureText: true),
                   const SizedBox(height: 16),
 
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: isStudent,
+                        activeColor: Colors.blueAccent,
+                        onChanged: (val) {
+                          setState(() {
+                            isStudent = val ?? false;
+                            if (isStudent) isInstructor = false;
+                          });
+                        },
+                      ),
+                      const Text('Student',
+                          style: TextStyle(color: Colors.white)),
+                      const SizedBox(width: 20),
+                      Checkbox(
+                        value: isInstructor,
+                        activeColor: Colors.blueAccent,
+                        onChanged: (val) {
+                          setState(() {
+                            isInstructor = val ?? false;
+                            if (isInstructor) isStudent = false;
+                          });
+                        },
+                      ),
+                      const Text('Instructor',
+                          style: TextStyle(color: Colors.white)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                   // Register Button
                   CustomButton(
                     text: 'Register',
