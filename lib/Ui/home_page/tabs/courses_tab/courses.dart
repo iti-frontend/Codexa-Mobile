@@ -11,153 +11,130 @@ class CoursesTab extends StatefulWidget {
 }
 
 class _CoursesTabState extends State<CoursesTab> {
-  // list of the progress main titles
-  List<String> mainTitles = ['All', 'In Progress', 'Completed'];
-
-  // list of the category titles
-  List<String> categoryTitles = [
-    'All',
-    'Frontend',
-    'Devops',
-    'Data Structure',
-    'OOP',
-    'Machine Learning'
-  ];
-
   final List<Map<String, dynamic>> courseCards = [
     {
       'categoryTitle': 'Web Development',
       'courseTitle': 'Mastering React.js',
-      'percentage': 0.85, // 85%,
-      'percentageByNumber': '85%'
+      'percentage': 0.85,
+      'percentageByNumber': '85%',
+      'enrolled': 30
     },
     {
       'categoryTitle': 'Mobile Development',
       'courseTitle': 'Flutter from Zero to Hero',
-      'percentage': 0.65, // 65%
-      'percentageByNumber': '65%'
+      'percentage': 0.65,
+      'percentageByNumber': '65%',
+      'enrolled': 15
     },
     {
       'categoryTitle': 'Data Science',
       'courseTitle': 'Python for Machine Learning',
-      'percentage': 0.45, // 45%
-      'percentageByNumber': '45%'
+      'percentage': 0.45,
+      'percentageByNumber': '45%',
+      'enrolled': 10
     },
     {
       'categoryTitle': 'UI/UX Design',
       'courseTitle': 'Design Thinking Basics',
-      'percentage': 0.75, // 75%
-      'percentageByNumber': '75%'
+      'percentage': 0.75,
+      'percentageByNumber': '75%',
+      'enrolled': 6
     },
     {
       'categoryTitle': 'Backend Development',
       'courseTitle': 'Node.js & MongoDB Masterclass',
-      'percentage': 0.9, // 90%
-      'percentageByNumber': '90%'
+      'percentage': 0.9,
+      'percentageByNumber': '90%',
+      'enrolled': 45
     },
   ];
 
-  // to control main items
-  int selectedMainIndex = 0;
-
-  // to control category items
-  int selectedCategoryIndex = 0;
-
-  // main flag to control active or not
-  bool isMainSelected = true;
-  bool isCategorySelected = false;
-
   @override
   Widget build(BuildContext context) {
-    // padding to adjust the container
     return Padding(
       padding: const EdgeInsets.all(20.0),
-      // all widgets nested here
       child: SingleChildScrollView(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          // default is center and design tells us to be start
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              height: 20.0,
-            ),
-            // wrap for fixing and aligning our row widgets
-            Wrap(
-              spacing: 8, // horizontal space between items
-              // list to generate items
-              children: List.generate(mainTitles.length, (index) {
-                bool isSelected = selectedMainIndex == index;
-                return customSectionTitle(
-                  backgroundColor: isSelected
-                      ? AppColorsDark.accentBlue
-                      : Colors.transparent,
-                  textColor: isSelected
-                      ? AppColorsDark.primaryText
-                      : AppColorsDark.secondaryText,
-                  context: context,
-                  title: mainTitles[index],
-                  isSelected: selectedMainIndex == index,
-                  onPressed: () {
-                    // here we change active index later on we might using provider
-                    setState(() {
-                      selectedMainIndex = index;
-                    });
-                  },
+            const SizedBox(height: 20.0),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: courseCards.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final course = courseCards[index];
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColorsDark.cardBackground,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min, // shrink to content
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        course['courseTitle'],
+                        style: TextStyle(
+                          fontSize:
+                              MediaQuery.of(context).size.width > 600 ? 20 : 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColorsDark.primaryText,
+                          fontFamily: 'Gilroy',
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "${course['enrolled'] ?? 0} enrolled",
+                            style: TextStyle(
+                              fontSize: MediaQuery.of(context).size.width > 600
+                                  ? 16
+                                  : 14,
+                              color: AppColorsDark.secondaryText,
+                            ),
+                          ),
+                          Text(
+                            course['percentageByNumber'],
+                            style: TextStyle(
+                              fontSize: MediaQuery.of(context).size.width > 600
+                                  ? 16
+                                  : 14,
+                              color: AppColorsDark.secondaryText,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: course['percentage'],
+                          minHeight:
+                              MediaQuery.of(context).size.width > 600 ? 10 : 8,
+                          backgroundColor: Colors.white.withOpacity(0.1),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppColorsDark.accentGreen),
+                        ),
+                      ),
+                    ],
+                  ),
                 );
-              }),
-            ),
-            SizedBox(
-              height: 30.0,
-            ),
-            Text(
-              'Category',
-              style: TextStyle(
-                  color: AppColorsDark.primaryText,
-                  fontSize: 24.0,
-                  fontWeight: FontWeight.bold),
-            ),
-            SizedBox(
-              height: 20.0,
-            ),
-            Wrap(
-              spacing: 4, // horizontal space between items
-              runSpacing: 16, // vertical space between rows
-              children: List.generate(categoryTitles.length, (index) {
-                bool isSelected = selectedCategoryIndex == index;
-                return customSectionTitle(
-                  backgroundColor:
-                      isSelected ? Color(0xff1e293b) : Colors.transparent,
-                  textColor: isSelected
-                      ? Color(0xff2563eb)
-                      : AppColorsDark.secondaryText,
-                  context: context,
-                  title: categoryTitles[index],
-                  isSelected: selectedCategoryIndex == index,
-                  onPressed: () {
-                    setState(() {
-                      selectedCategoryIndex = index;
-                    });
-                  },
-                );
-              }),
-            ),
-            SizedBox(
-              height: 30.0,
-            ),
-            Column(
-              children: List.generate(courseCards.length, (index) {
-                return DashboardCard(
-                    haveBanner: false,
-                    child: CourseProgressItem(
-                        categoryTitle: courseCards[index]['categoryTitle'],
-                        hasCategory: true,
-                        categoryPercentage: courseCards[index]
-                            ['percentageByNumber'],
-                        title: courseCards[index]['courseTitle'],
-                        progress: courseCards[index]['percentage'],
-                        color: AppColorsDark.accentGreen));
-              }),
+              },
             )
             // DashboardCard(
             //     haveBanner: false,
