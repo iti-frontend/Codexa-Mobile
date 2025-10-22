@@ -1,6 +1,7 @@
 import 'package:codexa_mobile/Ui/auth/register/register_view/register_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
 import 'package:flutter/material.dart';
+import '../../auth/register/register_view/register_role_screen.dart';
 import 'onboarding_page_1.dart';
 import 'onboarding_page_2.dart';
 import 'onboarding_page_3.dart';
@@ -26,7 +27,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      Navigator.pushReplacementNamed(context, RegisterScreen.routeName);
+      Navigator.pushReplacementNamed(context, RoleSelectionScreen.routeName);
     }
   }
 
