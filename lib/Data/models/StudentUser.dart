@@ -51,31 +51,14 @@ class Student {
     googleId = json['googleId'];
     githubId = json['githubId'];
     emailVerified = json['emailVerified'];
-    if (json['purchasedCourses'] != null) {
-      purchasedCourses = [];
-      json['purchasedCourses'].forEach((v) {
-        purchasedCourses?.add(Dynamic.fromJson(v));
-      });
-    }
-    if (json['enrolledCourses'] != null) {
-      enrolledCourses = [];
-      json['enrolledCourses'].forEach((v) {
-        enrolledCourses?.add(Dynamic.fromJson(v));
-      });
-    }
+    purchasedCourses = List<dynamic>.from(json['purchasedCourses'] ?? []);
+
+    enrolledCourses = List<dynamic>.from(json['enrolledCourses'] ?? []);
     id = json['_id'];
-    if (json['notes'] != null) {
-      notes = [];
-      json['notes'].forEach((v) {
-        notes?.add(Dynamic.fromJson(v));
-      });
-    }
-    if (json['progress'] != null) {
-      progress = [];
-      json['progress'].forEach((v) {
-        progress?.add(Dynamic.fromJson(v));
-      });
-    }
+    notes = List<dynamic>.from(json['notes'] ?? []);
+
+    progress = List<dynamic>.from(json['progress'] ?? []);
+
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     v = json['__v'];
@@ -109,19 +92,15 @@ class Student {
     map['googleId'] = googleId;
     map['githubId'] = githubId;
     map['emailVerified'] = emailVerified;
-    if (purchasedCourses != null) {
-      map['purchasedCourses'] = purchasedCourses?.map((v) => v.toJson()).toList();
-    }
-    if (enrolledCourses != null) {
-      map['enrolledCourses'] = enrolledCourses?.map((v) => v.toJson()).toList();
-    }
+    map['purchasedCourses'] = purchasedCourses;
+
+    map['enrolledCourses'] = enrolledCourses;
+
     map['_id'] = id;
-    if (notes != null) {
-      map['notes'] = notes?.map((v) => v.toJson()).toList();
-    }
-    if (progress != null) {
-      map['progress'] = progress?.map((v) => v.toJson()).toList();
-    }
+    map['notes'] = notes;
+
+    map['progress'] = progress;
+
     map['createdAt'] = createdAt;
     map['updatedAt'] = updatedAt;
     map['__v'] = v;
