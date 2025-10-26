@@ -7,6 +7,7 @@ class CustomTextField extends StatelessWidget {
   final IconData? icon;
   final String? Function(String?)? validator;
   final TextEditingController? controller;
+  final Widget? suffixIcon; // ✅ إضافة الأيقونة الاختيارية
 
   const CustomTextField({
     super.key,
@@ -16,6 +17,7 @@ class CustomTextField extends StatelessWidget {
     this.icon,
     this.validator,
     this.controller,
+    this.suffixIcon, // ✅ optional
   });
 
   @override
@@ -28,6 +30,7 @@ class CustomTextField extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hintText,
         prefixIcon: icon != null ? Icon(icon) : null,
+        suffixIcon: suffixIcon, // ✅ تفعيل الـ suffixIcon هنا
         filled: true,
         fillColor: Colors.white,
         contentPadding:

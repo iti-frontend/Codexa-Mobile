@@ -1,50 +1,36 @@
-import 'package:equatable/equatable.dart';
+import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
+import 'package:codexa_mobile/Domain/entities/student_entity.dart';
+import 'package:codexa_mobile/Domain/failures.dart';
 
+class AuthStates {}
 
-abstract class LoginState extends Equatable {
-  const LoginState();
-  @override
-  List<Object?> get props => [];
-}
+// Initial
+class AuthInitialState extends AuthStates {}
 
-class LoginInitial extends LoginState {}
-
-class LoginLoading extends LoginState {}
-
-class LoginSuccess extends LoginState {
-  final dynamic user;
-  final String role;
-  const LoginSuccess({required this.user, required this.role});
-
-  @override
-  List<Object?> get props => [user, role];
-}
-
-class LoginFailure extends LoginState {
+// Loading
+class AuthLoadingState extends AuthStates {
   final String message;
-  const LoginFailure(this.message);
 
-  @override
-  List<Object?> get props => [message];
+  AuthLoadingState({this.message = 'Loading...'});
 }
 
+// Error
+class AuthErrorState extends AuthStates {
+  final Failures failure;
 
-// ================= Social Login States =================
-
-class SocialLoginLoading extends LoginState {}
-
-class SocialLoginSuccess extends LoginState {
-  final dynamic user; // StudentUser أو InstructorUser
-  const SocialLoginSuccess(this.user);
-
-  @override
-  List<Object?> get props => [user];
+  AuthErrorState({required this.failure});
 }
 
-class SocialLoginFailure extends LoginState {
-  final String message;
-  const SocialLoginFailure(this.message);
+// Success - Student
+class StudentAuthSuccessState extends AuthStates {
+  final StudentEntity student;
 
-  @override
-  List<Object?> get props => [message];
+  StudentAuthSuccessState({required this.student});
+}
+
+// Success - Instructor
+class InstructorAuthSuccessState extends AuthStates {
+  final InstructorEntity instructor;
+
+  InstructorAuthSuccessState({required this.instructor});
 }

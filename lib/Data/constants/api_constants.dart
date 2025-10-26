@@ -1,5 +1,3 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 class ApiConstants {
   static const String studentEndpointLogin = "/students/login";
   static const String studentEndpointRegister = "/students/register";
@@ -7,5 +5,4 @@ class ApiConstants {
   static const String instructorEndpointLogin = "/instructors/login";
   static const String instructorEndpointRegister = "/instructors/register";
   static const String instructorEndpointSocial = "/instructors/social-login";
-
 }
