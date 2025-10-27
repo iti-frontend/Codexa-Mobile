@@ -1,138 +1,161 @@
-import 'package:shared_preferences/shared_preferences.dart';
-import '../api_manager/api_manager.dart';
-import '../models/StudentUser.dart';
-import '../models/InstructorUser.dart';
+import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
+import 'package:codexa_mobile/Data/constants/api_constants.dart';
+import 'package:codexa_mobile/Data/models/instructor_dto.dart';
+import 'package:codexa_mobile/Data/models/student_dto.dart';
+import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
+import 'package:codexa_mobile/Domain/entities/student_entity.dart';
+import 'package:codexa_mobile/Domain/failures.dart';
+import 'package:codexa_mobile/Domain/repo/auth_repo.dart';
+import 'package:dart_either/dart_either.dart';
 
-class AuthRepository {
-  final ApiManager _api = ApiManager();
+class AuthRepoImpl implements AuthRepo {
+  final ApiManager apiManager;
 
-  static const String _tokenKey = 'auth_token';
-  static const String _roleKey = 'user_role';
+  AuthRepoImpl(this.apiManager);
 
-  // ================= Student =================
-
-  Future<StudentUser?> registerStudent({
-    required String name,
+  // ================== Instructor ==================
+  @override
+  Future<Either<Failures, InstructorEntity>> loginInstructor({
     required String email,
     required String password,
-  }) async {
-    final user = await _api.studentRegister(
-      name: name,
-      email: email,
-      password: password,
-    );
-
-    if (user?.token != null) {
-      await _saveToken(user!.token!, 'student');
-    }
-
-    return user;
-  }
-
-  Future<StudentUser?> loginStudent({
-    required String email,
-    required String password,
-  }) async {
-    final user = await _api.studentLogin(
-      email: email,
-      password: password,
-    );
-
-    if (user?.token != null) {
-      await _saveToken(user!.token!, 'student');
-    }
-
-    return user;
-  }
-
-  // ================= Instructor =================
-
-  Future<InstructorUser?> registerInstructor({
-    required String name,
-    required String email,
-    required String password,
-  }) async {
-    final user = await _api.instructorRegister(
-      name: name,
-      email: email,
-      password: password,
-    );
-
-    if (user?.token != null) {
-      await _saveToken(user!.token!, 'instructor');
-    }
-
-    return user;
-  }
-
-  Future<InstructorUser?> loginInstructor({
-    required String email,
-    required String password,
-  }) async {
-    final user = await _api.instructorLogin(
-      email: email,
-      password: password,
-    );
-
-    if (user?.token != null) {
-      await _saveToken(user!.token!, 'instructor');
-    }
-
-    return user;
-  }
-
-  // ================= Social Login =================
-
-  Future<dynamic> socialLogin({
-    required String role,
-    required String tokenId,
   }) async {
     try {
-      dynamic user;
-      if (role == 'instructor') {
-        user = await _api.socialLogin(tokenId: tokenId);
-      } else if (role == 'student') {
-        user = await _api.socialLoginStudent(tokenId: tokenId);
+      final response = await apiManager.postData(
+        ApiConstants.instructorEndpointLogin,
+        body: {"email": email, "password": password},
+      );
+
+      if (response.statusCode == 200) {
+        final dto = InstructorUserDto.fromJson(response.data);
+        if (dto.instructor != null) return Right(dto.instructor!);
+        return Left(Failures(errorMessage: "Instructor data missing"));
       } else {
-        throw Exception("Role not supported");
+        return Left(
+            Failures(errorMessage: response.data['message'] ?? 'Server Error'));
       }
-
-      if (user?.token != null) {
-        await _saveToken(user.token!, role);
-      }
-
-      return user;
     } catch (e) {
-      rethrow;
+      return Left(Failures(errorMessage: e.toString()));
     }
   }
 
-  // ================= Local Token Handling =================
+  @override
+  Future<Either<Failures, InstructorEntity>> registerInstructor({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await apiManager.postData(
+        ApiConstants.instructorEndpointRegister,
+        body: {"name": name, "email": email, "password": password},
+      );
 
-  Future<void> _saveToken(String token, String role) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
-    await prefs.setString(_roleKey, role);
+      if (response.statusCode == 200) {
+        final dto = InstructorUserDto.fromJson(response.data);
+        if (dto.instructor != null) return Right(dto.instructor!);
+        return Left(Failures(errorMessage: "Instructor data missing"));
+      } else {
+        return Left(
+            Failures(errorMessage: response.data['message'] ?? 'Server Error'));
+      }
+    } catch (e) {
+      return Left(Failures(errorMessage: e.toString()));
+    }
   }
 
-  Future<String?> getSavedToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+  @override
+  Future<Either<Failures, InstructorEntity>> socialLoginInstructor({
+    required String token,
+  }) async {
+    try {
+      final response = await apiManager.postData(
+        ApiConstants.instructorEndpointSocial,
+        body: { "token": token},
+      );
+
+      if (response.statusCode == 200) {
+        final dto = InstructorUserDto.fromJson(response.data);
+        if (dto.instructor != null) return Right(dto.instructor!);
+        return Left(Failures(errorMessage: "Instructor data missing"));
+      } else {
+        return Left(
+            Failures(errorMessage: response.data['message'] ?? 'Server Error'));
+      }
+    } catch (e) {
+      return Left(Failures(errorMessage: e.toString()));
+    }
   }
 
-  Future<String?> getSavedRole() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_roleKey);
+  // ================== Student ==================
+  @override
+  Future<Either<Failures, StudentEntity>> loginStudent({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await apiManager.postData(
+        ApiConstants.studentEndpointLogin,
+        body: {"email": email, "password": password},
+      );
+
+      if (response.statusCode == 200) {
+        final dto = StudentUserDto.fromJson(response.data);
+        if (dto.student != null) return Right(dto.student!);
+        return Left(Failures(errorMessage: "Student data missing"));
+      } else {
+        return Left(
+            Failures(errorMessage: response.data['message'] ?? 'Server Error'));
+      }
+    } catch (e) {
+      return Left(Failures(errorMessage: e.toString()));
+    }
   }
 
-  Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-    await prefs.remove(_roleKey);
+  @override
+  Future<Either<Failures, StudentEntity>> registerStudent({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await apiManager.postData(
+        ApiConstants.studentEndpointRegister,
+        body: {"name": name, "email": email, "password": password},
+      );
+
+      if (response.statusCode == 200) {
+        final dto = StudentUserDto.fromJson(response.data);
+        if (dto.student != null) return Right(dto.student!);
+        return Left(Failures(errorMessage: "Student data missing"));
+      } else {
+        return Left(
+            Failures(errorMessage: response.data['message'] ?? 'Server Error'));
+      }
+    } catch (e) {
+      return Left(Failures(errorMessage: e.toString()));
+    }
   }
 
-  Future<bool> isLoggedIn() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.containsKey(_tokenKey);
+  @override
+  Future<Either<Failures, StudentEntity>> socialLoginStudent({
+    required String token,
+  }) async {
+    try {
+      final response = await apiManager.postData(
+        ApiConstants.studentEndpointSocial,
+        body: { "token": token},
+      );
+
+      if (response.statusCode == 200) {
+        final dto = StudentUserDto.fromJson(response.data);
+        if (dto.student != null) return Right(dto.student!);
+        return Left(Failures(errorMessage: "Student data missing"));
+      } else {
+        return Left(
+            Failures(errorMessage: response.data['message'] ?? 'Server Error'));
+      }
+    } catch (e) {
+      return Left(Failures(errorMessage: e.toString()));
+    }
   }
 }

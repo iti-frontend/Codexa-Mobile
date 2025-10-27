@@ -1,26 +1,27 @@
-import 'package:equatable/equatable.dart';
+import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
+import 'package:codexa_mobile/Domain/entities/student_entity.dart';
+import 'package:codexa_mobile/Domain/failures.dart';
 
-abstract class RegisterState extends Equatable {
-  const RegisterState();
-  @override
-  List<Object?> get props => [];
-}
+class RegisterStates {}
 
-class RegisterInitial extends RegisterState {}
+class RegisterInitialState extends RegisterStates {}
 
-class RegisterLoading extends RegisterState {}
-
-class RegisterSuccess extends RegisterState {
-  final String token;
-  const RegisterSuccess({required this.token});
-
-  @override
-  List<Object?> get props => [token];
-}
-
-class RegisterFailure extends RegisterState {
+class RegisterLoadingState extends RegisterStates {
   final String message;
-  const RegisterFailure(this.message);
-  @override
-  List<Object?> get props => [message];
+  RegisterLoadingState({this.message = 'Loading...'});
+}
+
+class RegisterErrorState extends RegisterStates {
+  final Failures failure;
+  RegisterErrorState({required this.failure});
+}
+
+class StudentRegisterSuccessState extends RegisterStates {
+  final StudentEntity student;
+  StudentRegisterSuccessState({required this.student});
+}
+
+class InstructorRegisterSuccessState extends RegisterStates {
+  final InstructorEntity instructor;
+  InstructorRegisterSuccessState({required this.instructor});
 }

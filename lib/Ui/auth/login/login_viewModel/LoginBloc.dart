@@ -1,62 +1,135 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../Data/Repository/auth_repository.dart';
-import 'login_event.dart';
+import 'package:codexa_mobile/Domain/usecases/auth/login_instructor_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/auth/login_student_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/auth/register_instructor_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/auth/register_student_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/auth/social_login_instructor_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/auth/social_login_student_usecase.dart';
 import 'login_state.dart';
 
-class LoginBloc extends Bloc<LoginEvent, LoginState> {
-  final AuthRepository _repo;
+class AuthViewModel extends Cubit<AuthStates> {
+  final LoginStudentUseCase loginStudentUseCase;
+  final RegisterStudentUseCase registerStudentUseCase;
+  final SocialLoginStudentUseCase socialLoginStudentUseCase;
 
-  LoginBloc(this._repo) : super(LoginInitial()) {
-    on<LoginStudentSubmitted>(_onStudentLogin);
-    on<LoginInstructorSubmitted>(_onInstructorLogin);
-    on<SocialLoginEvent>(_onSocialLogin);
+  final LoginInstructorUseCase loginInstructorUseCase;
+  final RegisterInstructorUseCase registerInstructorUseCase;
+  final SocialLoginInstructorUseCase socialLoginInstructorUseCase;
+
+  // Controllers
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController rePasswordController = TextEditingController();
+
+  AuthViewModel({
+    required this.loginStudentUseCase,
+    required this.registerStudentUseCase,
+    required this.socialLoginStudentUseCase,
+    required this.loginInstructorUseCase,
+    required this.registerInstructorUseCase,
+    required this.socialLoginInstructorUseCase,
+  }) : super(AuthInitialState());
+
+  // ---------- Student ----------
+  Future<void> loginStudent() async {
+    emit(AuthLoadingState(message: 'Logging in student...'));
+    final result = await loginStudentUseCase.call(
+      email: emailController.text,
+      password: passwordController.text,
+    );
+
+    result.fold(ifLeft: (failure) {
+      emit(AuthErrorState(failure: failure));
+    }, ifRight: (student) {
+      emit(StudentAuthSuccessState(student: student));
+    });
   }
 
-  Future<void> _onStudentLogin(
-      LoginStudentSubmitted event, Emitter<LoginState> emit) async {
-    emit(LoginLoading());
-    try {
-      final user = await _repo.loginStudent(
-          email: event.email, password: event.password);
-      if (user != null && user.token != null) {
-        emit(LoginSuccess(user: user, role: 'student'));
-      } else {
-        emit(const LoginFailure('Student login failed'));
-      }
-    } catch (e) {
-      emit(LoginFailure(e.toString()));
-    }
+  Future<void> registerStudent() async {
+    emit(AuthLoadingState(message: 'Registering student...'));
+    final result = await registerStudentUseCase.call(
+      name: nameController.text,
+      email: emailController.text,
+      password: passwordController.text,
+    );
+
+    result.fold(
+      ifLeft: (failure) {
+        emit(AuthErrorState(failure: failure));
+      },
+      ifRight: (student) {
+        emit(StudentAuthSuccessState(student: student));
+      },
+    );
   }
 
-  Future<void> _onInstructorLogin(
-      LoginInstructorSubmitted event, Emitter<LoginState> emit) async {
-    emit(LoginLoading());
-    try {
-      final user = await _repo.loginInstructor(
-          email: event.email, password: event.password);
-      if (user != null && user.token != null) {
-        emit(LoginSuccess(user: user, role: 'instructor'));
-      } else {
-        emit(const LoginFailure('Instructor login failed'));
-      }
-    } catch (e) {
-      emit(LoginFailure(e.toString()));
-    }
+  Future<void> socialLoginStudent(
+      { required String token}) async {
+    emit(AuthLoadingState(message: 'Social login student...'));
+    final result =
+        await socialLoginStudentUseCase.call(token: token);
+
+    result.fold(
+      ifLeft: (failure) {
+        emit(AuthErrorState(failure: failure));
+      },
+      ifRight: (student) {
+        emit(StudentAuthSuccessState(student: student));
+      },
+    );
   }
 
-  Future<void> _onSocialLogin(
-      SocialLoginEvent event, Emitter<LoginState> emit) async {
-    emit(LoginLoading());
-    try {
-      final user =
-      await _repo.socialLogin(role: event.role, tokenId: event.tokenId);
-      if (user != null && user.token != null) {
-        emit(LoginSuccess(user: user, role: event.role));
-      } else {
-        emit(const LoginFailure('Social login failed'));
-      }
-    } catch (e) {
-      emit(LoginFailure(e.toString()));
-    }
+  // ---------- Instructor ----------
+  Future<void> loginInstructor() async {
+    emit(AuthLoadingState(message: 'Logging in instructor...'));
+    final result = await loginInstructorUseCase.call(
+      email: emailController.text,
+      password: passwordController.text,
+    );
+
+    result.fold(
+      ifLeft: (failure) {
+        emit(AuthErrorState(failure: failure));
+      },
+      ifRight: (instructor) {
+        emit(InstructorAuthSuccessState(instructor: instructor));
+      },
+    );
+  }
+
+  Future<void> registerInstructor() async {
+    emit(AuthLoadingState(message: 'Registering instructor...'));
+    final result = await registerInstructorUseCase.call(
+      name: nameController.text,
+      email: emailController.text,
+      password: passwordController.text,
+    );
+
+    result.fold(
+      ifLeft: (failure) {
+        emit(AuthErrorState(failure: failure));
+      },
+      ifRight: (instructor) {
+        emit(InstructorAuthSuccessState(instructor: instructor));
+      },
+    );
+  }
+
+  Future<void> socialLoginInstructor(
+      { required String token}) async {
+    emit(AuthLoadingState(message: 'Social login instructor...'));
+    final result = await socialLoginInstructorUseCase.call(
+         token: token);
+    result.fold(
+      ifLeft: (failure) {
+        emit(AuthErrorState(failure: failure));
+      },
+      ifRight: (instructor) {
+        emit(InstructorAuthSuccessState(instructor: instructor));
+      },
+    );
   }
 }

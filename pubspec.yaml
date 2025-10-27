@@ -46,6 +46,9 @@ dependencies:
   font_awesome_flutter: ^10.6.0
   equatable: ^2.0.7
   flutter_dotenv: ^6.0.0
+  dart_either: ^2.0.0
+  dartz: ^0.10.1
+
 
 
 dev_dependencies:
