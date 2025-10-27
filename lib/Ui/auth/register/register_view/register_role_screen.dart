@@ -8,49 +8,36 @@ class RoleSelectionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0D1B2A), Color(0xFF1B263B)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
         width: double.infinity,
         height: double.infinity,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.school,
               size: 90,
-              color: Colors.yellowAccent,
             ),
             const SizedBox(height: 18),
-
-            const Text(
+            Text(
               'Choose Your Role',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
+              style: theme.textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
-
-            const Text(
+            Text(
               'Select how you want to join our platform',
-              style: TextStyle(color: Colors.white70, fontSize: 14),
+              style: theme.textTheme.bodyMedium,
             ),
-
             const SizedBox(height: 40),
-
             _roleButton(
               context,
               title: 'Register as Student',
               icon: FontAwesomeIcons.userGraduate,
-              color: Colors.blueAccent,
               onTap: () {
                 Navigator.pushNamed(
                   context,
@@ -60,12 +47,10 @@ class RoleSelectionScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 18),
-
             _roleButton(
               context,
               title: 'Register as Instructor',
               icon: FontAwesomeIcons.chalkboardTeacher,
-              color: Colors.orangeAccent,
               onTap: () {
                 Navigator.pushNamed(
                   context,
@@ -82,34 +67,34 @@ class RoleSelectionScreen extends StatelessWidget {
 
   Widget _roleButton(BuildContext context,
       {required String title,
-        required IconData icon,
-        required Color color,
-        required VoidCallback onTap}) {
+      required IconData icon,
+      required VoidCallback onTap}) {
+    final theme = Theme.of(context);
+
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: onTap,
-      child: Container(
-        width: 260,
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white24),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(width: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: theme.cardTheme.elevation ?? 2,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 22,
+              ), // inherits iconTheme.color
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ), // inherits textTheme color
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

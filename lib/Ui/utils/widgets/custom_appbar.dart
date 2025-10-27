@@ -1,8 +1,5 @@
-import 'package:codexa_mobile/Ui/utils/provider_ui/theme_provider.dart';
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
 
 class CustomAppbar extends StatelessWidget {
   final String profileImage;
@@ -11,41 +8,44 @@ class CustomAppbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var provider = Provider.of<ThemeProvider>(context);
+    final theme = Theme.of(context);
+    final accentBlue = const Color(0xFF4A90E2);
+
     return AppBar(
       automaticallyImplyLeading: false,
-      backgroundColor: AppColorsDark.seconderyBackground,
+      backgroundColor:
+          theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
+      elevation: 0,
       title: Row(
-        // ! Appbar background
         children: [
-          // ! Profile Picture
-          Align(
-            alignment: Alignment.centerLeft,
-            child: CircleAvatar(
-              backgroundImage: AssetImage(profileImage),
-              radius: 20,
-            ),
+          // Profile avatar
+          CircleAvatar(
+            backgroundImage: AssetImage(profileImage),
+            radius: 20,
           ),
           SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-          // ! Search text field
+
+          // Search box
           Expanded(
             child: Container(
               height: 45,
               decoration: BoxDecoration(
-                color: AppColorsDark.cardBackground,
+                color: theme.cardColor.withOpacity(0.8),
                 borderRadius: BorderRadius.circular(25),
               ),
               child: TextField(
-                style: TextStyle(
-                  color: AppColorsLight.primaryBackground,
-                ),
-                cursorColor: AppColorsLight.primaryBackground,
+                style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                cursorColor: theme.textTheme.bodyLarge?.color,
                 decoration: InputDecoration(
-                  hintText: "Search ",
+                  hintText: "Search",
                   hintStyle: TextStyle(
-                      color: AppColorsLight.primaryBackground, fontSize: 16),
-                  prefixIcon: Icon(Icons.search,
-                      color: AppColorsLight.primaryBackground),
+                    color: theme.textTheme.bodyLarge?.color?.withOpacity(0.6),
+                    fontSize: 16,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: theme.iconTheme.color?.withOpacity(0.8),
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(25),
                     borderSide: BorderSide.none,
@@ -57,12 +57,17 @@ class CustomAppbar extends StatelessWidget {
               ),
             ),
           ),
+
           SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-          // ! Icon chat
+
+          // Chat icon with blue dot
           Stack(
             children: [
-              Icon(CupertinoIcons.chat_bubble,
-                  color: AppColorsLight.primaryBackground, size: 28),
+              Icon(
+                CupertinoIcons.chat_bubble,
+                color: theme.iconTheme.color,
+                size: 28,
+              ),
               Positioned(
                 right: 0,
                 top: 0,
@@ -70,19 +75,24 @@ class CustomAppbar extends StatelessWidget {
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: AppColorsDark.accentBlue,
+                    color: accentBlue,
                     shape: BoxShape.circle,
                   ),
                 ),
-              )
+              ),
             ],
           ),
+
           SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-          // ! Icon notifications
+
+          // Notification icon with blue dot
           Stack(
             children: [
-              Icon(CupertinoIcons.bell,
-                  color: AppColorsLight.primaryBackground, size: 28),
+              Icon(
+                CupertinoIcons.bell,
+                color: theme.iconTheme.color,
+                size: 28,
+              ),
               Positioned(
                 right: 0,
                 top: 0,
@@ -90,11 +100,11 @@ class CustomAppbar extends StatelessWidget {
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: AppColorsDark.accentBlue,
+                    color: accentBlue,
                     shape: BoxShape.circle,
                   ),
                 ),
-              )
+              ),
             ],
           ),
         ],

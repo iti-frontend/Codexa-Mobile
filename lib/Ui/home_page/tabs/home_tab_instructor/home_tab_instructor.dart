@@ -1,4 +1,3 @@
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_button.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_course_progress_instructor.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_home_tape_components.dart';
@@ -10,41 +9,25 @@ class HomeTabInstructor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               "Dashboard",
-              style: TextStyle(
-                color: AppColorsDark.primaryText,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: theme.iconTheme.color),
             ),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                StatBox(
-                  title: "2",
-                  subtitle: "Active Course",
-                  subtitleColor: AppColorsDark.secondaryText,
-                  subtitleFontSize: 20,
-                  titleColor: AppColorsDark.accentBlue,
-                  titleFontSize: 20,
-                ),
+                StatBox(title: "2", subtitle: "Active Course"),
                 SizedBox(width: 10),
-                StatBox(
-                  title: "160",
-                  subtitle: "All Students",
-                  subtitleColor: AppColorsDark.secondaryText,
-                  subtitleFontSize: 20,
-                  titleColor: AppColorsDark.accentBlue,
-                  titleFontSize: 20,
-                ),
+                StatBox(title: "160", subtitle: "All Students"),
               ],
             ),
             SizedBox(height: 10),
@@ -53,29 +36,19 @@ class HomeTabInstructor extends StatelessWidget {
               children: [
                 Text(
                   "My Courses",
-                  style: TextStyle(
-                      color: AppColorsDark.primaryText,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold),
+                  style: TextStyle(color: theme.iconTheme.color),
                 ),
-                Icon(
-                  Icons.more_vert,
-                  color: AppColorsDark.primaryText,
-                )
+                Icon(Icons.more_vert, color: theme.iconTheme.color)
               ],
             ),
-            SizedBox(
-              height: 10,
-            ),
+            SizedBox(height: 10),
             CourseProgressCard(
               progress: 0.75,
-              progressColor: AppColorsDark.accentGreen,
               students: 5,
               title: "Mastering Data Science",
             ),
             CourseProgressCard(
               progress: 0.5,
-              progressColor: AppColorsDark.accentGreen,
               students: 5,
               title: "UI/UX Design Principles",
             ),
@@ -86,26 +59,27 @@ class HomeTabInstructor extends StatelessWidget {
             ),
             const SizedBox(height: 25),
             DashboardCard(
-                title: "Recent Activity",
-                child: Column(
-                  children: [
-                    RecentActivityItem(
-                      action: "submitted an assignment in",
-                      avatarImg: "assets/images/review-1.jpg",
-                      name: "Ali",
-                      subject: "Data Science",
-                      timeAgo: "15m ago",
-                    ),
-                    const SizedBox(height: 20),
-                    RecentActivityItem(
-                      action: "submitted an assignment in",
-                      avatarImg: "assets/images/review-1.jpg",
-                      name: "Ali",
-                      subject: "Data Science",
-                      timeAgo: "15m ago",
-                    ),
-                  ],
-                )),
+              title: "Recent Activity",
+              child: Column(
+                children: [
+                  RecentActivityItem(
+                    action: "submitted an assignment in",
+                    avatarImg: "assets/images/review-1.jpg",
+                    name: "Ali",
+                    subject: "Data Science",
+                    timeAgo: "15m ago",
+                  ),
+                  const SizedBox(height: 20),
+                  RecentActivityItem(
+                    action: "submitted an assignment in",
+                    avatarImg: "assets/images/review-1.jpg",
+                    name: "Ali",
+                    subject: "Data Science",
+                    timeAgo: "15m ago",
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 10),
             DashboardCard(
               title: "Community Activity",

@@ -1,5 +1,5 @@
+import 'package:codexa_mobile/Ui/auth/register/register_view/register_role_screen.dart';
 import 'package:flutter/material.dart';
-import '../../auth/register/register_view/register_role_screen.dart';
 import 'onboarding_page_1.dart';
 import 'onboarding_page_2.dart';
 import 'onboarding_page_3.dart';
@@ -32,7 +32,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
       body: SafeArea(
         child: Column(
           children: [

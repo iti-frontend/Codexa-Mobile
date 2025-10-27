@@ -1,4 +1,3 @@
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_home_tape_components.dart';
 import 'package:flutter/material.dart';
 
@@ -7,17 +6,16 @@ class HomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             "Dashboard",
-            style: TextStyle(
-                color: AppColorsDark.primaryText,
-                fontSize: 22,
-                fontWeight: FontWeight.bold),
+            style: TextStyle(color: theme.iconTheme.color),
           ),
           const SizedBox(height: 16),
           DashboardCard(
@@ -27,13 +25,11 @@ class HomeTab extends StatelessWidget {
                 CourseProgressItem(
                   title: "Mastering Data Science",
                   progress: 0.75,
-                  color: AppColorsDark.accentGreen,
                 ),
                 SizedBox(height: 12),
                 CourseProgressItem(
                   title: "UX/UI Design Principles",
                   progress: 0.4,
-                  color: AppColorsDark.accentGreen,
                 ),
               ],
             ),
@@ -92,28 +88,16 @@ class HomeTab extends StatelessWidget {
               StatBox(
                 title: "100K+",
                 subtitle: "Learners",
-                subtitleColor: AppColorsDark.secondaryText,
-                subtitleFontSize: 30,
-                titleColor: AppColorsDark.accentBlue,
-                titleFontSize: 20,
               ),
               SizedBox(width: 10),
               StatBox(
                 title: "500+",
                 subtitle: "Courses",
-                subtitleColor: AppColorsDark.secondaryText,
-                subtitleFontSize: 30,
-                titleColor: AppColorsDark.accentBlue,
-                titleFontSize: 20,
               ),
               SizedBox(width: 10),
               StatBox(
                 title: "10K+",
                 subtitle: "Companies",
-                subtitleColor: AppColorsDark.secondaryText,
-                subtitleFontSize: 30,
-                titleColor: AppColorsDark.accentBlue,
-                titleFontSize: 20,
               ),
             ],
           ),
@@ -136,32 +120,22 @@ class HomeTab extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "Advanced Analytics with R",
                         style: TextStyle(
-                            color: AppColorsDark.primaryText,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16),
+                          color: theme.iconTheme.color,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         "Dive deep into statistical analysis and data modeling.",
-                        style: TextStyle(
-                            color: AppColorsDark.primaryText, fontSize: 13),
+                        style: TextStyle(color: theme.iconTheme.color),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColorsDark.accentBlue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
                         onPressed: () {},
-                        child: const Text(
-                          "View Course",
-                          style: TextStyle(color: AppColorsDark.primaryText),
-                        ),
+                        child: Text("View Course"),
                       ),
                     ],
                   ),

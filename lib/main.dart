@@ -71,19 +71,20 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      routes: {
-        SplashScreen.routeName: (_) => SplashScreen(),
-        OnboardingScreen.routeName: (_) => OnboardingScreen(),
-        RoleSelectionScreen.routeName: (_) => RoleSelectionScreen(),
-        RegisterScreen.routeName: (_) => RegisterScreen(),
-        LoginScreen.routeName: (_) => LoginScreen(),
-        HomeScreen.routeName: (_) => HomeScreen(),
-      },
-      theme: AppThemeData.lightTheme,
-      darkTheme: AppThemeData.darkTheme,
-      themeMode: ThemeMode.dark,
-    );
+        debugShowCheckedModeBanner: false,
+        routes: {
+          SplashScreen.routeName: (_) => SplashScreen(),
+          OnboardingScreen.routeName: (_) => OnboardingScreen(),
+          RoleSelectionScreen.routeName: (_) => RoleSelectionScreen(),
+          RegisterScreen.routeName: (_) => RegisterScreen(),
+          LoginScreen.routeName: (_) => LoginScreen(),
+          HomeScreen.routeName: (_) => HomeScreen(),
+        },
+        theme: AppThemeData.lightTheme,
+        darkTheme: AppThemeData.darkTheme,
+        themeMode: themeProvider.currentTheme);
   }
 }
