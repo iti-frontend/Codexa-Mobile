@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String name;
@@ -15,52 +14,43 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        Stack(
-          alignment: Alignment.bottomRight,
+    final theme = Theme.of(context);
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
           children: [
             CircleAvatar(
-              radius: 50,
+              radius: 30,
               backgroundImage: AssetImage(image),
             ),
-            Positioned(
-              bottom: 0,
-              right: 4,
-              child: Container(
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColorsDark.cardBackground,
-                ),
-                padding: const EdgeInsets.all(6),
-                child: const Icon(
-                  Icons.edit,
-                  color: Colors.white,
-                  size: 18,
-                ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.iconTheme.color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    email,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.iconTheme.color,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Text(
-          name,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppColorsDark.primaryText,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          email,
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppColorsDark.secondaryText,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

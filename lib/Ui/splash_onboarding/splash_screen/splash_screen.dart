@@ -1,7 +1,5 @@
-import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   static const String routeName = '/';
@@ -23,14 +21,16 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColorsDark.seconderyBackground,
-      body: const Center(
+      backgroundColor: theme.cardColor,
+      body: Center(
         child: Text(
           "Codexa",
-          style: TextStyle(
-            color: AppColorsDark.primaryText,
-            fontSize: 25,
+          style: theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.iconTheme.color,
           ),
         ),
       ),

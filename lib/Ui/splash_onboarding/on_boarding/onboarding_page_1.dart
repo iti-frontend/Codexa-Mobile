@@ -1,4 +1,3 @@
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'onboarding_widgets.dart';
 
@@ -9,28 +8,30 @@ class OnboardingPage1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
-      color: AppColorsDark.seconderyBackground,
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Spacer(),
-          const Icon(Icons.bar_chart,
-              color: AppColorsDark.accentBlue, size: 90),
+          Icon(Icons.bar_chart, size: 90, color: theme.iconTheme.color),
           const SizedBox(height: 40),
-          const Text(
+          Text(
             "Welcome to Codexa",
-            style: TextStyle(
-                color: AppColorsDark.primaryText,
-                fontSize: 24,
-                fontWeight: FontWeight.bold),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.iconTheme.color,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
             "Your go-to platform for professional growth and community engagement. Connect with peers, learn new skills, and advance your career.",
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColorsDark.primaryText, fontSize: 14),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.iconTheme.color,
+            ),
           ),
           const Spacer(),
           OnboardingButton(text: "Get Started", onPressed: onNext),
