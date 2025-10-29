@@ -9,6 +9,7 @@ import 'package:codexa_mobile/Domain/usecases/auth/social_login_student_usecase.
 import 'package:codexa_mobile/Ui/auth/login/login_viewModel/LoginBloc.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_viewModel/login_state.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_view/register_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_text_field.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_social_icon.dart';
@@ -62,19 +63,33 @@ class _LoginScreenState extends State<LoginScreen> {
       value: authViewModel,
       child: BlocListener<AuthViewModel, AuthStates>(
         listener: (context, state) {
-          if (state is StudentAuthSuccessState) {
-            Provider.of<UserProvider>(context, listen: false).saveUser(
-              token: state.student.token!,
-              role: 'student',
-              user: state.student,
-            );
-          }
+          if (state is StudentAuthSuccessState ||
+              state is InstructorAuthSuccessState) {
+            final token = (state is StudentAuthSuccessState)
+                ? state.student.token
+                : (state as InstructorAuthSuccessState).instructor.token;
 
-          if (state is InstructorAuthSuccessState) {
+            final user = (state is StudentAuthSuccessState)
+                ? state.student
+                : (state as InstructorAuthSuccessState).instructor;
+
+            final role =
+                state is StudentAuthSuccessState ? 'student' : 'instructor';
+
             Provider.of<UserProvider>(context, listen: false).saveUser(
-              token: state.instructor.token!,
-              role: 'instructor',
-              user: state.instructor,
+              token: token ?? "",
+              role: role,
+              user: user,
+            );
+
+            print("Logged in as: $role");
+            Navigator.pushReplacementNamed(context, HomeScreen.routeName);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Logged in successfully!'),
+                backgroundColor: Colors.green,
+              ),
             );
           } else if (state is AuthErrorState) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -231,11 +246,11 @@ class _LoginScreenState extends State<LoginScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         GestureDetector(
-          onTap: () => _googleSignIn(),
+          onTap: () => _googleSignIn(selectedRole ?? ''),
           child: const CustomSocialIcon(assetPath: 'assets/images/google.png'),
         ),
         GestureDetector(
-          onTap: () => _googleSignIn(),
+          onTap: () => _githubSignIn(selectedRole ?? ''),
           child: const CustomSocialIcon(assetPath: 'assets/images/github.png'),
         ),
       ],
@@ -287,7 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // =================== Google Sign In ===================
-  void _googleSignIn() async {
+  void _googleSignIn(String role) async {
     try {
       // 1️⃣ تسجيل دخول Google
       final GoogleSignInAccount? googleUser =
@@ -309,9 +324,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final firebaseIdToken = await userCredential.user!.getIdToken();
 
-      if (selectedRole == 'student') {
+      if (role == 'student') {
         authViewModel.socialLoginStudent(token: firebaseIdToken ?? "");
-      } else if (selectedRole == 'instructor') {
+      } else if (role == 'instructor') {
         authViewModel.socialLoginInstructor(token: firebaseIdToken ?? "");
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

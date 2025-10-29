@@ -107,3 +107,20 @@ class StudentUserDto {
   String? token;
   StudentDto? student;
 }
+
+extension StudentMapper on StudentDto {
+  StudentEntity toEntity(String? token) {
+    return StudentEntity(
+      id: id,
+      name: name,
+      email: email,
+      profileImage: profileImage,
+      role: role,
+      isAdmin: isAdmin,
+      isActive: isActive,
+      emailVerified: emailVerified,
+      authProvider: authProvider,
+      token: token,
+    );
+  }
+}
