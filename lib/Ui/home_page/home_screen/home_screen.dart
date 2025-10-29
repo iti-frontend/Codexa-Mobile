@@ -1,10 +1,19 @@
+import 'package:codexa_mobile/Data/Repository/courses_repository.dart';
+import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
+import 'package:codexa_mobile/Domain/usecases/courses/get_courses_usecase.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_student.dart';
 import 'package:codexa_mobile/Ui/home_page/tabs/community_tab/community.dart';
 import 'package:codexa_mobile/Ui/home_page/tabs/courses_tab/courses.dart';
 import 'package:codexa_mobile/Ui/home_page/tabs/home_tab_instructor/home_tab_instructor.dart';
 import 'package:codexa_mobile/Ui/home_page/tabs/settings_tab/settings.dart';
+import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
+import 'package:codexa_mobile/Ui/utils/theme/app_theme_data.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_appbar.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_bottom_navbar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String routeName = "/home";
@@ -17,6 +26,8 @@ class _HomescreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final role = userProvider.role;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -42,11 +53,24 @@ class _HomescreenState extends State<HomeScreen> {
           });
         },
       ),
-      body: tabs[selectedIndex],
+      body: role == "student"
+          ? BlocProvider(
+              create: (_) => StudentCoursesCubit(
+                GetCoursesUseCase(CoursesRepoImpl(ApiManager())),
+              )..fetchCourses(),
+              child: studentTabs[selectedIndex],
+            )
+          : instructorTabs[selectedIndex],
     );
   }
 
-  List<Widget> tabs = [
+  List<Widget> studentTabs = [
+    HomeTab(),
+    StudentCoursesTab(),
+    CommunityTab(),
+    SettingsTab(),
+  ];
+  List<Widget> instructorTabs = [
     HomeTabInstructor(),
     CoursesTab(),
     CommunityTab(),

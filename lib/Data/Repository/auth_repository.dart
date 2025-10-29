@@ -70,7 +70,7 @@ class AuthRepoImpl implements AuthRepo {
     try {
       final response = await apiManager.postData(
         ApiConstants.instructorEndpointSocial,
-        body: { "token": token},
+        body: {"token": token},
       );
 
       if (response.statusCode == 200) {
@@ -100,7 +100,12 @@ class AuthRepoImpl implements AuthRepo {
 
       if (response.statusCode == 200) {
         final dto = StudentUserDto.fromJson(response.data);
-        if (dto.student != null) return Right(dto.student!);
+
+        if (dto.student != null) {
+          final entity = dto.student!.toEntity(dto.token);
+          return Right(entity);
+        }
+
         return Left(Failures(errorMessage: "Student data missing"));
       } else {
         return Left(
@@ -143,7 +148,7 @@ class AuthRepoImpl implements AuthRepo {
     try {
       final response = await apiManager.postData(
         ApiConstants.studentEndpointSocial,
-        body: { "token": token},
+        body: {"token": token},
       );
 
       if (response.statusCode == 200) {
