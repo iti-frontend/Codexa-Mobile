@@ -1,9 +1,7 @@
 import 'package:codexa_mobile/Ui/home_page/tabs/community_tab/community.dart';
 import 'package:codexa_mobile/Ui/home_page/tabs/courses_tab/courses.dart';
-import 'package:codexa_mobile/Ui/home_page/tabs/home_tab/home.dart';
 import 'package:codexa_mobile/Ui/home_page/tabs/home_tab_instructor/home_tab_instructor.dart';
 import 'package:codexa_mobile/Ui/home_page/tabs/settings_tab/settings.dart';
-import 'package:codexa_mobile/Ui/utils/theme/app_theme_data.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_appbar.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_bottom_navbar.dart';
 import 'package:flutter/material.dart';

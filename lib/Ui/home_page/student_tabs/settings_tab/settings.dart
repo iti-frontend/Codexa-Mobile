@@ -6,7 +6,6 @@ import 'package:codexa_mobile/Ui/utils/widgets/settings_tab_profile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'theme_settings_screen.dart';
 
 class SettingsTab extends StatelessWidget {
   const SettingsTab({super.key});
@@ -37,23 +36,12 @@ class SettingsTab extends StatelessWidget {
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 childAspectRatio: 1.2, // fixes overflow
-                children: [
+                children: const [
                   SettingsGridItem(
                       icon: Icons.notifications, label: 'Notifications'),
                   SettingsGridItem(icon: Icons.lock, label: 'Privacy'),
                   SettingsGridItem(icon: Icons.language, label: 'Language'),
-                  SettingsGridItem(
-                    icon: Icons.color_lens,
-                    label: 'Theme',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ThemeSettingsScreen(),
-                        ),
-                      );
-                    },
-                  ),
+                  SettingsGridItem(icon: Icons.color_lens, label: 'Theme'),
                   SettingsGridItem(icon: Icons.help_outline, label: 'Help'),
                   SettingsGridItem(icon: Icons.info_outline, label: 'About'),
                 ],
