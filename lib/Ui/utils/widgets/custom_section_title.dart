@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 
 // here this a custom widget will be used to display main progress titles
 Widget customSectionTitle({
@@ -15,7 +14,7 @@ Widget customSectionTitle({
 }) {
   // media query for sizing
   double screenWidth = MediaQuery.of(context).size.width;
-  double responsiveFontSize = screenWidth * 0.026;
+  double responsiveFontSize = screenWidth * 0.03;
 
   return Container(
     decoration: BoxDecoration(

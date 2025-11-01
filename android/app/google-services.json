@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "9248017139",
+    "project_id": "codexa-api",
+    "storage_bucket": "codexa-api.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:9248017139:android:3d19e1cf0457be80ad8586",
+        "android_client_info": {
+          "package_name": "com.example.codexa_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "9248017139-vech6nudsj8bjk3tk4hbioou9q60b57n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBTv3TIyY6awbgutMldopLXHhnNzWg-Wo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "9248017139-vech6nudsj8bjk3tk4hbioou9q60b57n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

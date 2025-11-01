@@ -1,38 +1,45 @@
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class SettingsOptionTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
+  final Widget leading;
+  final String title;
+  final VoidCallback? onTap;
 
   const SettingsOptionTile({
     super.key,
-    required this.icon,
-    required this.label,
+    required this.leading,
+    required this.title,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-      leading: Icon(icon, color: AppColorsDark.accentBlue),
-      title: Text(
-        label,
-        style: TextStyle(
-          color: AppColorsDark.primaryText,
-          fontWeight: FontWeight.w600,
+    final theme = Theme.of(context);
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap ?? () {},
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          child: Row(
+            children: [
+              leading,
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  title,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.iconTheme.color,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-      trailing: const Icon(
-        Icons.arrow_forward_ios,
-        size: 16,
-        color: AppColorsDark.accentBlue,
-      ),
-      onTap: () {},
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      tileColor: AppColorsDark.cardBackground,
     );
   }
 }

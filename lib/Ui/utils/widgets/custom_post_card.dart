@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 
 class CustomPostCard extends StatelessWidget {
   final String name;
@@ -21,115 +20,104 @@ class CustomPostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColorsDark.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // User info
-          Row(
-            children: [
-              const CircleAvatar(
-                radius: 20,
-                backgroundImage: AssetImage(""), //TODO add user image
+    final theme = Theme.of(context);
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // User info
+            Row(
+              children: [
+                const CircleAvatar(
+                    radius: 20,
+                    backgroundImage: AssetImage("")), // replace with real image
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.iconTheme.color,
+                        ),
+                      ),
+                      Text(
+                        title,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.iconTheme.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Post content
+            Text(
+              content,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                height: 1.4,
+                color: theme.iconTheme.color,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+
+            const SizedBox(height: 12),
+
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                image,
+                width: double.infinity,
+                height: 180,
+                fit: BoxFit.cover,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Likes / Comments / Share
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Wrap(
+                  spacing: 16,
                   children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        color: AppColorsDark.primaryText,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: AppColorsDark.accentGreen,
-                        fontSize: 13,
-                      ),
-                    ),
+                    _buildStat(context, Icons.thumb_up_alt_outlined, likes),
+                    _buildStat(context, Icons.comment_outlined, comments),
                   ],
                 ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // Post content
-          Text(
-            content,
-            style: const TextStyle(
-              color: AppColorsDark.secondaryText,
-              fontSize: 14,
-              height: 1.4,
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              image,
-              width: double.infinity,
-              height: 180,
-              fit: BoxFit.cover,
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // Likes / Comments / Share
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Wrap(
-                spacing: 16,
-                children: [
-                  _buildStat(Icons.thumb_up_alt_outlined, likes),
-                  _buildStat(Icons.comment_outlined, comments)
-                ],
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.ios_share,
-                  size: 20,
-                  color: AppColorsDark.secondaryText,
+                IconButton(
+                  icon: const Icon(Icons.ios_share, size: 20),
+                  onPressed: () {},
                 ),
-                tooltip: "Share post",
-                onPressed: () {},
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildStat(IconData icon, String text) {
+  Widget _buildStat(BuildContext context, IconData icon, String text) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          icon,
-          color: AppColorsDark.secondaryText,
-          size: 18,
-        ),
+        Icon(icon, size: 18),
         const SizedBox(width: 6),
         Text(
           text,
-          style: const TextStyle(
-            color: AppColorsDark.secondaryText,
-            fontSize: 13,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.iconTheme.color,
           ),
         ),
       ],
