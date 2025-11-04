@@ -1,9 +1,20 @@
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 
 class AppThemeData {
   // ! Dark Theme
+
   static ThemeData darkTheme = ThemeData(
+    colorScheme: ColorScheme.dark(
+      primary: AppColorsDark.accentBlue,
+      secondary: AppColorsDark.accentGreen,
+      surface: AppColorsDark.cardBackground,
+      error: AppColorsDark.errorColor,
+      onPrimary: AppColorsDark.primaryText,
+      onSecondary: AppColorsDark.primaryText,
+      onSurface: AppColorsDark.primaryText,
+      onError: Colors.white,
+    ),
     scaffoldBackgroundColor: AppColorsDark.seconderyBackground,
     appBarTheme: AppBarTheme(
       backgroundColor: AppColorsDark.seconderyBackground,
@@ -38,7 +49,18 @@ class AppThemeData {
   );
 
   // ! Light Theme
+
   static ThemeData lightTheme = ThemeData(
+    colorScheme: ColorScheme.light(
+      primary: AppColorsLight.accentBlue,
+      secondary: AppColorsLight.accentGreen,
+      surface: AppColorsLight.cardBackground,
+      error: AppColorsLight.errorColor,
+      onPrimary: AppColorsLight.primaryText,
+      onSecondary: AppColorsLight.primaryText,
+      onSurface: AppColorsLight.primaryText,
+      onError: Colors.white,
+    ),
     scaffoldBackgroundColor: AppColorsLight.primaryBackground,
     appBarTheme: AppBarTheme(
       backgroundColor: AppColorsLight.primaryBackground,

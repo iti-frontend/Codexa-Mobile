@@ -28,6 +28,7 @@ class _HomescreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final role = userProvider.role;
+    final token = userProvider.token;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -58,18 +59,19 @@ class _HomescreenState extends State<HomeScreen> {
               create: (_) => StudentCoursesCubit(
                 GetCoursesUseCase(CoursesRepoImpl(ApiManager())),
               )..fetchCourses(),
-              child: studentTabs[selectedIndex],
+              child: studentTabs(token!)[selectedIndex],
             )
           : instructorTabs[selectedIndex],
     );
   }
 
-  List<Widget> studentTabs = [
-    HomeTab(),
-    StudentCoursesTab(),
-    CommunityTab(),
-    SettingsTab(),
-  ];
+  List<Widget> studentTabs(String userToken) => [
+        HomeTab(userToken: userToken),
+        StudentCoursesTab(userToken: userToken),
+        CommunityTab(),
+        SettingsTab(),
+      ];
+
   List<Widget> instructorTabs = [
     HomeTabInstructor(),
     CoursesTab(),
