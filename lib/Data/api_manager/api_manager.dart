@@ -19,10 +19,17 @@ class ApiManager {
   }
 
   // GET Request
-  Future<Response> getData(String endPoint,
-      {Map<String, dynamic>? query}) async {
+  Future<Response> getData(
+    String endPoint, {
+    Map<String, dynamic>? query,
+    Options? options,
+  }) async {
     try {
-      final response = await dio.get(endPoint, queryParameters: query);
+      final response = await dio.get(
+        endPoint,
+        queryParameters: query,
+        options: options,
+      );
       return response;
     } catch (e) {
       rethrow;
@@ -31,15 +38,25 @@ class ApiManager {
 
   // POST Request
   Future<Response> postData(String endPoint,
-      {Map<String, dynamic>? body}) async {
+      {Map<String, dynamic>? body, Options? options}) async {
     try {
+      final fullUrl = dio.options.baseUrl + endPoint;
+      print("POST URL: $fullUrl");
+      print("POST body: $body");
+      print("POST headers: ${options?.headers ?? dio.options.headers}");
+
       final response = await dio.post(
         endPoint,
         data: body,
-        options: Options(validateStatus: (status) => true),
+        options: options ?? Options(validateStatus: (status) => true),
       );
+
+      print("Response code: ${response.statusCode}");
+      print("Response data: ${response.data}");
+
       return response;
     } catch (e) {
+      print("POST Error: $e");
       rethrow;
     }
   }
