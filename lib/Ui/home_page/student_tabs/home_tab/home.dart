@@ -1,3 +1,6 @@
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_states.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_details.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_home_tape_components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -255,7 +258,70 @@ class _HomeTabState extends State<HomeTab> {
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 16),
+          DashboardCard(
+            title: "Recommended for You",
+            child: BlocBuilder<StudentCoursesCubit, StudentCoursesState>(
+              builder: (context, state) {
+                if (state is StudentCoursesLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state is StudentCoursesError) {
+                  return Center(
+                    child: Text(
+                      'Error: ${state.message}',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  );
+                } else if (state is StudentCoursesLoaded) {
+                  final courses = state.courses;
+
+                  if (courses.isEmpty) {
+                    return const Center(child: Text('No courses found'));
+                  }
+                  final randomCourse = (courses..shuffle()).first;
+                  return Row(
+                    children: [
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              randomCourse.title ?? "Unknown Course",
+                              style: TextStyle(
+                                color: theme.iconTheme.color,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              randomCourse.description ??
+                                  "No description available.",
+                              style: TextStyle(color: theme.iconTheme.color),
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          CourseDetails(course: randomCourse),
+                                    ));
+                              },
+                              child: const Text("View Course"),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return const SizedBox();
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

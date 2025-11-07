@@ -47,11 +47,26 @@ class CourseDetails extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          return Scaffold(
-            appBar: AppBar(
-              title: Text(course.title ?? "Course Details"),
-              backgroundColor: Colors.transparent,
-              elevation: 0,
+         
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(course.title ?? "Course Details"),
+        backgroundColor: Colors.transparent,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DashboardCard(
+              haveBanner: false,
+              child: CourseProgressItem(
+                title: course.title ?? "",
+                categoryTitle: course.category ?? "No category",
+                categoryPercentage: "${((course.progress?.length ?? 0) * 10)}%",
+                progress: 0,
+                hasCategory: true,
+              ),
             ),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -182,8 +197,48 @@ class CourseDetails extends StatelessWidget {
                 ],
               ),
             ),
-          );
-        },
+            const SizedBox(height: 20),
+
+            // Dates
+            Text(
+              "Created At: ${formatDate(course.createdAt)}",
+              style: const TextStyle(
+                  fontSize: 16, color: AppColorsDark.secondaryText),
+            ),
+            Text(
+              "Updated At: ${formatDate(course.updatedAt)}",
+              style: const TextStyle(
+                  fontSize: 16, color: AppColorsDark.secondaryText),
+            ),
+            const SizedBox(height: 20),
+
+            // Enroll Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColorsDark.accentBlue,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Enrolled successfully!')),
+                  );
+                },
+                child: const Text(
+                  "Enroll",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }

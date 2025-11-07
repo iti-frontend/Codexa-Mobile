@@ -31,6 +31,41 @@ class _HomescreenState extends State<HomeScreen> {
     final token = userProvider.token;
     final theme = Theme.of(context);
 
+    if (role == "student") {
+      return BlocProvider(
+        create: (_) => StudentCoursesCubit(
+          GetCoursesUseCase(CoursesRepoImpl(ApiManager())),
+        )..fetchCourses(),
+        child: Scaffold(
+          appBar: selectedIndex == 3
+              ? AppBar(
+                  automaticallyImplyLeading: false,
+                  title: Text(
+                    'Settings',
+                    style: TextStyle(color: theme.iconTheme.color),
+                  ),
+                  backgroundColor: theme.appBarTheme.backgroundColor,
+                )
+              : AppBar(
+                  automaticallyImplyLeading: false,
+                  backgroundColor: theme.appBarTheme.backgroundColor,
+                  title:
+                      CustomAppbar(profileImage: "assets/images/review-1.jpg"),
+                ),
+          bottomNavigationBar: CustomBottomNavBar(
+            selectedIndex: selectedIndex,
+            onItemTapped: (index) {
+              setState(() {
+                selectedIndex = index;
+              });
+            },
+          ),
+          body: studentTabs[selectedIndex],
+        ),
+      );
+    }
+
+    // 👇 المدرّس (بدون كيوبت)
     return Scaffold(
       appBar: selectedIndex == 3
           ? AppBar(

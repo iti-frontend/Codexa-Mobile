@@ -1,5 +1,8 @@
+import 'package:codexa_mobile/Ui/home_page/additional_screens/search_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 
 class CustomAppbar extends StatelessWidget {
   final String profileImage;
@@ -25,7 +28,7 @@ class CustomAppbar extends StatelessWidget {
           ),
           SizedBox(width: MediaQuery.of(context).size.width * 0.02),
 
-          // Search box
+          // 🔍 Search box
           Expanded(
             child: Container(
               height: 45,
@@ -34,10 +37,17 @@ class CustomAppbar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(25),
               ),
               child: TextField(
+                onTap: () {
+                  final cubit = context.read<StudentCoursesCubit>();
+                  showSearch(
+                    context: context,
+                   delegate: SearchCoursesScreen(cubit),
+                  );
+                },
                 style: TextStyle(color: theme.textTheme.bodyLarge?.color),
                 cursorColor: theme.textTheme.bodyLarge?.color,
                 decoration: InputDecoration(
-                  hintText: "Search",
+                  hintText: "Search courses...",
                   hintStyle: TextStyle(
                     color: theme.textTheme.bodyLarge?.color?.withOpacity(0.6),
                     fontSize: 16,

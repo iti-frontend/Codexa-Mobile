@@ -17,15 +17,10 @@ class StudentCoursesTab extends StatefulWidget {
 }
 
 class _StudentCoursesTabState extends State<StudentCoursesTab> {
+  List<CourseEntity> filteredCourses = [];
+
   List<String> mainTitles = ['All', 'In Progress', 'Completed'];
-  List<String> categoryTitles = [
-    'All',
-    'Frontend',
-    'DevOps',
-    'Data Structure',
-    'OOP',
-    'Machine Learning'
-  ];
+  List<String> categoryTitles = ['All'];
   int selectedMainIndex = 0;
   int selectedCategoryIndex = 0;
 
@@ -35,6 +30,33 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
     // Fetch My Courses using MyCoursesCubit
     final cubit = context.read<MyCoursesCubit>();
     cubit.fetchMyCourses(widget.userToken);
+  }
+
+  void updateCategories(List<CourseEntity> courses) {
+    final categories = courses
+        .map((c) => c.category ?? "")
+        .where((c) => c.isNotEmpty)
+        .toSet()
+        .toList();
+    categories.insert(0, 'All');
+
+    setState(() {
+      categoryTitles = categories;
+      if (selectedCategoryIndex >= categoryTitles.length) {
+        selectedCategoryIndex = 0;
+      }
+      filteredCourses = List.from(courses);
+    });
+  }
+
+  void filterCoursesByCategory(List<CourseEntity> courses, String category) {
+    setState(() {
+      if (category == 'All') {
+        filteredCourses = List.from(courses);
+      } else {
+        filteredCourses = courses.where((c) => c.category == category).toList();
+      }
+    });
   }
 
   @override
@@ -93,6 +115,13 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                   isSelected: isSelected,
                   onPressed: () {
                     setState(() => selectedCategoryIndex = index);
+                    final cubit = context.read<StudentCoursesCubit>();
+                    cubit.filterByCategory(categoryTitles[index]);
+                    final List<CourseEntity> courses =
+                        cubit.state is StudentCoursesLoaded
+                            ? (cubit.state as StudentCoursesLoaded).courses
+                            : [];
+                    filterCoursesByCategory(courses, categoryTitles[index]);
                   },
                 );
               }),
@@ -116,7 +145,12 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                   if (courses.isEmpty) {
                     return const Center(child: Text('No courses found'));
                   }
-
+                  if (categoryTitles.length == 1) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      updateCategories(
+                          context.read<StudentCoursesCubit>().allCourses);
+                    });
+                  }
                   return Column(
                     children: List.generate(courses.length, (index) {
                       final course = courses[index];

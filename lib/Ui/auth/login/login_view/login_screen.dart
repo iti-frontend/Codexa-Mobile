@@ -8,6 +8,7 @@ import 'package:codexa_mobile/Domain/usecases/auth/social_login_instructor_useca
 import 'package:codexa_mobile/Domain/usecases/auth/social_login_student_usecase.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_viewModel/LoginBloc.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_viewModel/login_state.dart';
+import 'package:codexa_mobile/Ui/auth/register/register_view/register_role_screen.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_view/register_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
@@ -268,7 +269,7 @@ class _LoginScreenState extends State<LoginScreen> {
             WidgetSpan(
               child: GestureDetector(
                 onTap: () => Navigator.pushReplacementNamed(
-                    context, RegisterScreen.routeName),
+                    context, RoleSelectionScreen.routeName),
                 child: const Text(
                   'Register for free',
                   style: TextStyle(

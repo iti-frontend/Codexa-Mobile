@@ -10,4 +10,6 @@ class ApiConstants {
   static const String coursesEndpoint = "/courses";
   static String enrollCourseEndpoint(String courseId) =>
       '/students/enroll/$courseId';
+
+  static const String coursesInstructorEndpoint = "/courses/my-courses";
 }

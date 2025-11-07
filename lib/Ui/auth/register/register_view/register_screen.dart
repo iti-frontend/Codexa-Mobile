@@ -9,6 +9,9 @@ import 'package:codexa_mobile/Domain/usecases/auth/social_login_student_usecase.
 import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_viewModel/register_bloc.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_viewModel/register_state.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
+import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
+import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_text_field.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_social_icon.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
@@ -16,6 +19,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -28,8 +32,6 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   late final RegisterViewModel authViewModel;
-
-  // visibility flags for option B (buttons below fields)
   bool _showPassword = false;
   bool _showRePassword = false;
 
@@ -49,39 +51,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // role comes from RoleSelectionScreen via Navigator arguments
     final String role = ModalRoute.of(context)!.settings.arguments as String;
 
     return BlocProvider<RegisterViewModel>.value(
       value: authViewModel,
       child: BlocListener<RegisterViewModel, RegisterStates>(
         listener: (context, state) {
-          if (state is StudentRegisterSuccessState) {
-            // Registration success -> navigate to CategoryScreen (student)
+          if (state is StudentRegisterSuccessState ||
+              state is InstructorRegisterSuccessState) {
+            final token = (state is StudentRegisterSuccessState)
+                ? state.student.token
+                : (state as InstructorRegisterSuccessState).instructor.token;
+
+            final user = (state is StudentRegisterSuccessState)
+                ? state.student
+                : (state as InstructorRegisterSuccessState).instructor;
+
+            final role =
+                state is StudentRegisterSuccessState ? 'student' : 'instructor';
+            Provider.of<UserProvider>(context, listen: false).saveUser(
+              token: token ?? "",
+              role: role,
+              user: user,
+            );
+
+            print("Registered and logged in as: $role");
+
             ScaffoldMessenger.of(context).clearSnackBars();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                  content: Text('✅ Registration Successful! Redirecting...')),
+                content: Text('✅ Registration Successful! Redirecting...'),
+                backgroundColor: Colors.green,
+              ),
             );
-            Navigator.pushReplacementNamed(
-                context, '/home'); // use CategoryScreen.routeName if available
-          } else if (state is InstructorRegisterSuccessState) {
-            ScaffoldMessenger.of(context).clearSnackBars();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                  content: Text('✅ Registration Successful! Redirecting...')),
-            );
-            Navigator.pushReplacementNamed(
-                context, '/home'); // use TeacherScreen.routeName if available
+
+            Navigator.pushReplacementNamed(context, OnboardingScreen.routeName);
           } else if (state is RegisterLoadingState) {
-            // show a transient message
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );
           } else if (state is RegisterErrorState) {
-            final err = state.failure.errorMessage ?? 'Registration failed';
+            final err = state.failure.errorMessage;
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(err)),
+              SnackBar(content: Text(err), backgroundColor: Colors.red),
             );
           }
         },
