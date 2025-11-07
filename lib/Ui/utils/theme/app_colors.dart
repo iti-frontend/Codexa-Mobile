@@ -10,7 +10,6 @@ class AppColorsDark {
   static const Color accentBlue = Color(0xFF4CA5FF);
   static const Color accentBlueAuth = Color(0xFF94B9F8);
   static const Color visualPurple = Color(0xFF70509E);
-  static const Color errorColor = Color(0xFFFF4D4F);
 }
 
 class AppColorsLight {
@@ -24,5 +23,4 @@ class AppColorsLight {
   static const Color visualPurple = Color(0xFF70509E);
   static const Color divider = Color(0xFFE2E8F0);
   static const Color shadow = Color(0x1A000000);
-  static const Color errorColor = Color(0xFFFF4D4F);
 }

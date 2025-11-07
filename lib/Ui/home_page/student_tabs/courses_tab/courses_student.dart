@@ -1,16 +1,19 @@
+// lib/src/ui/courses/student_courses_tab.dart
+
 import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
-import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/my_courses_cubit.dart';
+
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_states.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_details.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_home_tape_components.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_section_title.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class StudentCoursesTab extends StatefulWidget {
-  final String userToken; // add user token to fetch personal courses
-
-  const StudentCoursesTab({super.key, required this.userToken});
+  const StudentCoursesTab({super.key});
 
   @override
   State<StudentCoursesTab> createState() => _StudentCoursesTabState();
@@ -32,9 +35,8 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
   @override
   void initState() {
     super.initState();
-    // Fetch My Courses using MyCoursesCubit
-    final cubit = context.read<MyCoursesCubit>();
-    cubit.fetchMyCourses(widget.userToken);
+    final cubit = context.read<StudentCoursesCubit>();
+    cubit.fetchCourses();
   }
 
   @override
@@ -84,9 +86,9 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                 final isSelected = selectedCategoryIndex == index;
                 return customSectionTitle(
                   backgroundColor:
-                      isSelected ? const Color(0xff1e293b) : Colors.transparent,
+                      isSelected ? Color(0xff1e293b) : Colors.transparent,
                   textColor: isSelected
-                      ? const Color(0xff2563eb)
+                      ? Color(0xff2563eb)
                       : AppColorsDark.secondaryText,
                   context: context,
                   title: categoryTitles[index],
@@ -98,19 +100,19 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
               }),
             ),
             const SizedBox(height: 30.0),
-            // My Courses Section using MyCoursesCubit
-            BlocBuilder<MyCoursesCubit, MyCoursesState>(
+            // Courses
+            BlocBuilder<StudentCoursesCubit, StudentCoursesState>(
               builder: (context, state) {
-                if (state is MyCoursesLoading) {
+                if (state is StudentCoursesLoading) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (state is MyCoursesError) {
+                } else if (state is StudentCoursesError) {
                   return Center(
                     child: Text(
                       'Error: ${state.message}',
                       style: const TextStyle(color: Colors.red),
                     ),
                   );
-                } else if (state is MyCoursesLoaded) {
+                } else if (state is StudentCoursesLoaded) {
                   final courses = state.courses;
 
                   if (courses.isEmpty) {
@@ -120,29 +122,22 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                   return Column(
                     children: List.generate(courses.length, (index) {
                       final course = courses[index];
-                      double progress = 0.0;
-                      if (course.progress != null &&
-                          course.progress!.isNotEmpty) {
-                        progress = (course.progress!.length /
-                                (course.videos?.length ?? 1))
-                            .clamp(0.0, 1.0);
-                      }
-
                       return DashboardCard(
                         haveBanner: false,
                         child: InkWell(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => CourseDetails(course: course),
-                            ),
-                          ),
+                          onTap: () => {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CourseDetails(course: course),
+                                ))
+                          },
                           child: CourseProgressItem(
                             categoryTitle: course.category ?? "No category",
                             hasCategory: true,
-                            categoryPercentage: "${(progress * 100).toInt()}%",
+                            categoryPercentage: "0%",
                             title: course.title ?? "",
-                            progress: progress,
+                            progress: 0,
                           ),
                         ),
                       );
