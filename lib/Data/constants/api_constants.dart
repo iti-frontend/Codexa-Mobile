@@ -7,4 +7,6 @@ class ApiConstants {
   static const String instructorEndpointSocial = "/instructors/social-login";
 
   static const String coursesEndpoint = "/courses";
+
+  static const String coursesInstructorEndpoint = "/courses/my-courses";
 }

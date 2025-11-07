@@ -34,7 +34,7 @@ class OnboardingPage1 extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          OnboardingButton(text: "Get Started", onPressed: onNext),
+          OnboardingButton(text: "Next", onPressed: onNext),
         ],
       ),
     );

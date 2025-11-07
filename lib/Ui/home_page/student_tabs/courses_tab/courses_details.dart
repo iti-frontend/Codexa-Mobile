@@ -35,7 +35,7 @@ class CourseDetails extends StatelessWidget {
                 title: course.title ?? "",
                 categoryTitle: course.category ?? "No category",
                 categoryPercentage: "${((course.progress?.length ?? 0) * 10)}%",
-                progress: 0, 
+                progress: 0,
                 hasCategory: true,
               ),
             ),
@@ -113,7 +113,7 @@ class CourseDetails extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  // هنا تضيف logic التسجيل في الكورس
+                  
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Enrolled successfully!')),
                   );
