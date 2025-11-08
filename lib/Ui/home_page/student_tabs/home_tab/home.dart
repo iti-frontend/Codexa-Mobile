@@ -5,8 +5,8 @@ import 'package:codexa_mobile/Ui/utils/widgets/custom_home_tape_components.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class HomeTab extends StatelessWidget {
-  const HomeTab({super.key});
+class HomeStudentTab extends StatelessWidget {
+  const HomeStudentTab({super.key});
 
   @override
   Widget build(BuildContext context) {

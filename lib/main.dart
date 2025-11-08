@@ -12,6 +12,7 @@ import 'package:codexa_mobile/Ui/auth/register/register_view/register_screen.dar
 import 'package:codexa_mobile/Ui/auth/register/register_viewModel/register_bloc.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/courses_cubit/instructor_courses_cubit.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/splash_screen/splash_screen.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
@@ -34,12 +35,53 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  final authRepo = AuthRepoImpl(ApiManager());
-  final coursesRepo = CoursesRepoImpl(ApiManager());
-  final getCoursesUseCase = GetCoursesUseCase(coursesRepo);
+  runApp(const AppInitializer());
+}
 
-  runApp(
-    MultiProvider(
+class AppInitializer extends StatefulWidget {
+  const AppInitializer({Key? key}) : super(key: key);
+
+  @override
+  State<AppInitializer> createState() => _AppInitializerState();
+}
+
+class _AppInitializerState extends State<AppInitializer> {
+  bool _isLoading = true;
+  String? _token;
+  String? _role;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final userProvider = UserProvider();
+    await userProvider.loadUser();
+    setState(() {
+      _token = userProvider.token;
+      _role = userProvider.role;
+      _isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    final apiManager = ApiManager(token: _token);
+    final authRepo = AuthRepoImpl(apiManager);
+    final coursesRepo = CoursesRepoImpl(apiManager);
+    final getCoursesUseCase = GetCoursesUseCase(coursesRepo);
+
+    return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
@@ -69,30 +111,40 @@ void main() async {
           BlocProvider(
             create: (_) => StudentCoursesCubit(getCoursesUseCase),
           ),
+          BlocProvider(
+            create: (_) => InstructorCoursesCubit(getCoursesUseCase),
+          ),
         ],
-        child: MyApp(),
+        child: MyApp(
+            initialRoute:
+                _token == null ? SplashScreen.routeName : HomeScreen.routeName),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
+  final String initialRoute;
+  const MyApp({Key? key, required this.initialRoute}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        routes: {
-          SplashScreen.routeName: (_) => SplashScreen(),
-          OnboardingScreen.routeName: (_) => OnboardingScreen(),
-          RoleSelectionScreen.routeName: (_) => RoleSelectionScreen(),
-          RegisterScreen.routeName: (_) => RegisterScreen(),
-          LoginScreen.routeName: (_) => LoginScreen(),
-          HomeScreen.routeName: (_) => HomeScreen(),
-        },
-        theme: AppThemeData.lightTheme,
-        darkTheme: AppThemeData.darkTheme,
-        themeMode: themeProvider.currentTheme);
+      debugShowCheckedModeBanner: false,
+      routes: {
+        SplashScreen.routeName: (_) => SplashScreen(),
+        OnboardingScreen.routeName: (_) => OnboardingScreen(),
+        RoleSelectionScreen.routeName: (_) => RoleSelectionScreen(),
+        RegisterScreen.routeName: (_) => RegisterScreen(),
+        LoginScreen.routeName: (_) => LoginScreen(),
+        HomeScreen.routeName: (_) => HomeScreen(),
+      },
+      initialRoute: initialRoute,
+      theme: AppThemeData.lightTheme,
+      darkTheme: AppThemeData.darkTheme,
+      themeMode: themeProvider.currentTheme,
+    );
   }
 }
