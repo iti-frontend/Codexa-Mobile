@@ -9,6 +9,10 @@ import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubi
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_student.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/home_tab/home.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/settings_tab/settings.dart';
+// import 'package:codexa_mobile/Ui/home_page/tabs/community_tab/community.dart';
+// import 'package:codexa_mobile/Ui/home_page/tabs/courses_tab/courses.dart';
+// import 'package:codexa_mobile/Ui/home_page/tabs/home_tab_instructor/home_tab_instructor.dart';
+// import 'package:codexa_mobile/Ui/home_page/tabs/settings_tab/settings.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_appbar.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_bottom_navbar.dart';
