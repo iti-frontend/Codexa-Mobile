@@ -6,10 +6,11 @@ class UserProvider extends ChangeNotifier {
   String? role;
   dynamic user;
 
-  Future<void> saveUser(
-      {required String token,
-      required String role,
-      required dynamic user}) async {
+  Future<void> saveUser({
+    required String token,
+    required String role,
+    required dynamic user,
+  }) async {
     this.token = token;
     this.role = role;
     this.user = user;

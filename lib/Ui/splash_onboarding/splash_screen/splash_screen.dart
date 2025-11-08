@@ -1,5 +1,5 @@
+import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
-import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -25,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
         if (userProvider.token != null && userProvider.role != null) {
           Navigator.pushReplacementNamed(context, HomeScreen.routeName);
         } else {
-          Navigator.pushReplacementNamed(context, OnboardingScreen.routeName);
+          Navigator.pushReplacementNamed(context, LoginScreen.routeName);
         }
       });
     });

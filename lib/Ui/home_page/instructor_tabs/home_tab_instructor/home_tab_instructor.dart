@@ -1,8 +1,11 @@
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/create_course.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_button.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_course_progress_instructor.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_home_tape_components.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/recent_activity.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeTabInstructor extends StatelessWidget {
   const HomeTabInstructor({super.key});
@@ -55,7 +58,18 @@ class HomeTabInstructor extends StatelessWidget {
             const SizedBox(height: 10),
             CustomButton(
               text: "Create new Course",
-              onPressed: () {},
+              onPressed: () {
+              final cubit = context.read<InstructorUploadCoursesCubit>();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider.value(
+                    value: cubit,
+                    child: AddEditCourseScreen(cubit: cubit),
+                  ),
+                ),
+              );
+            },
             ),
             const SizedBox(height: 25),
             DashboardCard(

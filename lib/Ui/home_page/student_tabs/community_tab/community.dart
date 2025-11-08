@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_post_card.dart';
 
-class CommunityTab extends StatelessWidget {
-  const CommunityTab({super.key});
+class CommunityStudentTab extends StatelessWidget {
+  const CommunityStudentTab({super.key});
 
   @override
   Widget build(BuildContext context) {

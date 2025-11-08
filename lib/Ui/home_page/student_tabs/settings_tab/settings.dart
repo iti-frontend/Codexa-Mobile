@@ -1,3 +1,4 @@
+import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/settings_grid_item.dart';
@@ -7,8 +8,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class SettingsTab extends StatelessWidget {
-  const SettingsTab({super.key});
+class SettingsStudentTab extends StatelessWidget {
+  const SettingsStudentTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -58,11 +59,7 @@ class SettingsTab extends StatelessWidget {
                 final userProvider =
                     Provider.of<UserProvider>(context, listen: false);
                 userProvider.logout();
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  OnboardingScreen.routeName,
-                  (route) => false,
-                );
+                Navigator.pushReplacementNamed(context, LoginScreen.routeName);
               },
             ),
             const SizedBox(height: 10),
