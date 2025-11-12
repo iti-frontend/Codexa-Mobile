@@ -45,7 +45,7 @@ class CoursesDto extends CourseEntity {
       '_id': id,
       'title': title,
       'description': description,
-      'price': price,
+      'price': price ?? 0,
       'category': category,
       'instructor': instructor is InstructorDto
           ? (instructor as InstructorDto).toJson()

@@ -1,43 +1,71 @@
-class CourseInstructorEntity {
-  final String? id;
-  final String? title;
-  final String? description;
-  final String? category;
-  final String? level;
-  final List<String>? tags;
-  final String? thumbnailUrl;
+// class InstructorCourseEntity {
+//   final String? id;
+//   final String? title;
+//   final String? description;
+//   final String? category;
+//   final int? price;
+//   final InstructorEntity? instructor;
+//   final List<VideoEntity>? videos;
+//   final CoverImageEntity? coverImage;
+//   final String? level;
+//   final String? status;
+//   final String? prerequisites;
+//   final List<dynamic>? enrolledStudents;
+//   final List<dynamic>? progress;
+//   final String? createdAt;
+//   final String? updatedAt;
 
-  CourseInstructorEntity({
-    this.id,
-    this.title,
-    this.description,
-    this.category,
-    this.level,
-    this.tags,
-    this.thumbnailUrl,
-  });
+//   const InstructorCourseEntity({
+//     this.id,
+//     this.title,
+//     this.description,
+//     this.category,
+//     this.price,
+//     this.instructor,
+//     this.videos,
+//     this.coverImage,
+//     this.level,
+//     this.status,
+//     this.prerequisites,
+//     this.enrolledStudents,
+//     this.progress,
+//     this.createdAt,
+//     this.updatedAt,
+//   });
+// }
 
-  factory CourseInstructorEntity.fromJson(Map<String, dynamic> json) {
-    return CourseInstructorEntity(
-      id: json['id']?.toString(),
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      category: json['category'] ?? '',
-      level: json['level'] ?? '',
-      tags: (json['tags'] as List?)?.map((e) => e.toString()).toList() ?? [],
-      thumbnailUrl: json['thumbnailUrl'] ?? '',
-    );
-  }
+// class CoverImageEntity {
+//   final String? url;
+//   final String? publicId;
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title ?? '',
-      'description': description ?? '',
-      'category': category ?? '',
-      'level': level ?? '',
-      'tags': tags ?? [],
-      'thumbnailUrl': thumbnailUrl ?? '',
-    };
-  }
-}
+//   const CoverImageEntity({
+//     this.url,
+//     this.publicId,
+//   });
+// }
+
+// class VideoEntity {
+//   final String? id;
+//   final String? title;
+//   final String? url;
+//   final String? publicId;
+
+//   const VideoEntity({
+//     this.id,
+//     this.title,
+//     this.url,
+//     this.publicId,
+//   });
+// }
+
+// class InstructorEntity {
+//   final String? id;
+//   final String? name;
+//   final String? profileImage;
+
+//   const InstructorEntity({
+//     this.id,
+//     this.name,
+//     this.profileImage,
+//   });
+// }

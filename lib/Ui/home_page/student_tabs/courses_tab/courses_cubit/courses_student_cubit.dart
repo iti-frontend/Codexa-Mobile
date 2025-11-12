@@ -22,6 +22,8 @@ class StudentCoursesCubit extends Cubit<StudentCoursesState> {
       (courses) {
         allCourses = courses;
         filteredCourses = courses;
+
+       
         emit(StudentCoursesLoaded(filteredCourses));
       },
     );

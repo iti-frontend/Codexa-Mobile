@@ -1,4 +1,4 @@
-import 'package:codexa_mobile/Domain/entities/add_course_entity.dart';
+import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
 
 abstract class InstructorCoursesState {}
 
@@ -7,7 +7,7 @@ class InstructorCoursesInitial extends InstructorCoursesState {}
 class InstructorCoursesLoading extends InstructorCoursesState {}
 
 class InstructorCoursesLoaded extends InstructorCoursesState {
-  final List<CourseInstructorEntity> courses;
+  final List<CourseEntity> courses;
   InstructorCoursesLoaded(this.courses);
 }
 

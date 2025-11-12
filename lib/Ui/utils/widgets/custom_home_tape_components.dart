@@ -39,72 +39,100 @@ class DashboardCard extends StatelessWidget {
 
 class CourseProgressItem extends StatelessWidget {
   final String title;
-  final double progress;
+  final double? progress;
   final bool hasCategory;
   final String? categoryTitle;
   final String? categoryPercentage;
+  final String instructorName;
 
   const CourseProgressItem({
     super.key,
     required this.title,
-    required this.progress,
+    this.progress,
     this.categoryTitle,
     this.categoryPercentage,
     this.hasCategory = false,
+    required this.instructorName,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final bool showProgress = progress != null && progress! > 0;
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 50,
-          height: 50,
+          width: 55,
+          height: 55,
           decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            Icons.play_circle_outline_rounded,
             color: theme.dividerTheme.color,
-            borderRadius: BorderRadius.circular(10),
+            size: 28,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (hasCategory) ...[
+              if (hasCategory)
                 Text(
                   categoryTitle ?? '',
-                  style: TextStyle(color: theme.progressIndicatorTheme.color),
-                ),
-                const SizedBox(height: 10.0),
-              ],
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Text(
-                      title,
-                      style: TextStyle(color: theme.dividerTheme.color),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  style: TextStyle(
+                    color: theme.progressIndicatorTheme.color,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
-                  if (hasCategory)
-                    Text(
-                      categoryPercentage ?? '',
-                      style:
-                          TextStyle(color: theme.progressIndicatorTheme.color),
+                ),
+              if (hasCategory) const SizedBox(height: 4),
+              Text(
+                title,
+                style: TextStyle(
+                  color: theme.dividerTheme.color,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Instructor: $instructorName',
+                style: TextStyle(
+                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  fontSize: 13,
+                ),
+              ),
+              if (showProgress) const SizedBox(height: 8),
+              if (showProgress)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 6,
+                      borderRadius: BorderRadius.circular(10),
+                      color: theme.progressIndicatorTheme.color,
+                      backgroundColor: theme
+                          .progressIndicatorTheme.linearTrackColor
+                          ?.withOpacity(0.3),
                     ),
-                ],
-              ),
-              SizedBox(height: hasCategory ? 15.0 : 6),
-              LinearProgressIndicator(
-                value: progress,
-                color: theme.progressIndicatorTheme.color,
-                backgroundColor: theme.progressIndicatorTheme.linearTrackColor,
-                borderRadius: BorderRadius.circular(10),
-                minHeight: 6,
-              ),
+                    const SizedBox(height: 6),
+                    Text(
+                      categoryPercentage ?? '${(progress! * 100).toInt()}%',
+                      style: TextStyle(
+                        color: theme.progressIndicatorTheme.color,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),
