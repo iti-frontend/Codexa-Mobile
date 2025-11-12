@@ -1,14 +1,12 @@
 // lib/src/ui/courses/student_courses_tab.dart
 
 import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
-
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_states.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_details.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_home_tape_components.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_section_title.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -70,7 +68,6 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20.0),
-            // Main Sections
             Wrap(
               spacing: 8,
               children: List.generate(mainTitles.length, (index) {
@@ -100,36 +97,28 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                   fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20.0),
-            // Categories
-            Wrap(
-              spacing: 4,
-              runSpacing: 16,
-              children: List.generate(categoryTitles.length, (index) {
-                final isSelected = selectedCategoryIndex == index;
-                return customSectionTitle(
-                  backgroundColor:
-                      isSelected ? const Color(0xff1e293b) : Colors.transparent,
-                  textColor: isSelected
-                      ? const Color(0xff2563eb)
-                      : AppColorsDark.secondaryText,
-                  context: context,
-                  title: categoryTitles[index],
-                  isSelected: isSelected,
-                  onPressed: () {
-                    setState(() => selectedCategoryIndex = index);
-                    final cubit = context.read<StudentCoursesCubit>();
-                    cubit.filterByCategory(categoryTitles[index]);
-                    final List<CourseEntity> courses =
-                        cubit.state is StudentCoursesLoaded
-                            ? (cubit.state as StudentCoursesLoaded).courses
-                            : [];
-                    filterCoursesByCategory(courses, categoryTitles[index]);
-                  },
-                );
-              }),
+            customSectionTitle(
+              context: context,
+              title: categoryTitles[selectedCategoryIndex],
+              onPressed: () {},
+              backgroundColor: Colors.white,
+              textColor: AppColorsDark.accentBlue,
+              dropdownItems: categoryTitles,
+              selectedValue: categoryTitles[selectedCategoryIndex],
+              onChanged: (value) {
+                if (value == null) return;
+                final index = categoryTitles.indexOf(value);
+                setState(() => selectedCategoryIndex = index);
+                final cubit = context.read<StudentCoursesCubit>();
+                cubit.filterByCategory(value);
+                final List<CourseEntity> courses =
+                    cubit.state is StudentCoursesLoaded
+                        ? (cubit.state as StudentCoursesLoaded).courses
+                        : [];
+                filterCoursesByCategory(courses, value);
+              },
             ),
             const SizedBox(height: 30.0),
-            // Courses
             BlocBuilder<StudentCoursesCubit, StudentCoursesState>(
               builder: (context, state) {
                 if (state is StudentCoursesLoading) {
@@ -156,23 +145,21 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                   return Column(
                     children: List.generate(courses.length, (index) {
                       final course = courses[index];
-                      return DashboardCard(
-                        haveBanner: false,
-                        child: InkWell(
-                          onTap: () => {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => CourseDetails(course: course),
-                              ),
-                            )
-                          },
+                      return InkWell(
+                        onTap: () => {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CourseDetails(course: course),
+                            ),
+                          )
+                        },
+                        child: DashboardCard(
                           child: CourseProgressItem(
+                            instructorName: course.instructor!.name ?? "",
                             categoryTitle: course.category ?? "No category",
                             hasCategory: true,
-                            categoryPercentage: "0%",
                             title: course.title ?? "",
-                            progress: 0,
                           ),
                         ),
                       );

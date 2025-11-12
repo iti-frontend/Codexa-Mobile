@@ -65,11 +65,12 @@ class SearchCoursesScreen extends SearchDelegate {
               )
             },
             child: CourseProgressItem(
+              instructorName: course.instructor!.name ?? "",
               categoryTitle: course.category ?? "No category",
               hasCategory: true,
-              categoryPercentage: "0%",
+              
               title: course.title ?? "",
-              progress: 0,
+              
             ),
           ),
         );

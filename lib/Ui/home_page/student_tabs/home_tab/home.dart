@@ -27,11 +27,13 @@ class HomeStudentTab extends StatelessWidget {
             child: Column(
               children: const [
                 CourseProgressItem(
+                  instructorName: "Ahmed",
                   title: "Mastering Data Science",
                   progress: 0.75,
                 ),
                 SizedBox(height: 12),
                 CourseProgressItem(
+                  instructorName: "Ahmed",
                   title: "UX/UI Design Principles",
                   progress: 0.4,
                 ),

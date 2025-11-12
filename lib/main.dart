@@ -1,3 +1,4 @@
+import 'package:codexa_mobile/Data/Repository/add_course_repo_impl.dart';
 import 'package:codexa_mobile/Data/Repository/courses_repository.dart';
 import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/login_instructor_usecase.dart';
@@ -6,13 +7,17 @@ import 'package:codexa_mobile/Domain/usecases/auth/register_instructor_usecase.d
 import 'package:codexa_mobile/Domain/usecases/auth/register_student_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/social_login_instructor_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/social_login_student_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/courses/add_course_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/courses/delete_course_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/get_courses_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/courses/update_course_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/courses/update_course_videos_usecase.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_view/register_screen.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_viewModel/register_bloc.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/courses_cubit/instructor_courses_cubit.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/splash_screen/splash_screen.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
@@ -80,6 +85,8 @@ class _AppInitializerState extends State<AppInitializer> {
     final authRepo = AuthRepoImpl(apiManager);
     final coursesRepo = CoursesRepoImpl(apiManager);
     final getCoursesUseCase = GetCoursesUseCase(coursesRepo);
+    final courseInstructorRepo =
+        CourseInstructorRepoImpl(apiManager: apiManager);
 
     return MultiProvider(
       providers: [
@@ -112,7 +119,12 @@ class _AppInitializerState extends State<AppInitializer> {
             create: (_) => StudentCoursesCubit(getCoursesUseCase),
           ),
           BlocProvider(
-            create: (_) => InstructorCoursesCubit(getCoursesUseCase),
+            create: (_) => InstructorCoursesCubit(
+                getCoursesUseCase: getCoursesUseCase,
+                addCourseUseCase: AddCourseUseCase(courseInstructorRepo),
+                updateCourseUseCase: UpdateCourseUseCase(courseInstructorRepo),
+                deleteCourseUseCase: DeleteCourseUseCase(courseInstructorRepo),
+                uploadVideosUseCase: UploadVideosUseCase(courseInstructorRepo)),
           ),
         ],
         child: MyApp(

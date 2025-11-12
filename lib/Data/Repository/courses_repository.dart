@@ -1,7 +1,6 @@
 import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
 import 'package:codexa_mobile/Data/constants/api_constants.dart';
 import 'package:codexa_mobile/Data/models/courses_dto.dart';
-import 'package:codexa_mobile/Domain/entities/add_course_entity.dart';
 import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
 import 'package:codexa_mobile/Domain/failures.dart';
 import 'package:codexa_mobile/Domain/repo/get_courses_repo.dart';
@@ -57,41 +56,6 @@ class CoursesRepoImpl implements GetCoursesRepo {
         return Left(Failures(
           errorMessage: response.data?['message']?.toString() ?? 'Server Error',
         ));
-      }
-    } catch (e) {
-      return Left(Failures(errorMessage: e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failures, List<CourseInstructorEntity>>>
-      getUploadInstructorCourses() async {
-    try {
-      final response =
-          await apiManager.getData(ApiConstants.coursesInstructorEndpoint);
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        final List<dynamic> dataList = (data is Map && data['data'] != null)
-            ? (data['data'] as List<dynamic>)
-            : (data is List ? data : []);
-
-        final List<CourseInstructorEntity> courses = dataList
-            .map((item) => CourseInstructorEntity(
-                  id: item['id'],
-                  title: item['title'],
-                  description: item['description'],
-                  category: item['category'],
-                  level: item['level'],
-                  tags: List<String>.from(item['tags'] ?? []),
-                  thumbnailUrl: item['thumbnail_url'],
-                ))
-            .toList();
-        return Right(courses);
-      } else {
-        return Left(Failures(
-            errorMessage:
-                response.data?['message']?.toString() ?? 'Server Error'));
       }
     } catch (e) {
       return Left(Failures(errorMessage: e.toString()));

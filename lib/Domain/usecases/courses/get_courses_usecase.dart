@@ -1,4 +1,3 @@
-import 'package:codexa_mobile/Domain/entities/add_course_entity.dart';
 import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
 import 'package:codexa_mobile/Domain/failures.dart';
 import 'package:codexa_mobile/Domain/repo/get_courses_repo.dart';
@@ -16,8 +15,8 @@ class GetCoursesUseCase {
     return await repo.getInstructorCourses();
   }
 
-  Future<Either<Failures, List<CourseInstructorEntity>>>
-      instructorUploadCall() async {
-    return await repo.getUploadInstructorCourses();
-  }
+  // Future<Either<Failures, List<InstructorCourseEntity>>>
+  //     instructorUploadCall() async {
+  //   return await repo.getUploadInstructorCourses();
+  // }
 }

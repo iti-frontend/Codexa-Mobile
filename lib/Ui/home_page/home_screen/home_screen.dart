@@ -1,5 +1,6 @@
 import 'package:codexa_mobile/Data/Repository/courses_repository.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/get_courses_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/courses/update_course_videos_usecase.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/courses_instructor.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/home_tab_instructor/home_tab_instructor.dart';
@@ -9,10 +10,6 @@ import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubi
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_student.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/home_tab/home.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/settings_tab/settings.dart';
-// import 'package:codexa_mobile/Ui/home_page/tabs/community_tab/community.dart';
-// import 'package:codexa_mobile/Ui/home_page/tabs/courses_tab/courses.dart';
-// import 'package:codexa_mobile/Ui/home_page/tabs/home_tab_instructor/home_tab_instructor.dart';
-// import 'package:codexa_mobile/Ui/home_page/tabs/settings_tab/settings.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_appbar.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_bottom_navbar.dart';
@@ -20,9 +17,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
+import 'package:codexa_mobile/Domain/usecases/courses/add_course_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/courses/update_course_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/courses/delete_course_usecase.dart';
+import 'package:codexa_mobile/Data/Repository/add_course_repo_impl.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String routeName = "/home";
+
   @override
   State<HomeScreen> createState() => _HomescreenState();
 }
@@ -57,9 +60,10 @@ class _HomescreenState extends State<HomeScreen> {
     final role = userProvider.role;
     final theme = Theme.of(context);
 
-    // تمرير الـ token لكل الـ API calls
     final apiManager = ApiManager(token: userProvider.token);
     final coursesRepo = CoursesRepoImpl(apiManager);
+    final courseInstructorRepo =
+        CourseInstructorRepoImpl(apiManager: apiManager);
     final getCoursesUseCase = GetCoursesUseCase(coursesRepo);
 
     List<Widget> studentTabs = [
@@ -69,12 +73,35 @@ class _HomescreenState extends State<HomeScreen> {
       SettingsStudentTab(),
     ];
 
-    List<Widget> instructorTabs = [
-      HomeTabInstructor(),
-      CoursesInstructorTab(),
-      CommunityInstructorTab(),
-      SettingsInstructorTab(),
-    ];
+    List<Widget> instructorTabs() {
+      return [
+        // Home Tab Instructor مع Cubit
+        BlocProvider(
+          create: (_) => InstructorCoursesCubit(
+              getCoursesUseCase: getCoursesUseCase,
+              addCourseUseCase: AddCourseUseCase(courseInstructorRepo),
+              updateCourseUseCase: UpdateCourseUseCase(courseInstructorRepo),
+              deleteCourseUseCase: DeleteCourseUseCase(courseInstructorRepo),
+              uploadVideosUseCase: UploadVideosUseCase(courseInstructorRepo))
+            ..fetchCourses(),
+          child: const HomeTabInstructor(),
+        ),
+
+        // Courses Tab Instructor
+        BlocProvider(
+          create: (_) => InstructorCoursesCubit(
+              getCoursesUseCase: getCoursesUseCase,
+              addCourseUseCase: AddCourseUseCase(courseInstructorRepo),
+              updateCourseUseCase: UpdateCourseUseCase(courseInstructorRepo),
+              deleteCourseUseCase: DeleteCourseUseCase(courseInstructorRepo),
+              uploadVideosUseCase: UploadVideosUseCase(courseInstructorRepo))
+            ..fetchCourses(),
+          child: const CoursesInstructorTab(),
+        ),
+        const CommunityInstructorTab(),
+        const SettingsInstructorTab(),
+      ];
+    }
 
     if (role == "student") {
       return BlocProvider(
@@ -102,6 +129,7 @@ class _HomescreenState extends State<HomeScreen> {
       );
     }
 
+    // Instructor View
     return Scaffold(
       appBar: selectedIndex == 3
           ? AppBar(
@@ -119,7 +147,7 @@ class _HomescreenState extends State<HomeScreen> {
         selectedIndex: selectedIndex,
         onItemTapped: (index) => setState(() => selectedIndex = index),
       ),
-      body: instructorTabs[selectedIndex],
+      body: instructorTabs()[selectedIndex],
     );
   }
 }

@@ -10,7 +10,6 @@ class ApiManager {
 
   ApiManager({String? token}) {
     _token = token;
-
     dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
@@ -21,7 +20,6 @@ class ApiManager {
         },
       ),
     );
-
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
@@ -33,7 +31,6 @@ class ApiManager {
       ),
     );
   }
-
   // GET Request
   Future<Response> getData(String endPoint,
       {Map<String, dynamic>? query}) async {
@@ -90,7 +87,7 @@ class ApiManager {
     }
   }
 
-  // Upload files (generic)
+  
   Future<Response> uploadData(String endPoint, List<File> files,
       {String fieldName = 'files'}) async {
     try {

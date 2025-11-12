@@ -48,6 +48,9 @@ dependencies:
   flutter_dotenv: ^6.0.0
   dart_either: ^2.0.0
   dartz: ^0.10.1
+  flutter_slidable: ^3.0.0
+  file_picker: ^10.3.3
+  video_player: ^2.10.1
 
 dev_dependencies:
   flutter_test:
