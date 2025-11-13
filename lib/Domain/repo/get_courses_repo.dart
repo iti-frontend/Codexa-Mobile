@@ -5,4 +5,6 @@ import 'package:dartz/dartz.dart';
 abstract class GetCoursesRepo {
   Future<Either<Failures, List<CourseEntity>>> getCourses();
   Future<Either<Failures, List<CourseEntity>>> getMyCourses(String token);
+  Future<Either<Failures, bool>> enrollInCourse(
+      {required String token, required String courseId});
 }

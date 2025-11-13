@@ -14,6 +14,8 @@ import 'package:codexa_mobile/Ui/utils/widgets/custom_bottom_navbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/my_courses_cubit.dart';
+import 'package:codexa_mobile/Domain/usecases/courses/get_my_courses_usecase.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String routeName = "/home";
@@ -55,10 +57,19 @@ class _HomescreenState extends State<HomeScreen> {
         },
       ),
       body: role == "student"
-          ? BlocProvider(
-              create: (_) => StudentCoursesCubit(
-                GetCoursesUseCase(CoursesRepoImpl(ApiManager())),
-              )..fetchCourses(),
+          ? MultiBlocProvider(
+              providers: [
+                BlocProvider(
+                  create: (_) => StudentCoursesCubit(
+                    GetCoursesUseCase(CoursesRepoImpl(ApiManager())),
+                  )..fetchCourses(),
+                ),
+                BlocProvider(
+                  create: (_) => MyCoursesCubit(
+                      GetMyCoursesUseCase(CoursesRepoImpl(ApiManager())))
+                    ..fetchMyCourses(token!),
+                ),
+              ],
               child: studentTabs(token!)[selectedIndex],
             )
           : instructorTabs[selectedIndex],
@@ -66,8 +77,8 @@ class _HomescreenState extends State<HomeScreen> {
   }
 
   List<Widget> studentTabs(String userToken) => [
-        HomeTab(userToken: userToken),
-        StudentCoursesTab(userToken: userToken),
+        HomeTab(userToken: userToken), // Remove BlocProvider from here
+        StudentCoursesTab(),
         CommunityTab(),
         SettingsTab(),
       ];

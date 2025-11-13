@@ -16,7 +16,8 @@ class EnrollCubit extends Cubit<EnrollState> {
 
     result.fold(
       (failure) => emit(EnrollFailureState(failure.errorMessage)),
-      (_) => emit(EnrollSuccess()),
+      (_) => emit(
+          EnrollSuccess(courseId: courseId)), // Add courseId to success state
     );
   }
 }

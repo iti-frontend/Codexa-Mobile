@@ -40,23 +40,13 @@ class ApiManager {
   Future<Response> postData(String endPoint,
       {Map<String, dynamic>? body, Options? options}) async {
     try {
-      final fullUrl = dio.options.baseUrl + endPoint;
-      print("POST URL: $fullUrl");
-      print("POST body: $body");
-      print("POST headers: ${options?.headers ?? dio.options.headers}");
-
       final response = await dio.post(
         endPoint,
         data: body,
         options: options ?? Options(validateStatus: (status) => true),
       );
-
-      print("Response code: ${response.statusCode}");
-      print("Response data: ${response.data}");
-
       return response;
     } catch (e) {
-      print("POST Error: $e");
       rethrow;
     }
   }
