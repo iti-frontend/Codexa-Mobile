@@ -15,4 +15,7 @@ class ApiConstants {
       '/courses/$courseId/videos';
   static String courseInstructorVideoById(String courseId, String videoId) =>
       '/courses/$courseId/videos/$videoId';
+
+  static String enrollCourseEndpoint(String courseId) =>
+      '/students/enroll/$courseId';
 }

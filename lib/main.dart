@@ -18,6 +18,7 @@ import 'package:codexa_mobile/Ui/auth/register/register_viewModel/register_bloc.
 import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/enroll_cubit/enroll_courses_cubit.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/splash_screen/splash_screen.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
@@ -125,6 +126,18 @@ class _AppInitializerState extends State<AppInitializer> {
                 updateCourseUseCase: UpdateCourseUseCase(courseInstructorRepo),
                 deleteCourseUseCase: DeleteCourseUseCase(courseInstructorRepo),
                 uploadVideosUseCase: UploadVideosUseCase(courseInstructorRepo)),
+          ),
+          BlocProvider(
+            create: (context) {
+              final userProvider =
+                  Provider.of<UserProvider>(context, listen: false);
+              return EnrollCubit(
+                enrollUseCase: GetCoursesUseCase(
+                  CoursesRepoImpl(ApiManager(token: userProvider.token)),
+                ),
+                token: userProvider.token ?? '',
+              );
+            },
           ),
         ],
         child: MyApp(

@@ -10,7 +10,7 @@ class CoursesRepoImpl implements GetCoursesRepo {
   final ApiManager apiManager;
 
   CoursesRepoImpl(this.apiManager);
-
+// !=============================================Student Courses=========================================
   @override
   Future<Either<Failures, List<CourseEntity>>> getCourses() async {
     try {
@@ -20,7 +20,6 @@ class CoursesRepoImpl implements GetCoursesRepo {
         final List<dynamic> dataList = (data is Map && data['data'] != null)
             ? (data['data'] as List<dynamic>)
             : (data is List ? data : []);
-
         final List<CourseEntity> courses = dataList
             .map((item) => CoursesDto.fromJson(item as Map<String, dynamic>))
             .toList();
@@ -31,6 +30,47 @@ class CoursesRepoImpl implements GetCoursesRepo {
                 response.data?['message']?.toString() ?? 'Server Error'));
       }
     } catch (e) {
+      return Left(Failures(errorMessage: e.toString()));
+    }
+  }
+
+  // ! =========================================Enroll Courses===================================
+
+  @override
+  Future<Either<Failures, bool>> enrollInCourse({
+    required String courseId,
+  }) async {
+    try {
+      final response = await apiManager.postData(
+        ApiConstants.enrollCourseEndpoint(courseId),
+        body: {},
+      );
+
+      print('Enroll response status: ${response.statusCode}');
+      print('Enroll response data: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return const Right(true);
+      }
+
+      // Handle error
+      String errorMessage = 'Failed to enroll in course';
+      final data = response.data;
+
+      if (data != null) {
+        if (data is Map<String, dynamic>) {
+          errorMessage = data['message']?.toString() ?? errorMessage;
+        } else if (data is List && data.isNotEmpty) {
+          errorMessage = data.first.toString();
+        } else if (data is String) {
+          errorMessage = data;
+        }
+      }
+
+      return Left(Failures(errorMessage: errorMessage));
+    } catch (e, stack) {
+      print('Enroll exception: $e');
+      print('Stack trace: $stack');
       return Left(Failures(errorMessage: e.toString()));
     }
   }

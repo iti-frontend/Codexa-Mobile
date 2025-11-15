@@ -15,8 +15,10 @@ class GetCoursesUseCase {
     return await repo.getInstructorCourses();
   }
 
-  // Future<Either<Failures, List<InstructorCourseEntity>>>
-  //     instructorUploadCall() async {
-  //   return await repo.getUploadInstructorCourses();
-  // }
+  Future<Either<Failures, bool>> callEnroll({
+    required String token,
+    required String courseId,
+  }) {
+    return repo.enrollInCourse(courseId: courseId);
+  }
 }

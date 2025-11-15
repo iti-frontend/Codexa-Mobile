@@ -12,7 +12,7 @@ class StudentCoursesCubit extends Cubit<StudentCoursesState> {
   List<CourseEntity> filteredCourses = [];
 
   StudentCoursesCubit(this.getStudentCoursesUseCase)
-      : super(StudentCoursesInitial());
+      : super(StudentCoursesInitial(), );
 
   Future<void> fetchCourses() async {
     emit(StudentCoursesLoading());
@@ -22,8 +22,6 @@ class StudentCoursesCubit extends Cubit<StudentCoursesState> {
       (courses) {
         allCourses = courses;
         filteredCourses = courses;
-
-       
         emit(StudentCoursesLoaded(filteredCourses));
       },
     );
