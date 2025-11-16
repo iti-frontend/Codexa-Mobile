@@ -6,6 +6,7 @@ class CourseEntity {
   final String? description;
   final int? price;
   final String? category;
+  final String? level;
   final InstructorEntity? instructor;
   final List<dynamic>? enrolledStudents;
   final List<dynamic>? videos;
@@ -20,6 +21,7 @@ class CourseEntity {
     this.description,
     this.price,
     this.category,
+    this.level,
     this.instructor,
     this.enrolledStudents,
     this.videos,

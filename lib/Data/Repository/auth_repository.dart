@@ -119,9 +119,22 @@ class AuthRepoImpl implements AuthRepo {
 
       if (response.statusCode == 200) {
         final dto = StudentUserDto.fromJson(response.data);
+        final token = response.data['token'];
 
         if (dto.student != null) {
-          final entity = dto.student!.toEntity(dto.token);
+          final entity = StudentEntity(
+            id: dto.student!.id,
+            name: dto.student!.name,
+            email: dto.student!.email,
+            profileImage: dto.student!.profileImage,
+            role: dto.student!.role,
+            isAdmin: dto.student!.isAdmin,
+            isActive: dto.student!.isActive,
+            emailVerified: dto.student!.emailVerified,
+            authProvider: dto.student!.authProvider,
+            token: token,
+          );
+
           return Right(entity);
         }
 

@@ -15,3 +15,5 @@ class StudentCoursesError extends StudentCoursesState {
   final String message;
   StudentCoursesError(this.message);
 }
+
+
