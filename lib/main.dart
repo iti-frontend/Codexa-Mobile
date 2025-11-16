@@ -1,4 +1,5 @@
 import 'package:codexa_mobile/Data/Repository/add_course_repo_impl.dart';
+import 'package:codexa_mobile/Data/Repository/coumminty_repo_impl.dart';
 import 'package:codexa_mobile/Data/Repository/courses_repository.dart';
 import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/login_instructor_usecase.dart';
@@ -7,6 +8,11 @@ import 'package:codexa_mobile/Domain/usecases/auth/register_instructor_usecase.d
 import 'package:codexa_mobile/Domain/usecases/auth/register_student_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/social_login_instructor_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/social_login_student_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/community/add_comment_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/community/add_reply_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/community/create_post_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/community/get_all_posts_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/community/toggle_like_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/add_course_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/delete_course_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/get_courses_usecase.dart';
@@ -16,6 +22,7 @@ import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_view/register_screen.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_viewModel/register_bloc.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_cubit/community_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/enroll_cubit/enroll_courses_cubit.dart';
@@ -88,6 +95,12 @@ class _AppInitializerState extends State<AppInitializer> {
     final getCoursesUseCase = GetCoursesUseCase(coursesRepo);
     final courseInstructorRepo =
         CourseInstructorRepoImpl(apiManager: apiManager);
+    final communityRepo = CommunityRepoImpl(apiManager);
+    final getAllPostsUseCase = GetAllPostsUseCase(communityRepo);
+    final createPostUseCase = CreatePostUseCase(communityRepo);
+    final toggleLikeUseCase = ToggleLikeUseCase(communityRepo);
+    final addCommentUseCase = AddCommentUseCase(communityRepo);
+    final addReplyUseCase = AddReplyUseCase(communityRepo);
 
     return MultiProvider(
       providers: [
@@ -138,6 +151,15 @@ class _AppInitializerState extends State<AppInitializer> {
                 token: userProvider.token ?? '',
               );
             },
+          ),
+          BlocProvider(
+            create: (_) => CommunityCubit(
+              getAllPostsUseCase: getAllPostsUseCase,
+              createPostUseCase: createPostUseCase,
+              toggleLikeUseCase: toggleLikeUseCase,
+              addCommentUseCase: addCommentUseCase,
+              addReplyUseCase: addReplyUseCase,
+            )..fetchPosts(),
           ),
         ],
         child: MyApp(

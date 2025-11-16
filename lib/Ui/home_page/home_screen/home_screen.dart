@@ -69,7 +69,7 @@ class _HomescreenState extends State<HomeScreen> {
     List<Widget> studentTabs = [
       HomeStudentTab(),
       StudentCoursesTab(),
-      CommunityStudentTab(),
+      // CommunityStudentTab(),
       SettingsStudentTab(),
     ];
 
