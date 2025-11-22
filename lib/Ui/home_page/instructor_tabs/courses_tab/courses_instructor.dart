@@ -1,4 +1,3 @@
-import 'package:codexa_mobile/Domain/usecases/courses/update_course_videos_usecase.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/create_course.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructor_courses_state.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
@@ -7,41 +6,13 @@ import 'package:codexa_mobile/Ui/utils/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:provider/provider.dart';
-import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
-import 'package:codexa_mobile/Data/Repository/courses_repository.dart';
-import 'package:codexa_mobile/Data/Repository/add_course_repo_impl.dart';
-import 'package:codexa_mobile/Domain/usecases/courses/get_courses_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/courses/add_course_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/courses/update_course_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/courses/delete_course_usecase.dart';
-import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 
 class CoursesInstructorTab extends StatelessWidget {
   const CoursesInstructorTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final token = Provider.of<UserProvider>(context, listen: false).token;
-    if (token == null || token.isEmpty) {
-      return const Center(child: Text('No token found! Please login again.'));
-    }
-
-    final apiManager = ApiManager(token: token);
-    final coursesRepo = CoursesRepoImpl(apiManager);
-    final courseInstructorRepo =
-        CourseInstructorRepoImpl(apiManager: apiManager);
-
-    return BlocProvider(
-      create: (_) => InstructorCoursesCubit(
-          getCoursesUseCase: GetCoursesUseCase(coursesRepo),
-          addCourseUseCase: AddCourseUseCase(courseInstructorRepo),
-          updateCourseUseCase: UpdateCourseUseCase(courseInstructorRepo),
-          deleteCourseUseCase: DeleteCourseUseCase(courseInstructorRepo),
-          uploadVideosUseCase: UploadVideosUseCase(courseInstructorRepo))
-        ..fetchCourses(),
-      child: const _CoursesInstructorView(),
-    );
+    return const _CoursesInstructorView();
   }
 }
 

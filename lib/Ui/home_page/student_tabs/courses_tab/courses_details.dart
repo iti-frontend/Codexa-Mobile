@@ -7,9 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
-import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
-import 'package:codexa_mobile/Data/Repository/courses_repository.dart';
-import 'package:codexa_mobile/Domain/usecases/courses/get_courses_usecase.dart';
 
 class CourseDetails extends StatelessWidget {
   final CourseEntity course;
@@ -30,14 +27,6 @@ class CourseDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final isInstructor = userProvider.role == 'instructor';
-    final token = userProvider.token;
-
-    if (token == null || token.isEmpty) {
-      return const Center(child: Text('No token found! Please login again.'));
-    }
-
-    final apiManager = ApiManager(token: token);
-    final coursesRepo = CoursesRepoImpl(apiManager);
 
     return Scaffold(
       appBar: AppBar(
@@ -235,61 +224,55 @@ class CourseDetails extends StatelessWidget {
               Center(
                 child: SizedBox(
                   width: double.infinity,
-                  child: BlocProvider(
-                    create: (_) => EnrollCubit(
-                      enrollUseCase: GetCoursesUseCase(coursesRepo),
-                      token: token, // نفس فكرة InstructorCubit
-                    ), // لو حابب تضيف fetch
-                    child: BlocConsumer<EnrollCubit, EnrollState>(
-                      listener: (context, state) {
-                        if (state is EnrollSuccess) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Enrolled successfully!'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        } else if (state is EnrollFailureState) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(state.errorMessage),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      },
-                      builder: (context, state) {
-                        final isLoading = state is EnrollLoading;
-                        return ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColorsDark.accentBlue,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
+                  child: BlocConsumer<EnrollCubit, EnrollState>(
+                    listener: (context, state) {
+                      if (state is EnrollSuccess) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Enrolled successfully!'),
+                            behavior: SnackBarBehavior.floating,
                           ),
-                          onPressed: isLoading
-                              ? null
-                              : () {
-                                  final cubit = context.read<EnrollCubit>();
-                                  cubit.enroll(courseId: course.id!);
-                                },
-                          child: isLoading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white,
-                                )
-                              : const Text(
-                                  "Enroll Now",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.3,
-                                  ),
-                                ),
                         );
-                      },
-                    ),
+                      } else if (state is EnrollFailureState) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(state.errorMessage),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                    builder: (context, state) {
+                      final isLoading = state is EnrollLoading;
+                      return ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColorsDark.accentBlue,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: isLoading
+                            ? null
+                            : () {
+                                final cubit = context.read<EnrollCubit>();
+                                cubit.enroll(courseId: course.id!);
+                              },
+                        child: isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                "Enroll Now",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                      );
+                    },
                   ),
                 ),
               ),

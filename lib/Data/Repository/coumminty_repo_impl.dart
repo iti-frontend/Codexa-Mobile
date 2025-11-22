@@ -1,159 +1,216 @@
 import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
 import 'package:codexa_mobile/Data/constants/api_constants.dart';
-import 'package:codexa_mobile/Data/models/community/community_dto.dart';
-import 'package:codexa_mobile/Domain/entities/community/community_entity.dart';
 import 'package:codexa_mobile/Domain/failures.dart';
 import 'package:codexa_mobile/Domain/repo/community_repo.dart';
 import 'package:dartz/dartz.dart';
 
+import '../../Domain/entities/community_entity.dart';
+import '../models/community_dto.dart';
+
 class CommunityRepoImpl implements CommunityRepo {
-  final ApiManager api;
+  final ApiManager apiManager;
 
-  CommunityRepoImpl(this.api);
+  CommunityRepoImpl(this.apiManager);
 
-// !==============================================get Posts=============================
+  // ==============================
+  // 🚀 Get All Posts
+  // ==============================
   @override
   Future<Either<Failures, List<CommunityEntity>>> getAllPosts() async {
     try {
-      final response = await api.getData(ApiConstants.communityGetAll);
+      final response = await apiManager.getData(ApiConstants.communityGetAll);
 
       if (response.statusCode == 200) {
-        final List data = response.data as List<dynamic>;
-        final posts = data.map((json) => CommunityDto.fromJson(json)).toList();
-        return Right(posts);
-      }
+        final data = response.data;
 
-      return Left(Failures(errorMessage: 'Failed to load posts'));
+        final List<dynamic> dataList = (data is Map && data['data'] != null)
+            ? data['data']
+            : (data is List ? data : []);
+
+        final posts = dataList
+            .map((item) => CommunityDto.fromJson(item))
+            .toList();
+
+        return Right(posts);
+      } else {
+        return Left(Failures(
+          errorMessage: response.data?['message']?.toString() ?? "Server Error",
+        ));
+      }
     } catch (e) {
       return Left(Failures(errorMessage: e.toString()));
     }
   }
 
-// !=========================================Create Posts==================================
+  // ==============================
+  // 🚀 Create Post
+  // ==============================
   @override
-  Future<Either<Failures, CommunityEntity>> createPost(
-      Map<String, dynamic> body) async {
+  Future<Either<Failures, CommunityEntity>> createPost({
+    required String content,
+    String? image,
+    dynamic linkUrl,
+    List<dynamic>? attachments,
+  }) async {
     try {
-      final response =
-          await api.postData(ApiConstants.communityCreatePost, body: body);
+      final response = await apiManager.postData(
+        ApiConstants.communityCreatePost,
+        body: {
+          "content": content,
+          "image": image,
+          "linkUrl": linkUrl,
+          "attachments": attachments,
+        },
+      );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        return Right(CommunityDto.fromJson(response.data));
+        final post = CommunityDto.fromJson(response.data);
+        return Right(post);
+      } else {
+        return Left(Failures(
+          errorMessage: response.data?['message'] ?? "Failed to create post",
+        ));
       }
-
-      return Left(Failures(errorMessage: 'Failed to create post'));
     } catch (e) {
       return Left(Failures(errorMessage: e.toString()));
     }
   }
 
-// !===================================================Like===================================
+  // ==============================
+  // 🚀 Toggle Like
+  // ==============================
   @override
-  Future<Either<Failures, bool>> toggleLike(String postId) async {
+  Future<Either<Failures, bool>> toggleLike({required String postId}) async {
     try {
-      final response =
-          await api.postData(ApiConstants.communityToggleLike(postId));
+      final response = await apiManager.postData(
+        ApiConstants.communityToggleLike(postId),
+        body: {},
+      );
 
       if (response.statusCode == 200) {
         return const Right(true);
       }
 
-      return Left(Failures(errorMessage: 'Failed to toggle like'));
+      return Left(Failures(
+        errorMessage: response.data?['message'] ?? "Failed to toggle like",
+      ));
     } catch (e) {
       return Left(Failures(errorMessage: e.toString()));
     }
   }
 
-// !==============================================Comment============================================
+  // ==============================
+  // 🚀 Add Comment
+  // ==============================
   @override
-  Future<Either<Failures, CommunityEntity>> addComment(
-      String postId, Map<String, dynamic> body) async {
+  Future<Either<Failures, CommentsEntity>> addComment({
+    required String postId,
+    required String text,
+  }) async {
     try {
-      final response = await api
-          .postData(ApiConstants.communityAddComment(postId), body: body);
+      final response = await apiManager.postData(
+        ApiConstants.communityAddComment(postId),
+        body: {"text": text},
+      );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return Right(CommunityDto.fromJson(response.data));
+        final comment = CommentsDto.fromJson(response.data["comment"]);
+        return Right(comment);
       }
 
-      return Left(Failures(errorMessage: 'Failed to add comment'));
+      return Left(Failures(
+        errorMessage: response.data?['message'] ?? "Failed to add comment",
+      ));
     } catch (e) {
       return Left(Failures(errorMessage: e.toString()));
     }
   }
 
-// !============================================Delete Post=======================================
+  // ==============================
+  // 🚀 Add Reply
+  // ==============================
   @override
-  Future<Either<Failures, bool>> deletePost(String postId) async {
+  Future<Either<Failures, CommentsEntity>> addReply({
+    required String postId,
+    required String commentId,
+    required String text,
+  }) async {
     try {
-      final response =
-          await api.deleteData(ApiConstants.communityDeletePost(postId));
-
-      if (response.statusCode == 200) {
-        return const Right(true);
-      }
-
-      return Left(Failures(errorMessage: 'Failed to delete post'));
-    } catch (e) {
-      return Left(Failures(errorMessage: e.toString()));
-    }
-  }
-
-  // !================================================Reply======================================
-
-  @override
-  Future<Either<Failures, CommunityEntity>> addReply(
-    String postId,
-    String commentId,
-    Map<String, dynamic> body,
-  ) async {
-    try {
-      final response = await api.postData(
+      final response = await apiManager.postData(
         ApiConstants.communityAddReply(postId, commentId),
-        body: body,
+        body: {"text": text},
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return Right(CommunityDto.fromJson(response.data));
+        final reply = CommentsDto.fromJson(response.data["reply"]);
+        return Right(reply);
       }
 
-      return Left(Failures(errorMessage: "Failed to add reply"));
+      return Left(Failures(
+        errorMessage: response.data?['message'] ?? "Failed to add reply",
+      ));
     } catch (e) {
       return Left(Failures(errorMessage: e.toString()));
     }
   }
 
+  // ==============================
+  // 🚀 Delete Post
+  // ==============================
   @override
-  Future<Either<Failures, CommunityEntity>> editReply(
-    String postId,
-    String commentId,
-    String replyId,
-    Map<String, dynamic> body,
-  ) async {
+  Future<Either<Failures, bool>> deletePost({required String postId}) async {
     try {
-      final response = await api.putData(
-        ApiConstants.communityEditReply(postId, commentId, replyId),
-        body: body,
+      final response =
+      await apiManager.deleteData(ApiConstants.communityDeletePost(postId));
+
+      if (response.statusCode == 200) {
+        return const Right(true);
+      }
+
+      return Left(Failures(
+        errorMessage: response.data?['message'] ?? "Failed to delete post",
+      ));
+    } catch (e) {
+      return Left(Failures(errorMessage: e.toString()));
+    }
+  }
+
+  // ==============================
+  // 🚀 Delete Comment
+  // ==============================
+  @override
+  Future<Either<Failures, bool>> deleteComment({
+    required String postId,
+    required String commentId,
+  }) async {
+    try {
+      final response = await apiManager.deleteData(
+        ApiConstants.communityDeleteComment(postId, commentId),
       );
 
       if (response.statusCode == 200) {
-        return Right(CommunityDto.fromJson(response.data));
+        return const Right(true);
       }
 
-      return Left(Failures(errorMessage: "Failed to edit reply"));
+      return Left(Failures(
+        errorMessage: response.data?['message'] ?? "Failed to delete comment",
+      ));
     } catch (e) {
       return Left(Failures(errorMessage: e.toString()));
     }
   }
 
+  // ==============================
+  // 🚀 Delete Reply
+  // ==============================
   @override
-  Future<Either<Failures, bool>> deleteReply(
-    String postId,
-    String commentId,
-    String replyId,
-  ) async {
+  Future<Either<Failures, bool>> deleteReply({
+    required String postId,
+    required String commentId,
+    required String replyId,
+  }) async {
     try {
-      final response = await api.deleteData(
+      final response = await apiManager.deleteData(
         ApiConstants.communityDeleteReply(postId, commentId, replyId),
       );
 
@@ -161,7 +218,9 @@ class CommunityRepoImpl implements CommunityRepo {
         return const Right(true);
       }
 
-      return Left(Failures(errorMessage: "Failed to delete reply"));
+      return Left(Failures(
+        errorMessage: response.data?['message'] ?? "Failed to delete reply",
+      ));
     } catch (e) {
       return Left(Failures(errorMessage: e.toString()));
     }
