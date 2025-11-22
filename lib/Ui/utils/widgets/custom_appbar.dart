@@ -3,11 +3,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
+import 'dart:io';
 
 class CustomAppbar extends StatelessWidget {
   final String profileImage;
+  final VoidCallback? onProfileTap;
 
-  const CustomAppbar({required this.profileImage, super.key});
+  const CustomAppbar(
+      {required this.profileImage, this.onProfileTap, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +24,16 @@ class CustomAppbar extends StatelessWidget {
       elevation: 0,
       title: Row(
         children: [
-          // Profile avatar
-          CircleAvatar(
-            backgroundImage: AssetImage(profileImage),
-            radius: 20,
+          // Profile avatar - MAKE THIS CLICKABLE
+          GestureDetector(
+            onTap: onProfileTap,
+            child: CircleAvatar(
+              backgroundImage: _getProfileImage(profileImage),
+              radius: 20,
+              child: profileImage.isEmpty
+                  ? Icon(Icons.person, color: theme.iconTheme.color)
+                  : null,
+            ),
           ),
           SizedBox(width: MediaQuery.of(context).size.width * 0.02),
 
@@ -41,7 +50,7 @@ class CustomAppbar extends StatelessWidget {
                   final cubit = context.read<StudentCoursesCubit>();
                   showSearch(
                     context: context,
-                   delegate: SearchCoursesScreen(cubit),
+                    delegate: SearchCoursesScreen(cubit),
                   );
                 },
                 style: TextStyle(color: theme.textTheme.bodyLarge?.color),
@@ -120,5 +129,17 @@ class CustomAppbar extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  ImageProvider _getProfileImage(String imageUrl) {
+    if (imageUrl.startsWith('http')) {
+      return NetworkImage(imageUrl);
+    } else if (imageUrl.startsWith('assets/')) {
+      return AssetImage(imageUrl);
+    } else if (imageUrl.startsWith('/')) {
+      return FileImage(File(imageUrl));
+    } else {
+      return AssetImage('assets/$imageUrl');
+    }
   }
 }

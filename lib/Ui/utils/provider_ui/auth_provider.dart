@@ -4,7 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 class UserProvider extends ChangeNotifier {
   String? token;
   String? role;
-  dynamic user;
+  dynamic
+      user; // Can be StudentDto, InstructorDto, StudentEntity, or InstructorEntity
+
+  bool get isLoggedIn => token != null && user != null;
 
   Future<void> saveUser({
     required String token,

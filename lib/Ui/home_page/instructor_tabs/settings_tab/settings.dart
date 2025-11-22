@@ -1,4 +1,6 @@
+import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_screen.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/settings_grid_item.dart';
@@ -10,6 +12,28 @@ import 'package:provider/provider.dart';
 
 class SettingsInstructorTab extends StatelessWidget {
   const SettingsInstructorTab({super.key});
+
+  void _navigateToProfileScreen(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final instructor = userProvider.user;
+
+    if (instructor is InstructorEntity) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen<InstructorEntity>(
+            user: instructor,
+            userType: 'Instructor',
+          ),
+        ),
+      );
+    } else {
+      // Show error if user data is not available
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User data not available')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +51,6 @@ class SettingsInstructorTab extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Grid items
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: GridView.count(
@@ -36,15 +59,22 @@ class SettingsInstructorTab extends StatelessWidget {
                 crossAxisCount: 3,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                childAspectRatio: 1.2, // fixes overflow
-                children: const [
-                  SettingsGridItem(
+                childAspectRatio: 1.2,
+                children: [
+                  const SettingsGridItem(
                       icon: Icons.notifications, label: 'Notifications'),
-                  SettingsGridItem(icon: Icons.lock, label: 'Privacy'),
-                  SettingsGridItem(icon: Icons.language, label: 'Language'),
-                  SettingsGridItem(icon: Icons.color_lens, label: 'Theme'),
-                  SettingsGridItem(icon: Icons.help_outline, label: 'Help'),
-                  SettingsGridItem(icon: Icons.info_outline, label: 'About'),
+                  const SettingsGridItem(icon: Icons.lock, label: 'Privacy'),
+                  const SettingsGridItem(
+                      icon: Icons.language, label: 'Language'),
+                  const SettingsGridItem(
+                      icon: Icons.color_lens, label: 'Theme'),
+                  SettingsGridItem(
+                    icon: Icons.person_outline,
+                    label: 'Profile',
+                    onTap: () => _navigateToProfileScreen(context),
+                  ),
+                  const SettingsGridItem(
+                      icon: Icons.info_outline, label: 'About'),
                 ],
               ),
             ),

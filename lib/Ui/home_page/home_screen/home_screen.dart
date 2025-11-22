@@ -22,6 +22,9 @@ import 'package:codexa_mobile/Domain/usecases/courses/add_course_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/update_course_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/delete_course_usecase.dart';
 import 'package:codexa_mobile/Data/Repository/add_course_repo_impl.dart';
+import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_screen.dart';
+import 'package:codexa_mobile/Domain/entities/student_entity.dart';
+import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String routeName = "/home";
@@ -42,10 +45,56 @@ class _HomescreenState extends State<HomeScreen> {
 
   Future<void> _loadUser() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    await userProvider.loadUser(); // يحمل token و role من SharedPreferences
+    await userProvider.loadUser();
     setState(() {
       _isUserLoaded = true;
     });
+  }
+
+  void _navigateToProfileScreen(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    if (userProvider.user is StudentEntity) {
+      final student = userProvider.user as StudentEntity;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen<StudentEntity>(
+            user: student,
+            userType: 'Student',
+          ),
+        ),
+      );
+    } else if (userProvider.user is InstructorEntity) {
+      final instructor = userProvider.user as InstructorEntity;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen<InstructorEntity>(
+            user: instructor,
+            userType: 'Instructor',
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User data not available')),
+      );
+    }
+  }
+
+  String _getUserProfileImage() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    if (userProvider.user is StudentEntity) {
+      final student = userProvider.user as StudentEntity;
+      return student.profileImage ?? 'assets/images/review-1.jpg';
+    } else if (userProvider.user is InstructorEntity) {
+      final instructor = userProvider.user as InstructorEntity;
+      return instructor.profileImage ?? 'assets/images/review-1.jpg';
+    }
+
+    return 'assets/images/review-1.jpg'; // Fallback to dummy image
   }
 
   @override
@@ -75,7 +124,6 @@ class _HomescreenState extends State<HomeScreen> {
 
     List<Widget> instructorTabs() {
       return [
-        // Home Tab Instructor مع Cubit
         BlocProvider(
           create: (_) => InstructorCoursesCubit(
               getCoursesUseCase: getCoursesUseCase,
@@ -86,8 +134,6 @@ class _HomescreenState extends State<HomeScreen> {
             ..fetchCourses(),
           child: const HomeTabInstructor(),
         ),
-
-        // Courses Tab Instructor
         BlocProvider(
           create: (_) => InstructorCoursesCubit(
               getCoursesUseCase: getCoursesUseCase,
@@ -103,6 +149,12 @@ class _HomescreenState extends State<HomeScreen> {
       ];
     }
 
+    final currentTabs = role == "student" ? studentTabs : instructorTabs();
+    final safeIndex = selectedIndex.clamp(0, currentTabs.length - 1);
+
+    // Get the real user profile image
+    final userProfileImage = _getUserProfileImage();
+
     if (role == "student") {
       return BlocProvider(
         create: (_) => StudentCoursesCubit(getCoursesUseCase)..fetchCourses(),
@@ -117,14 +169,17 @@ class _HomescreenState extends State<HomeScreen> {
               : AppBar(
                   automaticallyImplyLeading: false,
                   backgroundColor: theme.appBarTheme.backgroundColor,
-                  title:
-                      CustomAppbar(profileImage: "assets/images/review-1.jpg"),
+                  title: GestureDetector(
+                    onTap: () => _navigateToProfileScreen(context),
+                    child: CustomAppbar(profileImage: userProfileImage),
+                  ),
                 ),
           bottomNavigationBar: CustomBottomNavBar(
-            selectedIndex: selectedIndex,
-            onItemTapped: (index) => setState(() => selectedIndex = index),
+            selectedIndex: safeIndex,
+            onItemTapped: (index) => setState(
+                () => selectedIndex = index.clamp(0, currentTabs.length - 1)),
           ),
-          body: studentTabs[selectedIndex],
+          body: currentTabs[safeIndex],
         ),
       );
     }
@@ -141,13 +196,17 @@ class _HomescreenState extends State<HomeScreen> {
           : AppBar(
               automaticallyImplyLeading: false,
               backgroundColor: theme.appBarTheme.backgroundColor,
-              title: CustomAppbar(profileImage: "assets/images/review-1.jpg"),
+              title: GestureDetector(
+                onTap: () => _navigateToProfileScreen(context),
+                child: CustomAppbar(profileImage: userProfileImage),
+              ),
             ),
       bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: selectedIndex,
-        onItemTapped: (index) => setState(() => selectedIndex = index),
+        selectedIndex: safeIndex,
+        onItemTapped: (index) => setState(
+            () => selectedIndex = index.clamp(0, currentTabs.length - 1)),
       ),
-      body: instructorTabs()[selectedIndex],
+      body: currentTabs[safeIndex],
     );
   }
 }

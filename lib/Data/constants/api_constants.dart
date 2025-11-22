@@ -16,8 +16,7 @@ class ApiConstants {
   static const String coursesEndpoint = "/courses";
   static const String coursesInstructorEndpoint = "/courses/my-courses";
 
-  static String courseInstructorById(String courseId) =>
-      '/courses/$courseId';
+  static String courseInstructorById(String courseId) => '/courses/$courseId';
 
   static String courseInstructorVideos(String courseId) =>
       '/courses/$courseId/videos';
@@ -40,8 +39,7 @@ class ApiConstants {
   static const String communityGetAll = "/community/";
 
   ///? 3) Toggle like (like/unlike)
-  static String communityToggleLike(String postId) =>
-      "/community/$postId/like";
+  static String communityToggleLike(String postId) => "/community/$postId/like";
 
   ///? 4) Add a comment to a post
   static String communityAddComment(String postId) =>
@@ -52,12 +50,10 @@ class ApiConstants {
       "/community/$postId/comment/$commentId/reply";
 
   ///? 6) Edit a post
-  static String communityEditPost(String postId) =>
-      "/community/$postId";
+  static String communityEditPost(String postId) => "/community/$postId";
 
   ///? 7) Delete a post
-  static String communityDeletePost(String postId) =>
-      "/community/$postId";
+  static String communityDeletePost(String postId) => "/community/$postId";
 
   ///? 8) Edit a comment
   static String communityEditComment(String postId, String commentId) =>
@@ -84,8 +80,7 @@ class ApiConstants {
   // ============================
   //~ Community Admin (Moderation)
   // ============================
-  static const String adminCommunityReports =
-      "/admin/community/reports";
+  static const String adminCommunityReports = "/admin/community/reports";
 
   ///? Get a single report by ID
   static String adminCommunityReportById(String reportId) =>
@@ -96,7 +91,14 @@ class ApiConstants {
       "/admin/community/reports/$reportId/resolve";
 
   ///? Force delete any post (Admin only)
-  static String adminDeletePost(String postId) =>
-      "/admin/community/$postId";
-}
+  static String adminDeletePost(String postId) => "/admin/community/$postId";
 
+  // ============================
+  // !Profile
+  // ============================
+  static String studentEndpointProfile(String studentId) =>
+      '/students/$studentId';
+
+  static String instructorEndpointProfile(String instructorId) =>
+      '/instructors/$instructorId';
+}
