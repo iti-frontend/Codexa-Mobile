@@ -1,6 +1,9 @@
+import 'package:codexa_mobile/Data/services/likes_persistence_service.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/likes_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/likes_state.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
+import 'package:codexa_mobile/core/di/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -20,26 +23,28 @@ class PostCard extends StatefulWidget {
 class _PostCardState extends State<PostCard> {
   late bool isLiked;
   late int likesCount;
+  late LikesPersistenceService _likesService;
 
   @override
   void initState() {
     super.initState();
+    _likesService = sl<LikesPersistenceService>();
     likesCount = widget.post.likes?.length ?? 0;
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final userId = _extractUserId(userProvider.user);
-    isLiked = widget.post.likes?.any((l) => l.user == userId) ?? false;
+
+    // Initialize like state from persistence service
+    if (widget.post.id != null) {
+      isLiked = _likesService.isPostLiked(widget.post.id!);
+    } else {
+      isLiked = false;
+    }
   }
 
   String _formatDateOnly(String? iso) {
     if (iso == null) return '';
     try {
       final dt = DateTime.parse(iso);
-      // مثال: 20 Nov 2025  -> DateFormat.yMMMd()
       return DateFormat.yMMMd().format(dt);
-      // لو تريد شكل مختلف استبدل السطر أعلاه بـ:
-      // return DateFormat('yyyy-MM-dd').format(dt);
     } catch (_) {
-      // لو الــ ISO غير صالح، رجّع النص كما هو أو جزء منه
       return iso.split('T').first;
     }
   }
@@ -53,11 +58,13 @@ class _PostCardState extends State<PostCard> {
     return null;
   }
 
-  void _handleLike() {
+  void _handleLike() async {
+    if (widget.post.id == null) return;
+
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userId = _extractUserId(userProvider.user);
 
-    // optimistic update
+    // Optimistic update
     setState(() {
       if (isLiked) {
         likesCount = (likesCount - 1).clamp(0, 999999);
@@ -71,12 +78,23 @@ class _PostCardState extends State<PostCard> {
       isLiked = !isLiked;
     });
 
+    // Persist locally
+    await _likesService.togglePostLike(widget.post.id!);
+
     // API call
     context.read<LikeCubit>().toggleLike(widget.post.id!);
   }
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final dynamic userJson = userProvider.user;
+    String? currentUserId;
+    if (userJson is Map<String, dynamic>) {
+      currentUserId = (userJson['_id'] ?? userJson['id'])?.toString();
+    }
+    final isOwnPost = widget.post.author?.id == currentUserId;
+
     return BlocListener<LikeCubit, LikeState>(
       listener: (context, state) {
         if (state is LikeError) {
@@ -84,7 +102,7 @@ class _PostCardState extends State<PostCard> {
               Provider.of<UserProvider>(context, listen: false);
           final userId = _extractUserId(userProvider.user);
 
-          // rollback optimistic change
+          // Rollback optimistic change on error
           setState(() {
             if (isLiked) {
               likesCount = (likesCount - 1).clamp(0, 999999);
@@ -97,6 +115,11 @@ class _PostCardState extends State<PostCard> {
             }
             isLiked = !isLiked;
           });
+
+          // Rollback persistence
+          if (widget.post.id != null) {
+            _likesService.togglePostLike(widget.post.id!);
+          }
 
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(state.message)));
@@ -153,18 +176,119 @@ class _PostCardState extends State<PostCard> {
                         ],
                       ),
                     ),
-                    // small action icon
+                    // More menu icon with delete functionality
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () async {
+                        final userProvider =
+                            Provider.of<UserProvider>(context, listen: false);
+                        final dynamic userJson = userProvider.user;
+                        String? currentUserId;
+                        if (userJson is Map<String, dynamic>) {
+                          currentUserId =
+                              (userJson['_id'] ?? userJson['id'])?.toString();
+                        }
+
+                        final isOwnPost =
+                            widget.post.author?.id == currentUserId;
+
+                        if (!isOwnPost) {
+                          return; // Don't show menu for other users' posts
+                        }
+
+                        // Show bottom sheet
+                        final confirmed = await showModalBottomSheet<bool>(
+                          context: context,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          builder: (sheetContext) => Container(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade300,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                ListTile(
+                                  leading: Icon(Icons.delete_outline,
+                                      color: Colors.red.shade400),
+                                  title: const Text('Delete Post',
+                                      style: TextStyle(color: Colors.red)),
+                                  onTap: () =>
+                                      Navigator.pop(sheetContext, true),
+                                ),
+                                const SizedBox(height: 8),
+                                ListTile(
+                                  leading: const Icon(Icons.close),
+                                  title: const Text('Cancel'),
+                                  onTap: () =>
+                                      Navigator.pop(sheetContext, false),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+
+                        if (confirmed != true) return;
+
+                        // Second confirmation dialog
+                        if (!context.mounted) return;
+                        final doubleConfirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (dialogContext) => AlertDialog(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
+                            title: const Text('Are you sure?'),
+                            content: const Text(
+                              'Do you really want to delete this post? This action cannot be undone.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(dialogContext, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(dialogContext, true),
+                                style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red),
+                                child: const Text('Delete',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (doubleConfirmed != true) return;
+
+                        // Delete post
+                        if (!context.mounted) return;
+                        if (widget.post.id != null) {
+                          context
+                              .read<CommunityPostsCubit>()
+                              .deletePost(widget.post.id!);
+                        }
+                      },
                       icon: Icon(Icons.more_vert_rounded,
-                          color: Colors.grey.shade600),
+                          color: isOwnPost
+                              ? Colors.grey.shade600
+                              : Colors.transparent),
                       splashRadius: 20,
                     ),
                   ],
                 ),
               ),
 
-              // content
+              // Content
               if (widget.post.content != null)
                 Padding(
                   padding:
@@ -173,7 +297,7 @@ class _PostCardState extends State<PostCard> {
                       style: const TextStyle(fontSize: 15, height: 1.4)),
                 ),
 
-              // image (if any) — modern large card-like media
+              // Image (if any)
               if (widget.post.image != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -187,10 +311,9 @@ class _PostCardState extends State<PostCard> {
                   ),
                 ),
 
-              // spacing
               const SizedBox(height: 12),
 
-              // reactions row
+              // Reactions row
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 child: Row(
@@ -228,7 +351,7 @@ class _PostCardState extends State<PostCard> {
                       ),
                     ),
 
-                    // comments preview count button
+                    // Comments preview count button
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 8),
@@ -250,7 +373,7 @@ class _PostCardState extends State<PostCard> {
 
                     const Spacer(),
 
-                    // optional share button
+                    // Share button
                     IconButton(
                       onPressed: () {},
                       icon: Icon(Icons.share_outlined,
@@ -263,7 +386,7 @@ class _PostCardState extends State<PostCard> {
 
               const SizedBox(height: 8),
 
-              // comments preview (up to 2 lines) — modern inline preview
+              // Comments preview (up to 2 lines)
               if (widget.post.comments != null &&
                   widget.post.comments!.isNotEmpty)
                 Padding(
