@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:codexa_mobile/Domain/failures.dart';
 import 'package:dartz/dartz.dart';
 
@@ -8,7 +10,7 @@ abstract class CommunityRepo {
 
   Future<Either<Failures, CommunityEntity>> createPost({
     required String content,
-    String? image,
+    File? imageFile,
     dynamic linkUrl,
     List<dynamic>? attachments,
   });

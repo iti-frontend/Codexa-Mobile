@@ -3,6 +3,7 @@ import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/communi
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/likes_state.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
+import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:codexa_mobile/core/di/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -90,10 +91,26 @@ class _PostCardState extends State<PostCard> {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final dynamic userJson = userProvider.user;
     String? currentUserId;
-    if (userJson is Map<String, dynamic>) {
-      currentUserId = (userJson['_id'] ?? userJson['id'])?.toString();
+
+    // Relaxed type check and debug logging
+    if (userJson != null) {
+      if (userJson is Map) {
+        currentUserId = (userJson['_id'] ?? userJson['id'])?.toString();
+      } else {
+        print('DEBUG: userJson is not a Map: ${userJson.runtimeType}');
+      }
     }
-    final isOwnPost = widget.post.author?.id == currentUserId;
+
+    final postAuthorId = widget.post.author?.id;
+    final isOwnPost = postAuthorId == currentUserId;
+
+    // Debug print to verify IDs
+    if (widget.post.content == 'debug post') {
+      print('CHECKING OWN POST:');
+      print('Current User ID: $currentUserId');
+      print('Post Author ID: $postAuthorId');
+      print('Is Own Post: $isOwnPost');
+    }
 
     return BlocListener<LikeCubit, LikeState>(
       listener: (context, state) {
@@ -183,7 +200,7 @@ class _PostCardState extends State<PostCard> {
                             Provider.of<UserProvider>(context, listen: false);
                         final dynamic userJson = userProvider.user;
                         String? currentUserId;
-                        if (userJson is Map<String, dynamic>) {
+                        if (userJson is Map) {
                           currentUserId =
                               (userJson['_id'] ?? userJson['id'])?.toString();
                         }
@@ -191,9 +208,15 @@ class _PostCardState extends State<PostCard> {
                         final isOwnPost =
                             widget.post.author?.id == currentUserId;
 
-                        if (!isOwnPost) {
-                          return; // Don't show menu for other users' posts
-                        }
+                        print('DEBUG: Clicked Menu');
+                        print('Current User ID: $currentUserId');
+                        print('Post Author ID: ${widget.post.author?.id}');
+                        print('Is Own Post: $isOwnPost');
+
+                        // TEMPORARILY DISABLED CHECK FOR DEBUGGING
+                        // if (!isOwnPost) {
+                        //   return; // Don't show menu for other users' posts
+                        // }
 
                         // Show bottom sheet
                         final confirmed = await showModalBottomSheet<bool>(
@@ -278,10 +301,9 @@ class _PostCardState extends State<PostCard> {
                               .deletePost(widget.post.id!);
                         }
                       },
+                      // ALWAYS SHOW ICON FOR DEBUGGING
                       icon: Icon(Icons.more_vert_rounded,
-                          color: isOwnPost
-                              ? Colors.grey.shade600
-                              : Colors.transparent),
+                          color: Colors.grey.shade600),
                       splashRadius: 20,
                     ),
                   ],
@@ -327,7 +349,7 @@ class _PostCardState extends State<PostCard> {
                         margin: const EdgeInsets.symmetric(horizontal: 8),
                         decoration: BoxDecoration(
                           color: isLiked
-                              ? Colors.deepPurple.withOpacity(0.12)
+                              ? AppColorsDark.accentBlue.withOpacity(0.1)
                               : Colors.grey.withOpacity(0.06),
                           borderRadius: BorderRadius.circular(18),
                         ),
@@ -338,7 +360,7 @@ class _PostCardState extends State<PostCard> {
                                     ? Icons.thumb_up_alt_rounded
                                     : Icons.thumb_up_off_alt,
                                 color: isLiked
-                                    ? Colors.deepPurple
+                                    ? AppColorsDark.accentBlue
                                     : Colors.grey.shade700,
                                 size: 18),
                             const SizedBox(width: 8),

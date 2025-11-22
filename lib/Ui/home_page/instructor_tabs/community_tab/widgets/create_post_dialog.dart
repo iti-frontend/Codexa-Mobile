@@ -74,13 +74,15 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
 
     setState(() => _isPosting = true);
 
-    // TODO: In real implementation, upload image to server and get URL
-    // For now, using local path (this won't work in production)
-    final imageUrl = _selectedImage?.path;
+    // Convert XFile to File if image is selected
+    File? imageFile;
+    if (_selectedImage != null) {
+      imageFile = File(_selectedImage!.path);
+    }
 
     context.read<CommunityPostsCubit>().createPost(
           content: content,
-          image: imageUrl,
+          imageFile: imageFile,
           linkUrl: null,
           attachments: null,
         );

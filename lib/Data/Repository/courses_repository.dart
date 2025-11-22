@@ -14,12 +14,19 @@ class CoursesRepoImpl implements GetCoursesRepo {
   @override
   Future<Either<Failures, List<CourseEntity>>> getCourses() async {
     try {
+      print('DEBUG: CoursesRepoImpl.getCourses called');
       final response = await apiManager.getData(ApiConstants.coursesEndpoint);
+      print('DEBUG: Courses API Response Status: ${response.statusCode}');
+      print('DEBUG: Courses API Response Data: ${response.data}');
+
       if (response.statusCode == 200) {
         final data = response.data;
         final List<dynamic> dataList = (data is Map && data['data'] != null)
             ? (data['data'] as List<dynamic>)
             : (data is List ? data : []);
+
+        print('DEBUG: Parsed dataList length: ${dataList.length}');
+
         final List<CourseEntity> courses = dataList
             .map((item) => CoursesDto.fromJson(item as Map<String, dynamic>))
             .toList();
@@ -30,6 +37,7 @@ class CoursesRepoImpl implements GetCoursesRepo {
                 response.data?['message']?.toString() ?? 'Server Error'));
       }
     } catch (e) {
+      print('DEBUG: CoursesRepoImpl Error: $e');
       return Left(Failures(errorMessage: e.toString()));
     }
   }

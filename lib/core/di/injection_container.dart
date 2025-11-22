@@ -248,7 +248,7 @@ void _registerCubits() {
 
 void _registerProviders() {
   // UserProvider - LazySingleton with injected SharedPreferences
-  sl.registerLazySingleton(
+  sl.registerFactory(
     () => UserProvider(sl<SharedPreferences>()),
   );
 

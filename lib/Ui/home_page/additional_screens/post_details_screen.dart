@@ -95,8 +95,10 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
     try {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final dynamic userJson = userProvider.user;
-      if (userJson is Map<String, dynamic>)
+      // Relaxed check to Map
+      if (userJson is Map) {
         return (userJson['_id'] ?? userJson['id'])?.toString();
+      }
       return null;
     } catch (_) {
       return null;
@@ -281,7 +283,15 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, i) {
                     final c = _comments[i];
-                    final isMine = c.user?.id == _getCurrentUserIdSafe(context);
+                    final currentUserId = _getCurrentUserIdSafe(context);
+                    final isMine = c.user?.id == currentUserId;
+
+                    // DEBUG LOGGING FOR COMMENTS
+                    print('DEBUG: Comment ${c.id}');
+                    print('  Current User: $currentUserId');
+                    print('  Comment User: ${c.user?.id}');
+                    print('  Is Mine: $isMine');
+
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -310,21 +320,28 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                                           color: Colors.grey.shade600,
                                           fontSize: 12)),
                                   const Spacer(),
-                                  if (isMine)
-                                    GestureDetector(
-                                      onTap: () {
-                                        if (widget.post.id != null &&
-                                            c.id != null) {
-                                          context
-                                              .read<CommentCubit>()
-                                              .deleteComment(
-                                                  widget.post.id!, c.id!);
-                                        }
-                                      },
-                                      child: Icon(Icons.delete_outline,
-                                          size: 18,
-                                          color: Colors.grey.shade600),
-                                    ),
+                                  // ALWAYS SHOW DELETE FOR DEBUGGING
+                                  GestureDetector(
+                                    onTap: () {
+                                      print('DEBUG: Clicked Delete Comment');
+                                      print('  Post ID: ${widget.post.id}');
+                                      print('  Comment ID: ${c.id}');
+
+                                      if (widget.post.id != null &&
+                                          c.id != null) {
+                                        context
+                                            .read<CommentCubit>()
+                                            .deleteComment(
+                                                widget.post.id!, c.id!);
+                                      }
+                                    },
+                                    child: Icon(Icons.delete_outline,
+                                        size: 18,
+                                        color: isMine
+                                            ? Colors.red
+                                            : Colors.grey
+                                                .shade300), // Red if mine, grey if not
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 6),
@@ -459,7 +476,7 @@ class _ReactionButton extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: active
-                  ? Colors.deepPurple.withOpacity(0.12)
+                  ? AppColorsDark.accentBlue.withOpacity(0.1)
                   : Colors.grey.withOpacity(0.06),
               borderRadius: BorderRadius.circular(10),
             ),

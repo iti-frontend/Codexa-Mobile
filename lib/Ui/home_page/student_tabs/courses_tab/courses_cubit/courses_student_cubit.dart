@@ -12,14 +12,21 @@ class StudentCoursesCubit extends Cubit<StudentCoursesState> {
   List<CourseEntity> filteredCourses = [];
 
   StudentCoursesCubit(this.getStudentCoursesUseCase)
-      : super(StudentCoursesInitial(), );
+      : super(
+          StudentCoursesInitial(),
+        );
 
   Future<void> fetchCourses() async {
+    print('DEBUG: StudentCoursesCubit.fetchCourses called');
     emit(StudentCoursesLoading());
     final result = await getStudentCoursesUseCase();
     result.fold(
-      (failure) => emit(StudentCoursesError(failure.errorMessage)),
+      (failure) {
+        print('DEBUG: StudentCoursesCubit Error: ${failure.errorMessage}');
+        emit(StudentCoursesError(failure.errorMessage));
+      },
       (courses) {
+        print('DEBUG: StudentCoursesCubit Loaded: ${courses.length} courses');
         allCourses = courses;
         filteredCourses = courses;
         emit(StudentCoursesLoaded(filteredCourses));
