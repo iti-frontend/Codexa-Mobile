@@ -1,15 +1,8 @@
 // lib/src/ui/auth/register/register_screen.dart
 
-import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
-import 'package:codexa_mobile/Data/Repository/auth_repository.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/register_instructor_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/register_student_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/social_login_instructor_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/social_login_student_usecase.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_viewModel/register_bloc.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_viewModel/register_state.dart';
-import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_text_field.dart';
@@ -31,73 +24,57 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final RegisterViewModel authViewModel;
   bool _showPassword = false;
   bool _showRePassword = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final apiManager = ApiManager();
-    final authRepo = AuthRepoImpl(apiManager);
-
-    authViewModel = RegisterViewModel(
-      registerStudentUseCase: RegisterStudentUseCase(authRepo),
-      socialLoginStudentUseCase: SocialLoginStudentUseCase(authRepo),
-      registerInstructorUseCase: RegisterInstructorUseCase(authRepo),
-      socialLoginInstructorUseCase: SocialLoginInstructorUseCase(authRepo),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     final String role = ModalRoute.of(context)!.settings.arguments as String;
 
-    return BlocProvider<RegisterViewModel>.value(
-      value: authViewModel,
-      child: BlocListener<RegisterViewModel, RegisterStates>(
-        listener: (context, state) {
-          if (state is StudentRegisterSuccessState ||
-              state is InstructorRegisterSuccessState) {
-            final token = (state is StudentRegisterSuccessState)
-                ? state.student.token
-                : (state as InstructorRegisterSuccessState).instructor.token;
+    return BlocConsumer<RegisterViewModel, RegisterStates>(
+      listener: (context, state) {
+        if (state is StudentRegisterSuccessState ||
+            state is InstructorRegisterSuccessState) {
+          final token = (state is StudentRegisterSuccessState)
+              ? state.student.token
+              : (state as InstructorRegisterSuccessState).instructor.token;
 
-            final user = (state is StudentRegisterSuccessState)
-                ? state.student
-                : (state as InstructorRegisterSuccessState).instructor;
+          final user = (state is StudentRegisterSuccessState)
+              ? state.student
+              : (state as InstructorRegisterSuccessState).instructor;
 
-            final role =
-                state is StudentRegisterSuccessState ? 'student' : 'instructor';
-            Provider.of<UserProvider>(context, listen: false).saveUser(
-              token: token ?? "",
-              role: role,
-              user: user,
-            );
+          final role =
+              state is StudentRegisterSuccessState ? 'student' : 'instructor';
+          Provider.of<UserProvider>(context, listen: false).saveUser(
+            token: token ?? "",
+            role: role,
+            user: user,
+          );
 
-            print("Registered and logged in as: $role");
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Registration Successful! Redirecting...'),
+              backgroundColor: Colors.green,
+            ),
+          );
 
-            ScaffoldMessenger.of(context).clearSnackBars();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('✅ Registration Successful! Redirecting...'),
-                backgroundColor: Colors.green,
-              ),
-            );
+          Navigator.pushReplacementNamed(context, OnboardingScreen.routeName);
+        } else if (state is RegisterLoadingState) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+        } else if (state is RegisterErrorState) {
+          final err = state.failure.errorMessage;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(err), backgroundColor: Colors.red),
+          );
+        }
+      },
+      builder: (context, state) {
+        final authViewModel = context.read<RegisterViewModel>();
 
-            Navigator.pushReplacementNamed(context, OnboardingScreen.routeName);
-          } else if (state is RegisterLoadingState) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
-          } else if (state is RegisterErrorState) {
-            final err = state.failure.errorMessage;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(err), backgroundColor: Colors.red),
-            );
-          }
-        },
-        child: Scaffold(
+        return Scaffold(
           backgroundColor: AppColorsDark.accentBlue,
           body: SafeArea(
             child: Center(
@@ -266,7 +243,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: const CustomSocialIcon(
                                   assetPath: 'assets/images/google.png'),
                             ),
-                            // GitHub button placeholder (implement flow if available)
                             GestureDetector(
                               onTap: () => _githubSignIn(role),
                               child: const CustomSocialIcon(
@@ -307,13 +283,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   void _submitRegister(String role) {
     if (_formKey.currentState?.validate() != true) return;
+
+    final authViewModel = context.read<RegisterViewModel>();
 
     if (role == 'student') {
       authViewModel.registerStudent();
@@ -326,7 +304,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final googleSignIn = GoogleSignIn(scopes: ['email']);
       final googleUser = await googleSignIn.signIn();
-      if (googleUser == null) return; // user cancelled
+      if (googleUser == null) return;
 
       final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
@@ -345,6 +323,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
       final firebaseIdToken = await userCredential.user!.getIdToken();
+
+      final authViewModel = context.read<RegisterViewModel>();
 
       if (role == 'student') {
         authViewModel.socialRegisterStudent(token: firebaseIdToken ?? "");
@@ -370,6 +350,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
         return;
       }
+
+      final authViewModel = context.read<RegisterViewModel>();
+
       if (role == 'student') {
         authViewModel.socialRegisterStudent(
           token: firebaseIdToken,

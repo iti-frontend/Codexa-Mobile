@@ -8,6 +8,6 @@ class ToggleLikeUseCase {
   ToggleLikeUseCase(this.repo);
 
   Future<Either<Failures, bool>> call(String postId) {
-    return repo.toggleLike(postId);
+    return repo.toggleLike(postId: postId);
   }
 }

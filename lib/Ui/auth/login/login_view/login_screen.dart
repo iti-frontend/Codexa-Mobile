@@ -1,15 +1,6 @@
-import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
-import 'package:codexa_mobile/Data/Repository/auth_repository.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/login_instructor_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/login_student_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/register_instructor_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/register_student_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/social_login_instructor_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/social_login_student_usecase.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_viewModel/LoginBloc.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_viewModel/login_state.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_view/register_role_screen.dart';
-import 'package:codexa_mobile/Ui/auth/register/register_view/register_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_text_field.dart';
@@ -31,77 +22,53 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final AuthViewModel authViewModel;
   String? selectedRole;
   bool obscurePassword = true;
 
   @override
-  void initState() {
-    super.initState();
-    final apiManager = ApiManager();
-    final authRepo = AuthRepoImpl(apiManager);
-
-    authViewModel = AuthViewModel(
-      loginStudentUseCase: LoginStudentUseCase(authRepo),
-      registerStudentUseCase: RegisterStudentUseCase(authRepo),
-      socialLoginStudentUseCase: SocialLoginStudentUseCase(authRepo),
-      loginInstructorUseCase: LoginInstructorUseCase(authRepo),
-      registerInstructorUseCase: RegisterInstructorUseCase(authRepo),
-      socialLoginInstructorUseCase: SocialLoginInstructorUseCase(authRepo),
-    );
-  }
-
-  @override
-  void dispose() {
-    authViewModel.emailController.dispose();
-    authViewModel.passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthViewModel>.value(
-      value: authViewModel,
-      child: BlocListener<AuthViewModel, AuthStates>(
-        listener: (context, state) {
-          if (state is StudentAuthSuccessState ||
-              state is InstructorAuthSuccessState) {
-            final token = (state is StudentAuthSuccessState)
-                ? state.student.token
-                : (state as InstructorAuthSuccessState).instructor.token;
+    return BlocConsumer<AuthViewModel, AuthStates>(
+      listener: (context, state) {
+        if (state is StudentAuthSuccessState ||
+            state is InstructorAuthSuccessState) {
+          final token = (state is StudentAuthSuccessState)
+              ? state.student.token
+              : (state as InstructorAuthSuccessState).instructor.token;
 
-            final user = (state is StudentAuthSuccessState)
-                ? state.student
-                : (state as InstructorAuthSuccessState).instructor;
+          final user = (state is StudentAuthSuccessState)
+              ? state.student
+              : (state as InstructorAuthSuccessState).instructor;
 
-            final role =
-                state is StudentAuthSuccessState ? 'student' : 'instructor';
+          final role =
+              state is StudentAuthSuccessState ? 'student' : 'instructor';
 
-            Provider.of<UserProvider>(context, listen: false).saveUser(
-              token: token ?? "",
-              role: role,
-              user: user,
-            );
+          Provider.of<UserProvider>(context, listen: false).saveUser(
+            token: token ?? "",
+            role: role,
+            user: user,
+          );
 
-            print("Logged in as: $role");
-            Navigator.pushReplacementNamed(context, HomeScreen.routeName);
+          Navigator.pushReplacementNamed(context, HomeScreen.routeName);
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Logged in successfully!'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          } else if (state is AuthErrorState) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Login failed: ${state.failure.errorMessage}'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-        child: Scaffold(
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Logged in successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else if (state is AuthErrorState) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Login failed: ${state.failure.errorMessage}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        final authViewModel = context.read<AuthViewModel>();
+
+        return Scaffold(
           backgroundColor: AppColorsDark.accentBlue,
           body: SafeArea(
             child: Center(
@@ -205,8 +172,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -232,7 +199,6 @@ class _LoginScreenState extends State<LoginScreen> {
             setState(() {
               selectedRole = v;
             });
-            print(v); // هيطبع بس الاختيار اللي المستخدم عمله
           },
         ),
         Text(label, style: const TextStyle(color: Colors.white70)),
@@ -288,6 +254,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void _submitLogin() {
     if (_formKey.currentState?.validate() != true) return;
 
+    final authViewModel = context.read<AuthViewModel>();
+
     if (selectedRole == 'student') {
       authViewModel.loginStudent();
     } else if (selectedRole == 'instructor') {
@@ -305,16 +273,13 @@ class _LoginScreenState extends State<LoginScreen> {
   // =================== Google Sign In ===================
   void _googleSignIn(String role) async {
     try {
-      // 1️⃣ تسجيل دخول Google
       final GoogleSignInAccount? googleUser =
           await GoogleSignIn(scopes: ['email']).signIn();
-      if (googleUser == null) return; // المستخدم لغى العملية
+      if (googleUser == null) return;
 
-      // 2️⃣ جلب الـ authentication من Google
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      // 3️⃣ تحويله إلى Firebase credential
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -324,6 +289,8 @@ class _LoginScreenState extends State<LoginScreen> {
           await FirebaseAuth.instance.signInWithCredential(credential);
 
       final firebaseIdToken = await userCredential.user!.getIdToken();
+
+      final authViewModel = context.read<AuthViewModel>();
 
       if (role == 'student') {
         authViewModel.socialLoginStudent(token: firebaseIdToken ?? "");
@@ -343,6 +310,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // =================== GitHub Sign In ===================
   Future<void> _githubSignIn(String role) async {
     try {
       final githubProvider = GithubAuthProvider();
@@ -356,19 +324,17 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         return;
       }
+
+      final authViewModel = context.read<AuthViewModel>();
+
       if (role == 'student') {
-        authViewModel.socialLoginStudent(
-          token: firebaseIdToken,
-        );
+        authViewModel.socialLoginStudent(token: firebaseIdToken);
       } else {
-        authViewModel.socialLoginInstructor(
-          token: firebaseIdToken,
-        );
+        authViewModel.socialLoginInstructor(token: firebaseIdToken);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('GitHub login failed: $e')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('GitHub login failed: $e')));
     }
   }
 }

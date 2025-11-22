@@ -1,85 +1,104 @@
-import 'package:codexa_mobile/Data/Repository/coumminty_repo_impl.dart';
-import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
-import 'package:codexa_mobile/Domain/usecases/community/add_comment_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/community/add_reply_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/community/create_post_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/community/get_all_posts_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/community/toggle_like_usecase.dart';
-import 'package:codexa_mobile/Ui/home_page/additional_screens/post_details_screen.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_cubit/community_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_cubit/community_states.dart';
-import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
-import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/comment_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/likes_cubit.dart';
+import 'package:codexa_mobile/Domain/entities/community_entity.dart';
+import 'package:codexa_mobile/Ui/home_page/additional_screens/post_details_screen.dart';
+import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
 
-class CommunityInstructorTab extends StatelessWidget {
+class CommunityInstructorTab extends StatefulWidget {
   const CommunityInstructorTab({super.key});
 
   @override
+  State<CommunityInstructorTab> createState() => _CommunityInstructorTabState();
+}
+
+class _CommunityInstructorTabState extends State<CommunityInstructorTab> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CommunityPostsCubit>().fetchPosts();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
-    final token = userProvider.token ?? "";
-    final repository = CommunityRepoImpl(ApiManager(token: token));
+    return BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
+      buildWhen: (prev, curr) => prev != curr,
+      builder: (context, state) {
+        if (state is CommunityPostsLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    return BlocProvider(
-      create: (_) => CommunityCubit(
-        getAllPostsUseCase: GetAllPostsUseCase(repository),
-        createPostUseCase: CreatePostUseCase(repository),
-        toggleLikeUseCase: ToggleLikeUseCase(repository),
-        addCommentUseCase: AddCommentUseCase(repository),
-        addReplyUseCase: AddReplyUseCase(repository),
-      )..fetchPosts(),
-      child: Scaffold(
-        body: SafeArea(
-          child: BlocBuilder<CommunityCubit, CommunityState>(
-            buildWhen: (prev, curr) =>
-                curr is CommunityLoaded ||
-                curr is CommunityError ||
-                curr is CommunityInitial,
-            builder: (context, state) {
-              List posts = [];
-              if (state is CommunityLoaded) {
-                posts = state.posts;
-              }
+        if (state is CommunityPostsError) {
+          return Center(child: Text(state.message));
+        }
 
-              if (state is CommunityError) {
-                return Center(child: Text(state.message));
-              }
+        if (state is CommunityPostsLoaded) {
+          final posts = state.posts;
 
-              if (posts.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 700;
 
-              return ListView.builder(
+              return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
-                itemCount: posts.length,
-                itemBuilder: (context, index) {
-                  final post = posts[index];
-                  return PostCard(
-                    post: post,
-                    currentToken: token,
-                    onLike: () {
-                      context
-                          .read<CommunityCubit>()
-                          .toggleLike(post.id!, token);
-                    },
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => PostDetailsScreen(postId: post.id!),
-                        ),
-                      );
-                    },
-                  );
-                },
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1000),
+                    child: isWide
+                        ? Wrap(
+                            spacing: 16,
+                            runSpacing: 16,
+                            children: posts.map((post) {
+                              return SizedBox(
+                                width: 480,
+                                child: _buildPostCard(context, post),
+                              );
+                            }).toList(),
+                          )
+                        : Column(
+                            children: posts.map((post) {
+                              return _buildPostCard(context, post);
+                            }).toList(),
+                          ),
+                  ),
+                ),
               );
             },
+          );
+        }
+
+        return const Center(child: Text("No posts available"));
+      },
+    );
+  }
+
+  Widget _buildPostCard(BuildContext context, CommunityEntity post) {
+    return PostCard(
+      post: post,
+      onTap: () {
+        final commentCubit = context.read<CommentCubit>();
+        final likeCubit = context.read<LikeCubit>();
+        final postsCubit = context.read<CommunityPostsCubit>();
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: commentCubit),
+                BlocProvider.value(value: likeCubit),
+                BlocProvider.value(value: postsCubit),
+              ],
+              child: PostDetailsScreen(post: post),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

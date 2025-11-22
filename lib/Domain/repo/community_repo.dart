@@ -1,33 +1,45 @@
-import 'package:codexa_mobile/Domain/entities/community/community_entity.dart';
 import 'package:codexa_mobile/Domain/failures.dart';
 import 'package:dartz/dartz.dart';
 
+import '../entities/community_entity.dart';
+
 abstract class CommunityRepo {
   Future<Either<Failures, List<CommunityEntity>>> getAllPosts();
-  Future<Either<Failures, CommunityEntity>> createPost(
-      Map<String, dynamic> body);
-  Future<Either<Failures, bool>> toggleLike(String postId);
-  Future<Either<Failures, CommunityEntity>> addComment(
-      String postId, Map<String, dynamic> body);
-  Future<Either<Failures, bool>> deletePost(String postId);
 
+  Future<Either<Failures, CommunityEntity>> createPost({
+    required String content,
+    String? image,
+    dynamic linkUrl,
+    List<dynamic>? attachments,
+  });
 
-  Future<Either<Failures, CommunityEntity>> addReply(
-    String postId,
-    String commentId,
-    Map<String, dynamic> body,
-  );
+  Future<Either<Failures, bool>> toggleLike({
+    required String postId,
+  });
 
-  Future<Either<Failures, CommunityEntity>> editReply(
-    String postId,
-    String commentId,
-    String replyId,
-    Map<String, dynamic> body,
-  );
+  Future<Either<Failures, CommentsEntity>> addComment({
+    required String postId,
+    required String text,
+  });
 
-  Future<Either<Failures, bool>> deleteReply(
-    String postId,
-    String commentId,
-    String replyId,
-  );
+  Future<Either<Failures, CommentsEntity>> addReply({
+    required String postId,
+    required String commentId,
+    required String text,
+  });
+
+  Future<Either<Failures, bool>> deletePost({
+    required String postId,
+  });
+
+  Future<Either<Failures, bool>> deleteComment({
+    required String postId,
+    required String commentId,
+  });
+
+  Future<Either<Failures, bool>> deleteReply({
+    required String postId,
+    required String commentId,
+    required String replyId,
+  });
 }

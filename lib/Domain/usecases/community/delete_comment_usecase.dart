@@ -1,20 +1,19 @@
-import 'package:codexa_mobile/Domain/entities/community_entity.dart';
 import 'package:codexa_mobile/Domain/failures.dart';
 import 'package:codexa_mobile/Domain/repo/community_repo.dart';
 import 'package:dartz/dartz.dart';
 
-class AddCommentUseCase {
+class DeleteCommentUseCase {
   final CommunityRepo repo;
 
-  AddCommentUseCase(this.repo);
+  DeleteCommentUseCase(this.repo);
 
-  Future<Either<Failures, CommentsEntity>> call({
+  Future<Either<Failures, bool>> call({
     required String postId,
-    required String text,
+    required String commentId,
   }) {
-    return repo.addComment(
+    return repo.deleteComment(
       postId: postId,
-      text: text,
+      commentId: commentId,
     );
   }
 }

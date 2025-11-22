@@ -8,6 +8,6 @@ class DeletePostUseCase {
   DeletePostUseCase(this.repo);
 
   Future<Either<Failures, bool>> call(String postId) {
-    return repo.deletePost(postId);
+    return repo.deletePost(postId: postId);
   }
 }

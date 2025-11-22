@@ -1,10 +1,32 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserProvider extends ChangeNotifier {
+  final SharedPreferences prefs;
+
   String? token;
   String? role;
   dynamic user;
+
+  UserProvider(this.prefs) {
+    // ✅ Schedule loadUser to run after build completes
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      loadUser();
+    });
+  }
+
+  Future<void> loadUser() async {
+    token = prefs.getString('token');
+    role = prefs.getString('role');
+    final userJson = prefs.getString('user');
+    if (userJson != null) {
+      user = jsonDecode(userJson);
+    }
+    notifyListeners();
+  }
 
   Future<void> saveUser({
     required String token,
@@ -15,17 +37,8 @@ class UserProvider extends ChangeNotifier {
     this.role = role;
     this.user = user;
 
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', token);
     await prefs.setString('role', role);
-
-    notifyListeners();
-  }
-
-  Future<void> loadUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    token = prefs.getString('token');
-    role = prefs.getString('role');
 
     notifyListeners();
   }
@@ -35,7 +48,6 @@ class UserProvider extends ChangeNotifier {
     role = null;
     user = null;
 
-    final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
 
     notifyListeners();

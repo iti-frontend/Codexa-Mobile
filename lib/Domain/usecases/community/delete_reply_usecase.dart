@@ -7,12 +7,15 @@ class DeleteReplyUseCase {
 
   DeleteReplyUseCase(this.repo);
 
-  Future<Either<Failures, bool>> call(
-    String postId,
-    String commentId,
-    String replyId,
-  ) {
-    return repo.deleteReply(postId, commentId, replyId);
+  Future<Either<Failures, bool>> call({
+    required String postId,
+    required String commentId,
+    required String replyId,
+  }) {
+    return repo.deleteReply(
+      postId: postId,
+      commentId: commentId,
+      replyId: replyId,
+    );
   }
 }
-

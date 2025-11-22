@@ -1,15 +1,15 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 
 class ApiManager {
   late Dio dio;
   static final String baseUrl = dotenv.env['API_BASE_URL'] ?? "";
 
-  String? _token;
+  final SharedPreferences prefs;
 
-  ApiManager({String? token}) {
-    _token = token;
+  ApiManager({required this.prefs}) {
     dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
@@ -23,14 +23,17 @@ class ApiManager {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          if (_token != null && _token!.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $_token';
-          } else {}
+          // Read token dynamically from SharedPreferences
+          final token = prefs.getString('token');
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
           return handler.next(options);
         },
       ),
     );
   }
+
   // GET Request
   Future<Response> getData(String endPoint,
       {Map<String, dynamic>? query}) async {
@@ -87,7 +90,6 @@ class ApiManager {
     }
   }
 
-  
   Future<Response> uploadData(String endPoint, List<File> files,
       {String fieldName = 'files'}) async {
     try {
