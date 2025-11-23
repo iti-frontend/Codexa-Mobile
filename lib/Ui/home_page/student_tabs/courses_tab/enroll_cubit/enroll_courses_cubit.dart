@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class EnrollCubit extends Cubit<EnrollState> {
   final GetCoursesUseCase enrollUseCase;
-  final String token; // أضفنا التوكن
+  final String token;
 
   EnrollCubit({
     required this.enrollUseCase,
@@ -19,7 +19,7 @@ class EnrollCubit extends Cubit<EnrollState> {
     try {
       final result = await enrollUseCase.callEnroll(
         courseId: courseId,
-        token: token, // نمرر التوكن للاستخدام داخل الـ use case
+        token: token,
       );
 
       result.fold(

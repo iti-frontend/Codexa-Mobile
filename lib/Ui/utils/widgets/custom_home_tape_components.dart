@@ -146,6 +146,7 @@ class CommunityItem extends StatelessWidget {
   final String action;
   final String message;
   final String time;
+  final String? profileImage;
 
   const CommunityItem({
     super.key,
@@ -153,16 +154,34 @@ class CommunityItem extends StatelessWidget {
     required this.action,
     required this.message,
     required this.time,
+    this.profileImage,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // Determine the image provider
+    ImageProvider? imageProvider;
+    if (profileImage != null && profileImage!.startsWith('http')) {
+      imageProvider = NetworkImage(profileImage!);
+    } else if (profileImage != null && profileImage!.isNotEmpty) {
+      imageProvider = AssetImage(profileImage!);
+    } else {
+      // Default placeholder
+      imageProvider = const AssetImage("assets/images/review-1.jpg");
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CircleAvatar(radius: 18, backgroundColor: theme.dividerTheme.color),
+        CircleAvatar(
+          radius: 18,
+          backgroundImage: imageProvider,
+          onBackgroundImageError: (_, __) {
+            // Fallback is handled by the provider logic above
+          },
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -174,7 +193,7 @@ class CommunityItem extends StatelessWidget {
                   children: [
                     TextSpan(
                       text: "$name ",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     TextSpan(text: action),
                   ],
@@ -184,11 +203,16 @@ class CommunityItem extends StatelessWidget {
               Text(
                 message,
                 style: TextStyle(color: theme.dividerTheme.color),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
               Text(
                 time,
-                style: TextStyle(color: theme.dividerTheme.color),
+                style: TextStyle(
+                  color: theme.dividerTheme.color?.withOpacity(0.7),
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
