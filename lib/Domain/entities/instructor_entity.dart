@@ -22,4 +22,19 @@ class InstructorEntity {
     required this.authProvider,
     required this.token,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'name': name,
+      'email': email,
+      'profileImage': profileImage,
+      'role': role,
+      'isAdmin': isAdmin,
+      'isActive': isActive,
+      'emailVerified': emailVerified,
+      'authProvider': authProvider,
+      'token': token,
+    };
+  }
 }

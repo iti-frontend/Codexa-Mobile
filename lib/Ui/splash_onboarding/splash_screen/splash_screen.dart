@@ -18,15 +18,19 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
 
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
 
-    userProvider.loadUser().then((_) {
-      Future.delayed(const Duration(seconds: 2), () {
-        if (userProvider.token != null && userProvider.role != null) {
-          Navigator.pushReplacementNamed(context, HomeScreen.routeName);
-        } else {
-          Navigator.pushReplacementNamed(context, LoginScreen.routeName);
-        }
+      userProvider.loadUser().then((_) {
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            if (userProvider.token != null && userProvider.role != null) {
+              Navigator.pushReplacementNamed(context, HomeScreen.routeName);
+            } else {
+              Navigator.pushReplacementNamed(context, LoginScreen.routeName);
+            }
+          }
+        });
       });
     });
   }

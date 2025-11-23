@@ -95,8 +95,10 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
     try {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final dynamic userJson = userProvider.user;
-      if (userJson is Map<String, dynamic>)
+      // Relaxed check to Map
+      if (userJson is Map) {
         return (userJson['_id'] ?? userJson['id'])?.toString();
+      }
       return null;
     } catch (_) {
       return null;
@@ -106,9 +108,6 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
-    final viewInsets = MediaQuery.of(context).viewInsets.bottom;
-    // Height reserved for input area used for list padding so last comment isn't hidden
-    const double inputBarEstimatedHeight = 76.0;
     // Constrain image to a fraction of screen to avoid overflow when keyboard opens
     final double maxImageHeight = MediaQuery.of(context).size.height * 0.35;
 
@@ -124,243 +123,283 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       resizeToAvoidBottomInset: true,
       body: Column(
         children: [
-          // Top area: header + post content + reactions + section title
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 26,
-                      backgroundImage: post.author?.profileImage != null
-                          ? NetworkImage(post.author!.profileImage!)
-                          : null,
-                      child: post.author?.profileImage == null
-                          ? const Icon(Icons.person_outline, size: 26)
-                          : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(post.author?.name ?? 'Unknown',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w800, fontSize: 16)),
-                          const SizedBox(height: 4),
-                          Text(_formatTime(post.createdAt),
-                              style: TextStyle(
-                                  color: Colors.grey.shade600, fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                        icon: const Icon(Icons.more_horiz),
-                        onPressed: () {},
-                        splashRadius: 20),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                // Content
-                if (post.content != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Text(post.content!,
-                        style: const TextStyle(fontSize: 15, height: 1.5)),
-                  ),
-
-                // Media with constrained height
-                if (post.image != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: maxImageHeight),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: AspectRatio(
-                          aspectRatio: 16 / 9,
-                          child: Image.network(post.image!,
-                              fit: BoxFit.cover, width: double.infinity),
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                // Post header and content
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 26,
+                              backgroundImage: post.author?.profileImage != null
+                                  ? NetworkImage(post.author!.profileImage!)
+                                  : null,
+                              child: post.author?.profileImage == null
+                                  ? const Icon(Icons.person_outline, size: 26)
+                                  : null,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(post.author?.name ?? 'Unknown',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 16)),
+                                  const SizedBox(height: 4),
+                                  Text(_formatTime(post.createdAt),
+                                      style: TextStyle(
+                                          color: Colors.grey.shade600,
+                                          fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                                icon: const Icon(Icons.more_horiz),
+                                onPressed: () {},
+                                splashRadius: 20),
+                          ],
                         ),
-                      ),
+
+                        const SizedBox(height: 12),
+
+                        // Content
+                        if (post.content != null)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Text(post.content!,
+                                style:
+                                    const TextStyle(fontSize: 15, height: 1.5)),
+                          ),
+
+                        // Media with constrained height
+                        if (post.image != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: ConstrainedBox(
+                              constraints:
+                                  BoxConstraints(maxHeight: maxImageHeight),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: AspectRatio(
+                                  aspectRatio: 16 / 9,
+                                  child: Image.network(post.image!,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                        const SizedBox(height: 12),
+
+                        // Reaction row
+                        Row(
+                          children: [
+                            _ReactionButton(
+                              icon: Icons.thumb_up_alt_rounded,
+                              active: post.likes?.any((l) =>
+                                      l.user ==
+                                      _getCurrentUserIdSafe(context)) ??
+                                  false,
+                              label: '${post.likes?.length ?? 0}',
+                              onTap: () {
+                                if (post.id != null) {
+                                  context
+                                      .read<LikeCubit>()
+                                      .toggleLike(post.id!);
+                                  context
+                                      .read<CommunityPostsCubit>()
+                                      .fetchPosts();
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 12),
+                            _ReactionButton(
+                              icon: Icons.comment_rounded,
+                              label: '${_comments.length}',
+                              onTap: () {},
+                            ),
+                            const Spacer(),
+                            IconButton(
+                                onPressed: () {},
+                                icon: const Icon(Icons.share_outlined)),
+                          ],
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // Section title
+                        Text('Comments',
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.grey.shade800)),
+                        const SizedBox(height: 12),
+                      ],
                     ),
                   ),
-
-                const SizedBox(height: 12),
-
-                // Reaction row
-                Row(
-                  children: [
-                    _ReactionButton(
-                      icon: Icons.thumb_up_alt_rounded,
-                      active: post.likes?.any((l) =>
-                              l.user == _getCurrentUserIdSafe(context)) ??
-                          false,
-                      label: '${post.likes?.length ?? 0}',
-                      onTap: () {
-                        if (post.id != null) {
-                          context.read<LikeCubit>().toggleLike(post.id!);
-                          context.read<CommunityPostsCubit>().fetchPosts();
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 12),
-                    _ReactionButton(
-                      icon: Icons.comment_rounded,
-                      label: '${_comments.length}',
-                      onTap: () {
-                        // optionally focus input
-                        // FocusScope.of(context).requestFocus(_commentFocusNode);
-                      },
-                    ),
-                    const Spacer(),
-                    IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.share_outlined)),
-                  ],
                 ),
 
-                const SizedBox(height: 14),
+                // Comments list
+                BlocConsumer<CommentCubit, CommentState>(
+                  listener: (context, state) {
+                    try {
+                      if (state is CommentAdded && state.newComment != null) {
+                        setState(() {
+                          _comments = [..._comments, state.newComment!];
+                          widget.post.comments = _comments;
+                          _isAddingComment = false;
+                          _commentController.clear();
+                        });
+                        context
+                            .read<CommunityPostsCubit>()
+                            .updatePost(widget.post);
+                        context.read<CommunityPostsCubit>().fetchPosts();
+                      } else if (state is CommentDeleted) {
+                        setState(() {
+                          _comments.removeWhere((c) => c.id == state.commentId);
+                          widget.post.comments = _comments;
+                        });
+                        context
+                            .read<CommunityPostsCubit>()
+                            .updatePost(widget.post);
+                        context.read<CommunityPostsCubit>().fetchPosts();
+                      } else if (state is CommentError) {
+                        setState(() => _isAddingComment = false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(state.message)));
+                      }
+                    } catch (e) {
+                      debugPrint('Error in Comment listener: $e');
+                    }
+                  },
+                  builder: (context, state) {
+                    if (_comments.isEmpty) {
+                      return SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(40.0),
+                          child: Center(
+                            child: Text('Be the first to comment',
+                                style: TextStyle(color: Colors.grey.shade600)),
+                          ),
+                        ),
+                      );
+                    }
 
-                // Section title
-                Text('Comments',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.grey.shade800)),
+                    return SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, i) {
+                          final c = _comments[i];
+                          final currentUserId = _getCurrentUserIdSafe(context);
+                          final isMine = c.user?.id == currentUserId;
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 5),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                CircleAvatar(
+                                  radius: 18,
+                                  backgroundImage: c.user?.profileImage != null
+                                      ? NetworkImage(c.user!.profileImage!)
+                                      : null,
+                                  child: c.user?.profileImage == null
+                                      ? const Icon(Icons.person_outline,
+                                          size: 18)
+                                      : null,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(c.user?.name ?? 'Unknown',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w800)),
+                                          const SizedBox(width: 8),
+                                          Text(_formatTime(c.createdAt),
+                                              style: TextStyle(
+                                                  color: Colors.grey.shade600,
+                                                  fontSize: 12)),
+                                          const Spacer(),
+                                          GestureDetector(
+                                            onTap: () {
+                                              if (widget.post.id != null &&
+                                                  c.id != null) {
+                                                context
+                                                    .read<CommentCubit>()
+                                                    .deleteComment(
+                                                        widget.post.id!, c.id!);
+                                              }
+                                            },
+                                            child: Icon(Icons.delete_outline,
+                                                size: 18,
+                                                color: isMine
+                                                    ? Colors.red
+                                                    : Colors.grey.shade300),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 10),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          boxShadow: [
+                                            BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.03),
+                                                blurRadius: 6)
+                                          ],
+                                        ),
+                                        child: Text(c.text ?? '',
+                                            style: const TextStyle(
+                                                fontSize: 14, height: 1.4)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        childCount: _comments.length,
+                      ),
+                    );
+                  },
+                ),
+
+                // Bottom padding for input bar
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: 80),
+                ),
               ],
             ),
           ),
 
-          // Comments list in Expanded to avoid overflow with keyboard
-          Expanded(
-            child: BlocConsumer<CommentCubit, CommentState>(
-              listener: (context, state) {
-                try {
-                  if (state is CommentAdded && state.newComment != null) {
-                    setState(() {
-                      _comments = [..._comments, state.newComment!];
-                      widget.post.comments = _comments;
-                      _isAddingComment = false;
-                      _commentController.clear();
-                    });
-                    context.read<CommunityPostsCubit>().updatePost(widget.post);
-                    context.read<CommunityPostsCubit>().fetchPosts();
-                  } else if (state is CommentDeleted) {
-                    setState(() {
-                      _comments.removeWhere((c) => c.id == state.commentId);
-                      widget.post.comments = _comments;
-                    });
-                    context.read<CommunityPostsCubit>().updatePost(widget.post);
-                    context.read<CommunityPostsCubit>().fetchPosts();
-                  } else if (state is CommentError) {
-                    setState(() => _isAddingComment = false);
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(state.message)));
-                  }
-                } catch (e) {
-                  debugPrint('Error in Comment listener: $e');
-                }
-              },
-              builder: (context, state) {
-                if (_comments.isEmpty) {
-                  return Center(
-                      child: Text('Be the first to comment',
-                          style: TextStyle(color: Colors.grey.shade600)));
-                }
-
-                return ListView.separated(
-                  padding: EdgeInsets.fromLTRB(
-                      16, 12, 16, inputBarEstimatedHeight + viewInsets + 8),
-                  itemCount: _comments.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) {
-                    final c = _comments[i];
-                    final isMine = c.user?.id == _getCurrentUserIdSafe(context);
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundImage: c.user?.profileImage != null
-                              ? NetworkImage(c.user!.profileImage!)
-                              : null,
-                          child: c.user?.profileImage == null
-                              ? const Icon(Icons.person_outline, size: 18)
-                              : null,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(c.user?.name ?? 'Unknown',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w800)),
-                                  const SizedBox(width: 8),
-                                  Text(_formatTime(c.createdAt),
-                                      style: TextStyle(
-                                          color: Colors.grey.shade600,
-                                          fontSize: 12)),
-                                  const Spacer(),
-                                  if (isMine)
-                                    GestureDetector(
-                                      onTap: () {
-                                        if (widget.post.id != null &&
-                                            c.id != null) {
-                                          context
-                                              .read<CommentCubit>()
-                                              .deleteComment(
-                                                  widget.post.id!, c.id!);
-                                        }
-                                      },
-                                      child: Icon(Icons.delete_outline,
-                                          size: 18,
-                                          color: Colors.grey.shade600),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        color: Colors.black.withOpacity(0.03),
-                                        blurRadius: 6)
-                                  ],
-                                ),
-                                child: Text(c.text ?? '',
-                                    style: const TextStyle(
-                                        fontSize: 14, height: 1.4)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-
-          // Fixed bottom input bar. padding bottom respects keyboard via viewInsets.
+          // Fixed bottom input bar
           SafeArea(
             top: false,
             child: Container(
               color: Colors.white,
-              padding: EdgeInsets.fromLTRB(14, 10, 14, 10 + viewInsets),
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
               child: Row(
                 children: [
                   // small avatar preview
@@ -459,7 +498,7 @@ class _ReactionButton extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: active
-                  ? Colors.deepPurple.withOpacity(0.12)
+                  ? AppColorsDark.accentBlue.withOpacity(0.1)
                   : Colors.grey.withOpacity(0.06),
               borderRadius: BorderRadius.circular(10),
             ),

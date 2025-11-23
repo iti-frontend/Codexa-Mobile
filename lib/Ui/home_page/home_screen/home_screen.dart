@@ -63,7 +63,7 @@ class _HomescreenState extends State<HomeScreen> {
       SettingsInstructorTab(),
     ];
 
-    if (role == "student") {
+    if (role?.toLowerCase() == "student") {
       return Scaffold(
         appBar: selectedIndex == 3
             ? AppBar(

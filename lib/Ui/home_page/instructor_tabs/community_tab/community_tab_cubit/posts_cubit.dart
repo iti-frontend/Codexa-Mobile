@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:codexa_mobile/Domain/entities/community_entity.dart';
 import 'package:codexa_mobile/Domain/usecases/community/get_all_posts_usecase.dart';
@@ -21,28 +23,28 @@ class CommunityPostsCubit extends Cubit<CommunityPostsState> {
     emit(CommunityPostsLoading());
     final result = await getAllPostsUseCase();
     result.fold(
-          (failure) => emit(CommunityPostsError(failure.errorMessage)),
-          (posts) => emit(CommunityPostsLoaded(posts)),
+      (failure) => emit(CommunityPostsError(failure.errorMessage)),
+      (posts) => emit(CommunityPostsLoaded(posts)),
     );
   }
 
   Future<void> createPost({
     required String content,
-    String? image,
+    File? imageFile,
     dynamic linkUrl,
     List<dynamic>? attachments,
   }) async {
     emit(CommunityPostsLoading());
     final result = await createPostUseCase(
       content: content,
-      image: image,
+      imageFile: imageFile,
       linkUrl: linkUrl,
       attachments: attachments,
     );
 
     result.fold(
-          (failure) => emit(PostOperationError(failure.errorMessage)),
-          (_) => emit(PostOperationSuccess("Post created successfully")),
+      (failure) => emit(PostOperationError(failure.errorMessage)),
+      (_) => emit(PostOperationSuccess("Post created successfully")),
     );
 
     await fetchPosts(); // refresh
@@ -53,8 +55,8 @@ class CommunityPostsCubit extends Cubit<CommunityPostsState> {
     final result = await deletePostUseCase(postId);
 
     result.fold(
-          (failure) => emit(PostOperationError(failure.errorMessage)),
-          (_) => emit(PostOperationSuccess("Post deleted successfully")),
+      (failure) => emit(PostOperationError(failure.errorMessage)),
+      (_) => emit(PostOperationSuccess("Post deleted successfully")),
     );
 
     await fetchPosts();

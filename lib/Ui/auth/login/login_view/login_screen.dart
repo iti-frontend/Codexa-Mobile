@@ -28,26 +28,38 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthViewModel, AuthStates>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is StudentAuthSuccessState ||
             state is InstructorAuthSuccessState) {
-          final token = (state is StudentAuthSuccessState)
-              ? state.student.token
-              : (state as InstructorAuthSuccessState).instructor.token;
+          String token = '';
+          dynamic userObj;
+          if (state is StudentAuthSuccessState) {
+            token = state.student.token ?? '';
+            userObj = state.student;
+          } else if (state is InstructorAuthSuccessState) {
+            token =
+                (state as InstructorAuthSuccessState).instructor.token ?? '';
+            userObj = (state as InstructorAuthSuccessState).instructor;
+          }
 
-          final user = (state is StudentAuthSuccessState)
-              ? state.student
-              : (state as InstructorAuthSuccessState).instructor;
+          // Try to get role from returned user object (preferred)
+          String resolvedRole = _resolveRoleFromUser(userObj) ??
+              (state is StudentAuthSuccessState ? 'student' : 'instructor');
 
-          final role =
-              state is StudentAuthSuccessState ? 'student' : 'instructor';
+          // Debug prints (remove in production)
+          debugPrint(
+              'LOGIN SUCCESS - resolvedRole: $resolvedRole, token present: ${token.isNotEmpty}');
+          debugPrint('Returned user object type: ${userObj?.runtimeType}');
 
-          Provider.of<UserProvider>(context, listen: false).saveUser(
-            token: token ?? "",
-            role: role,
-            user: user,
+          // Save to provider (use role derived from returned user when possible)
+          await Provider.of<UserProvider>(context, listen: false).saveUser(
+            token: token,
+            role: resolvedRole.toLowerCase(),
+            user: userObj,
           );
 
+          // Navigate to home
+          if (!mounted) return;
           Navigator.pushReplacementNamed(context, HomeScreen.routeName);
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -207,17 +219,17 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // =================== Social Login ===================
+  // =================== Social Login Buttons ===================
   Widget _socialLoginButtons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         GestureDetector(
-          onTap: () => _googleSignIn(selectedRole ?? ''),
+          onTap: () => _googleSignIn(selectedRole),
           child: const CustomSocialIcon(assetPath: 'assets/images/google.png'),
         ),
         GestureDetector(
-          onTap: () => _githubSignIn(selectedRole ?? ''),
+          onTap: () => _githubSignIn(selectedRole),
           child: const CustomSocialIcon(assetPath: 'assets/images/github.png'),
         ),
       ],
@@ -254,24 +266,40 @@ class _LoginScreenState extends State<LoginScreen> {
   void _submitLogin() {
     if (_formKey.currentState?.validate() != true) return;
 
+    // Ensure role selected before attempting login
+    if (selectedRole == null || selectedRole!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a role (Student or Instructor)'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     final authViewModel = context.read<AuthViewModel>();
 
+    // Call the existing methods (keep using existing ViewModel API)
     if (selectedRole == 'student') {
       authViewModel.loginStudent();
     } else if (selectedRole == 'instructor') {
       authViewModel.loginInstructor();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a role'),
-          backgroundColor: Colors.orange,
-        ),
-      );
     }
   }
 
   // =================== Google Sign In ===================
-  void _googleSignIn(String role) async {
+  void _googleSignIn(String? role) async {
+    // Ensure role selected
+    if (role == null || role.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a role before social login'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     try {
       final GoogleSignInAccount? googleUser =
           await GoogleSignIn(scopes: ['email']).signIn();
@@ -288,30 +316,41 @@ class _LoginScreenState extends State<LoginScreen> {
       final userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
 
-      final firebaseIdToken = await userCredential.user!.getIdToken();
+      final firebaseIdToken = await userCredential.user?.getIdToken();
+      if (firebaseIdToken == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to get Firebase ID Token')),
+        );
+        return;
+      }
 
       final authViewModel = context.read<AuthViewModel>();
 
+      // Use explicit role path (keeps compatibility with existing ViewModel methods)
       if (role == 'student') {
-        authViewModel.socialLoginStudent(token: firebaseIdToken ?? "");
+        authViewModel.socialLoginStudent(token: firebaseIdToken);
       } else if (role == 'instructor') {
-        authViewModel.socialLoginInstructor(token: firebaseIdToken ?? "");
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select a role before social login'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        authViewModel.socialLoginInstructor(token: firebaseIdToken);
       }
     } catch (e) {
+      debugPrint('Google sign-in error: $e');
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Google login failed: $e')));
     }
   }
 
   // =================== GitHub Sign In ===================
-  Future<void> _githubSignIn(String role) async {
+  Future<void> _githubSignIn(String? role) async {
+    if (role == null || role.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a role before social login'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     try {
       final githubProvider = GithubAuthProvider();
       final userCredential =
@@ -333,9 +372,32 @@ class _LoginScreenState extends State<LoginScreen> {
         authViewModel.socialLoginInstructor(token: firebaseIdToken);
       }
     } catch (e) {
+      debugPrint('GitHub sign-in error: $e');
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('GitHub login failed: $e')));
     }
+  }
+
+  // Try to resolve role from returned user object (if backend includes it)
+  String? _resolveRoleFromUser(dynamic userObj) {
+    try {
+      if (userObj == null) return null;
+
+      // If it's a Map-like
+      if (userObj is Map) {
+        if (userObj.containsKey('role')) return userObj['role']?.toString();
+        if (userObj.containsKey('userType'))
+          return userObj['userType']?.toString();
+        if (userObj.containsKey('type')) return userObj['type']?.toString();
+      }
+
+      // If it's a class with a `role` getter/field
+      final dynamic maybeRole = (userObj as dynamic).role;
+      if (maybeRole != null) return maybeRole.toString();
+    } catch (_) {
+      // ignore
+    }
+    return null;
   }
 }
 

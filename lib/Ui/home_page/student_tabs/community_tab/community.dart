@@ -1,91 +1,173 @@
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/widgets/create_post_dialog.dart';
 import 'package:flutter/material.dart';
-import 'package:codexa_mobile/Ui/utils/widgets/custom_post_card.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/comment_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/likes_cubit.dart';
+import 'package:codexa_mobile/Domain/entities/community_entity.dart';
+import 'package:codexa_mobile/Ui/home_page/additional_screens/post_details_screen.dart';
+import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
+import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 
-class CommunityStudentTab extends StatelessWidget {
+class CommunityStudentTab extends StatefulWidget {
   const CommunityStudentTab({super.key});
+
+  @override
+  State<CommunityStudentTab> createState() => _CommunityStudentTabState();
+}
+
+class _CommunityStudentTabState extends State<CommunityStudentTab> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CommunityPostsCubit>().fetchPosts();
+    });
+  }
+
+  void _showCreatePostDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<CommunityPostsCubit>(),
+        child: const CreatePostDialog(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth > 700;
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1000),
-                  child: isWide ? _buildGridLayout() : _buildListLayout(),
-                ),
+      body: BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
+        buildWhen: (prev, curr) => prev != curr,
+        builder: (context, state) {
+          if (state is CommunityPostsLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is CommunityPostsError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline,
+                      size: 64, color: Colors.red.shade300),
+                  const SizedBox(height: 16),
+                  Text(
+                    state.message,
+                    style: TextStyle(color: Colors.grey.shade600),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () =>
+                        context.read<CommunityPostsCubit>().fetchPosts(),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
               ),
             );
-          },
+          }
+
+          if (state is CommunityPostsLoaded) {
+            final posts = state.posts;
+
+            if (posts.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.post_add, size: 80, color: Colors.grey.shade300),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No posts yet',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Be the first to share something!',
+                      style: TextStyle(color: Colors.grey.shade500),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 700;
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1000),
+                      child: isWide
+                          ? Wrap(
+                              spacing: 16,
+                              runSpacing: 16,
+                              children: posts.map((post) {
+                                return SizedBox(
+                                  width: 480,
+                                  child: _buildPostCard(context, post),
+                                );
+                              }).toList(),
+                            )
+                          : Column(
+                              children: posts.map((post) {
+                                return _buildPostCard(context, post);
+                              }).toList(),
+                            ),
+                    ),
+                  ),
+                );
+              },
+            );
+          }
+
+          return const Center(child: Text("No posts available"));
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showCreatePostDialog,
+        backgroundColor: AppColorsDark.accentBlue,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text(
+          'Create Post',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
     );
   }
 
-  Widget _buildListLayout() {
-    return Column(
-      children: const [
-        CustomPostCard(
-          name: "Alexei Volkov",
-          title: "Lead AI Researcher @ FutureCorp",
-          content:
-              "Just published a new article on the ethical implications of advanced AI. Would love to hear your thoughts! #AI #Ethics #FutureTech",
-          image:
-              "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80",
-          likes: "1.2k",
-          comments: "98",
-        ),
-        SizedBox(height: 16),
-        CustomPostCard(
-          name: "Sarah Chen",
-          title: "Data Scientist @ Innovate Inc.",
-          content:
-              "Excited to share my latest project on predictive modeling for market trends. Check out the GitHub repo in my profile! #DataScience #MachineLearning #BigData",
-          image:
-              "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80",
-          likes: "845",
-          comments: "52",
-        ),
-      ],
-    );
-  }
+  Widget _buildPostCard(BuildContext context, CommunityEntity post) {
+    return PostCard(
+      post: post,
+      onTap: () {
+        final commentCubit = context.read<CommentCubit>();
+        final likeCubit = context.read<LikeCubit>();
+        final postsCubit = context.read<CommunityPostsCubit>();
 
-  Widget _buildGridLayout() {
-    return Wrap(
-      spacing: 16,
-      runSpacing: 16,
-      children: const [
-        SizedBox(
-          width: 480,
-          child: CustomPostCard(
-            name: "Alexei Volkov",
-            title: "Lead AI Researcher @ FutureCorp",
-            content:
-                "Just published a new article on the ethical implications of advanced AI. Would love to hear your thoughts! #AI #Ethics #FutureTech",
-            image:
-                "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80",
-            likes: "1.2k",
-            comments: "98",
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: commentCubit),
+                BlocProvider.value(value: likeCubit),
+                BlocProvider.value(value: postsCubit),
+              ],
+              child: PostDetailsScreen(post: post),
+            ),
           ),
-        ),
-        SizedBox(
-          width: 480,
-          child: CustomPostCard(
-            name: "Sarah Chen",
-            title: "Data Scientist @ Innovate Inc.",
-            content:
-                "Excited to share my latest project on predictive modeling for market trends. Check out the GitHub repo in my profile! #DataScience #MachineLearning #BigData",
-            image:
-                "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80",
-            likes: "845",
-            comments: "52",
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 }

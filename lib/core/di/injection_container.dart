@@ -3,6 +3,7 @@ import 'package:codexa_mobile/Data/Repository/auth_repository.dart';
 import 'package:codexa_mobile/Data/Repository/courses_repository.dart';
 import 'package:codexa_mobile/Data/Repository/coumminty_repo_impl.dart';
 import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
+import 'package:codexa_mobile/Data/services/likes_persistence_service.dart';
 import 'package:codexa_mobile/Domain/repo/add_course_repo.dart';
 import 'package:codexa_mobile/Domain/repo/auth_repo.dart';
 import 'package:codexa_mobile/Domain/repo/community_repo.dart';
@@ -89,6 +90,11 @@ void _registerDataSources() {
   // Reads token dynamically from SharedPreferences in interceptor
   sl.registerLazySingleton<ApiManager>(
     () => ApiManager(prefs: sl<SharedPreferences>()),
+  );
+
+  // LikesPersistenceService - LazySingleton for persistent likes storage
+  sl.registerLazySingleton<LikesPersistenceService>(
+    () => LikesPersistenceService(sl<SharedPreferences>()),
   );
 }
 
@@ -242,7 +248,7 @@ void _registerCubits() {
 
 void _registerProviders() {
   // UserProvider - LazySingleton with injected SharedPreferences
-  sl.registerLazySingleton(
+  sl.registerFactory(
     () => UserProvider(sl<SharedPreferences>()),
   );
 

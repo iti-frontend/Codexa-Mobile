@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
 import 'package:codexa_mobile/Data/constants/api_constants.dart';
 import 'package:codexa_mobile/Domain/failures.dart';
@@ -27,9 +29,8 @@ class CommunityRepoImpl implements CommunityRepo {
             ? data['data']
             : (data is List ? data : []);
 
-        final posts = dataList
-            .map((item) => CommunityDto.fromJson(item))
-            .toList();
+        final posts =
+            dataList.map((item) => CommunityDto.fromJson(item)).toList();
 
         return Right(posts);
       } else {
@@ -48,18 +49,27 @@ class CommunityRepoImpl implements CommunityRepo {
   @override
   Future<Either<Failures, CommunityEntity>> createPost({
     required String content,
-    String? image,
+    File? imageFile,
     dynamic linkUrl,
     List<dynamic>? attachments,
   }) async {
     try {
+      // Backend expects JSON, not multipart
+      // For now, create text-only posts since we don't have image upload endpoint
+      String? imageUrl;
+      if (imageFile != null) {
+        print(
+            'WARNING: Image upload not implemented. Creating text-only post.');
+      }
+
       final response = await apiManager.postData(
         ApiConstants.communityCreatePost,
         body: {
           "content": content,
-          "image": image,
-          "linkUrl": linkUrl,
-          "attachments": attachments,
+          if (imageUrl != null) "image": imageUrl,
+          if (linkUrl != null) "linkUrl": linkUrl,
+          if (attachments != null && attachments.isNotEmpty)
+            "attachments": attachments,
         },
       );
 
@@ -161,7 +171,7 @@ class CommunityRepoImpl implements CommunityRepo {
   Future<Either<Failures, bool>> deletePost({required String postId}) async {
     try {
       final response =
-      await apiManager.deleteData(ApiConstants.communityDeletePost(postId));
+          await apiManager.deleteData(ApiConstants.communityDeletePost(postId));
 
       if (response.statusCode == 200) {
         return const Right(true);

@@ -1,8 +1,8 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class UserProvider extends ChangeNotifier {
   final SharedPreferences prefs;
@@ -11,20 +11,28 @@ class UserProvider extends ChangeNotifier {
   String? role;
   dynamic user;
 
-  UserProvider(this.prefs) {
-    // ✅ Schedule loadUser to run after build completes
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      loadUser();
-    });
-  }
+  bool _loaded = false;
 
+  UserProvider(this.prefs);
+
+  /// يجب استدعاؤها مرة واحدة في main.dart بعد إنشاء provider
   Future<void> loadUser() async {
+    if (_loaded) return;
+    _loaded = true;
+
     token = prefs.getString('token');
     role = prefs.getString('role');
+
     final userJson = prefs.getString('user');
+
     if (userJson != null) {
-      user = jsonDecode(userJson);
+      try {
+        user = jsonDecode(userJson);
+      } catch (e) {
+        print("Error decoding user json: $e");
+      }
     }
+
     notifyListeners();
   }
 
@@ -36,9 +44,15 @@ class UserProvider extends ChangeNotifier {
     this.token = token;
     this.role = role;
     this.user = user;
+    _loaded = true;
 
     await prefs.setString('token', token);
     await prefs.setString('role', role);
+
+    if (user != null) {
+      String encoded = jsonEncode(user);
+      await prefs.setString('user', encoded);
+    }
 
     notifyListeners();
   }
@@ -47,8 +61,14 @@ class UserProvider extends ChangeNotifier {
     token = null;
     role = null;
     user = null;
+    _loaded = false;
+
+    // 🟢 Sign out from Firebase + Google
+    await FirebaseAuth.instance.signOut();
+    await GoogleSignIn().signOut();
 
     await prefs.clear();
+    await prefs.reload();
 
     notifyListeners();
   }
