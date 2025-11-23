@@ -1,5 +1,6 @@
 import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/video_player_course.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/enroll_cubit/enroll_courses_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/enroll_cubit/enroll_courses_state.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
@@ -8,13 +9,49 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 
-class CourseDetails extends StatelessWidget {
+class CourseDetails extends StatefulWidget {
   final CourseEntity course;
 
   const CourseDetails({
     super.key,
     required this.course,
   });
+
+  @override
+  State<CourseDetails> createState() => _CourseDetailsState();
+}
+
+class _CourseDetailsState extends State<CourseDetails> {
+  late CourseEntity _currentCourse;
+  bool _isEnrolled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentCourse = widget.course;
+    _checkEnrollmentStatus();
+  }
+
+  void _checkEnrollmentStatus() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userId = _getUserId(userProvider.user);
+
+    if (userId != null && _currentCourse.enrolledStudents != null) {
+      setState(() {
+        _isEnrolled = _currentCourse.enrolledStudents!.contains(userId);
+      });
+    }
+  }
+
+  String? _getUserId(dynamic user) {
+    if (user == null) return null;
+    if (user is Map) return user['_id']?.toString() ?? user['id']?.toString();
+    try {
+      return (user as dynamic).id?.toString();
+    } catch (_) {
+      return null;
+    }
+  }
 
   String formatDate(String? date) {
     if (date == null) return "N/A";
@@ -30,7 +67,7 @@ class CourseDetails extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(course.title ?? "Course Details"),
+        title: Text(_currentCourse.title ?? "Course Details"),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.black,
@@ -43,8 +80,8 @@ class CourseDetails extends StatelessWidget {
             _sectionTitle(Icons.article_outlined, "Description"),
             const SizedBox(height: 10),
             Text(
-              course.description?.isNotEmpty == true
-                  ? course.description!
+              _currentCourse.description?.isNotEmpty == true
+                  ? _currentCourse.description!
                   : "No description available for this course.",
               style: const TextStyle(
                 fontSize: 16,
@@ -57,32 +94,32 @@ class CourseDetails extends StatelessWidget {
             _buildDetailItem(
               icon: Icons.category_outlined,
               title: "Category",
-              value: course.category ?? "No category",
+              value: _currentCourse.category ?? "No category",
             ),
             const SizedBox(height: 20),
             _buildDetailItem(
               icon: Icons.attach_money_outlined,
               title: "Price",
-              value: "\$${course.price ?? 0}",
+              value: "\$${_currentCourse.price ?? 0}",
               valueColor: AppColorsDark.accentBlue,
             ),
             const SizedBox(height: 20),
             _buildDetailItem(
               icon: Icons.stacked_bar_chart,
               title: "Level",
-              value: course.level ?? "N/A",
+              value: _currentCourse.level ?? "N/A",
               valueColor: AppColorsDark.secondaryText,
             ),
             const SizedBox(height: 25),
             const Divider(),
-            if (course.instructor != null)
+            if (_currentCourse.instructor != null)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _sectionTitle(Icons.person_outline, "Instructor"),
                   const SizedBox(height: 10),
                   Text(
-                    course.instructor!.name ?? "N/A",
+                    _currentCourse.instructor!.name ?? "N/A",
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
@@ -90,7 +127,7 @@ class CourseDetails extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    course.instructor!.email ?? "N/A",
+                    _currentCourse.instructor!.email ?? "N/A",
                     style: const TextStyle(
                       fontSize: 15,
                       color: AppColorsDark.secondaryText,
@@ -102,92 +139,19 @@ class CourseDetails extends StatelessWidget {
               ),
             _sectionTitle(Icons.play_circle_outline, "Videos"),
             const SizedBox(height: 10),
-            if (course.videos != null && course.videos!.isNotEmpty)
+            if (_currentCourse.videos != null &&
+                _currentCourse.videos!.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: course.videos!.map((video) {
+                children: _currentCourse.videos!.map((video) {
                   final v = video as Map<String, dynamic>;
                   final videoUrl = v['url'] ?? '';
                   final videoTitle = v['title'] ?? 'Untitled Video';
 
-                  return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 6,
-                          offset: const Offset(0, 3),
-                        )
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppColorsDark.accentBlue,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.play_arrow_rounded,
-                            color: Colors.white,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            videoTitle,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColorsDark.accentBlue,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            elevation: 0,
-                          ),
-                          onPressed: () {
-                            if (videoUrl.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text("Video URL is empty")),
-                              );
-                              return;
-                            }
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    VideoPlayerScreen(url: videoUrl),
-                              ),
-                            );
-                          },
-                          child: const Text(
-                            "Watch",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  return _buildVideoItem(
+                    videoTitle: videoTitle,
+                    videoUrl: videoUrl,
+                    isLocked: !_isEnrolled && !isInstructor,
                   );
                 }).toList(),
               )
@@ -205,21 +169,21 @@ class CourseDetails extends StatelessWidget {
               icon: Icons.people_outline,
               title: "Enrolled Students",
               value:
-                  "${course.enrolledStudents?.length ?? 0} student(s) enrolled",
+                  "${_currentCourse.enrolledStudents?.length ?? 0} student(s) enrolled",
             ),
             const SizedBox(height: 25),
             _buildDetailItem(
               icon: Icons.access_time_outlined,
               title: "Created At",
-              value: formatDate(course.createdAt),
+              value: formatDate(_currentCourse.createdAt),
             ),
             const SizedBox(height: 10),
             _buildDetailItem(
               icon: Icons.update,
               title: "Updated At",
-              value: formatDate(course.updatedAt),
+              value: formatDate(_currentCourse.updatedAt),
             ),
-            if (!isInstructor) ...[
+            if (!isInstructor && !_isEnrolled) ...[
               const SizedBox(height: 40),
               Center(
                 child: SizedBox(
@@ -227,10 +191,42 @@ class CourseDetails extends StatelessWidget {
                   child: BlocConsumer<EnrollCubit, EnrollState>(
                     listener: (context, state) {
                       if (state is EnrollSuccess) {
+                        // Update enrollment status
+                        setState(() {
+                          _isEnrolled = true;
+                          // Update the course's enrolled students list
+                          final userId = _getUserId(userProvider.user);
+                          if (userId != null) {
+                            _currentCourse = CourseEntity(
+                              id: _currentCourse.id,
+                              title: _currentCourse.title,
+                              description: _currentCourse.description,
+                              price: _currentCourse.price,
+                              category: _currentCourse.category,
+                              level: _currentCourse.level,
+                              instructor: _currentCourse.instructor,
+                              enrolledStudents: [
+                                ...(_currentCourse.enrolledStudents ?? []),
+                                userId
+                              ],
+                              videos: _currentCourse.videos,
+                              progress: _currentCourse.progress,
+                              createdAt: _currentCourse.createdAt,
+                              updatedAt: _currentCourse.updatedAt,
+                              v: _currentCourse.v,
+                            );
+                          }
+                        });
+
+                        // Refresh courses list
+                        context.read<StudentCoursesCubit>().fetchCourses();
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Enrolled successfully!'),
+                            content: Text(
+                                'Enrolled successfully! Videos are now unlocked.'),
                             behavior: SnackBarBehavior.floating,
+                            backgroundColor: Colors.green,
                           ),
                         );
                       } else if (state is EnrollFailureState) {
@@ -238,6 +234,7 @@ class CourseDetails extends StatelessWidget {
                           SnackBar(
                             content: Text(state.errorMessage),
                             behavior: SnackBarBehavior.floating,
+                            backgroundColor: Colors.red,
                           ),
                         );
                       }
@@ -257,11 +254,16 @@ class CourseDetails extends StatelessWidget {
                             ? null
                             : () {
                                 final cubit = context.read<EnrollCubit>();
-                                cubit.enroll(courseId: course.id!);
+                                cubit.enroll(courseId: _currentCourse.id!);
                               },
                         child: isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text(
                                 "Enroll Now",
@@ -279,6 +281,127 @@ class CourseDetails extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildVideoItem({
+    required String videoTitle,
+    required String videoUrl,
+    required bool isLocked,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isLocked ? Colors.grey.shade100 : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border:
+            isLocked ? Border.all(color: Colors.grey.shade300, width: 1) : null,
+        boxShadow: isLocked
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                )
+              ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isLocked ? Colors.grey.shade400 : AppColorsDark.accentBlue,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isLocked ? Icons.lock_outline : Icons.play_arrow_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  videoTitle,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isLocked ? Colors.grey.shade600 : Colors.black87,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (isLocked) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    "Enroll to unlock",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade500,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          if (isLocked)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                "Locked",
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            )
+          else
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColorsDark.accentBlue,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+              ),
+              onPressed: () {
+                if (videoUrl.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Video URL is empty")),
+                  );
+                  return;
+                }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => VideoPlayerScreen(url: videoUrl),
+                  ),
+                );
+              },
+              child: const Text(
+                "Watch",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

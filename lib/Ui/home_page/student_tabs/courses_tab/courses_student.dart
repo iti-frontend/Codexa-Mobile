@@ -93,7 +93,7 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'My Enrolled Courses',
+                          'My Courses',
                           style: TextStyle(
                             color: AppColorsDark.primaryText,
                             fontSize: 24,
@@ -104,7 +104,7 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: AppColorsDark.secondaryText,
+                            color: AppColorsDark.primaryText,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Center(
@@ -154,7 +154,7 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                 width: 280,
                                 margin: const EdgeInsets.only(right: 16),
                                 decoration: BoxDecoration(
-                                  color: AppColorsDark.primaryText,
+                                  color: Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
