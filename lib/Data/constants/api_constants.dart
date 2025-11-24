@@ -96,9 +96,7 @@ class ApiConstants {
   // ============================
   // !Profile
   // ============================
-  static String studentEndpointProfile(String studentId) =>
-      '/students/$studentId';
+  static String studentEndpointProfile= '/students/profile/';
 
-  static String instructorEndpointProfile(String instructorId) =>
-      '/instructors/$instructorId';
+  static String instructorEndpointProfile= '/instructors/profile/';
 }

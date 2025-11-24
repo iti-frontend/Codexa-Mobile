@@ -101,29 +101,18 @@ class _AppInitializerState extends State<AppInitializer> {
     final coursesRepo = CoursesRepoImpl(apiManager);
     final getCoursesUseCase = GetCoursesUseCase(coursesRepo);
     final courseInstructorRepo =
-        CourseInstructorRepoImpl(apiManager: apiManager);
+    CourseInstructorRepoImpl(apiManager: apiManager);
     final communityRepo = CommunityRepoImpl(apiManager);
     final getAllPostsUseCase = GetAllPostsUseCase(communityRepo);
     final createPostUseCase = CreatePostUseCase(communityRepo);
     final toggleLikeUseCase = ToggleLikeUseCase(communityRepo);
     final addCommentUseCase = AddCommentUseCase(communityRepo);
     final addReplyUseCase = AddReplyUseCase(communityRepo);
-    final profileRepo = ProfileRepoImpl(apiManager);
-    final updateStudentProfileUseCase =
-        UpdateStudentProfileUseCase(profileRepo);
-    final updateInstructorProfileUseCase =
-        UpdateInstructorProfileUseCase(profileRepo);
 
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
-        Provider<UpdateStudentProfileUseCase>(
-          create: (_) => updateStudentProfileUseCase,
-        ),
-        Provider<UpdateInstructorProfileUseCase>(
-          create: (_) => updateInstructorProfileUseCase,
-        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -135,7 +124,7 @@ class _AppInitializerState extends State<AppInitializer> {
               loginInstructorUseCase: LoginInstructorUseCase(authRepo),
               registerInstructorUseCase: RegisterInstructorUseCase(authRepo),
               socialLoginInstructorUseCase:
-                  SocialLoginInstructorUseCase(authRepo),
+              SocialLoginInstructorUseCase(authRepo),
             ),
           ),
           BlocProvider(
@@ -144,7 +133,7 @@ class _AppInitializerState extends State<AppInitializer> {
               socialLoginStudentUseCase: SocialLoginStudentUseCase(authRepo),
               registerInstructorUseCase: RegisterInstructorUseCase(authRepo),
               socialLoginInstructorUseCase:
-                  SocialLoginInstructorUseCase(authRepo),
+              SocialLoginInstructorUseCase(authRepo),
             ),
           ),
           BlocProvider(
@@ -161,7 +150,7 @@ class _AppInitializerState extends State<AppInitializer> {
           BlocProvider(
             create: (context) {
               final userProvider =
-                  Provider.of<UserProvider>(context, listen: false);
+              Provider.of<UserProvider>(context, listen: false);
               return EnrollCubit(
                 enrollUseCase: GetCoursesUseCase(
                   CoursesRepoImpl(ApiManager(token: userProvider.token)),
@@ -182,7 +171,7 @@ class _AppInitializerState extends State<AppInitializer> {
         ],
         child: MyApp(
             initialRoute:
-                _token == null ? SplashScreen.routeName : HomeScreen.routeName),
+            _token == null ? SplashScreen.routeName : HomeScreen.routeName),
       ),
     );
   }
@@ -206,20 +195,55 @@ class MyApp extends StatelessWidget {
         LoginScreen.routeName: (_) => LoginScreen(),
         HomeScreen.routeName: (_) => HomeScreen(),
         ProfileScreen.routeName: (_) {
-          final userProvider =
-              Provider.of<UserProvider>(context, listen: false);
+          final userProvider = Provider.of<UserProvider>(context, listen: false);
+          final token = userProvider.token;
+
+          print('🎯 ProfileScreen Route - User type: ${userProvider.user.runtimeType}');
+          print('🎯 ProfileScreen Route - Token: ${token != null ? "Present" : "Missing"}');
 
           if (userProvider.user is StudentEntity) {
             final student = userProvider.user as StudentEntity;
-            return ProfileScreen<StudentEntity>(
-              user: student,
-              userType: 'Student',
+
+            // Create fresh instances for this route
+            final apiManager = ApiManager(token: token);
+            final profileRepo = ProfileRepoImpl(apiManager);
+            final updateStudentProfileUseCase = UpdateStudentProfileUseCase(profileRepo);
+
+            return BlocProvider<ProfileCubit<StudentEntity>>(
+              create: (context) {
+                print('🎯 Creating ProfileCubit for Student');
+                print('📝 Student ID: ${student.id}');
+
+                return ProfileCubit<StudentEntity>(
+                  updateProfileUseCase: updateStudentProfileUseCase,
+                );
+              },
+              child: ProfileScreen<StudentEntity>(
+                user: student,
+                userType: 'Student',
+              ),
             );
           } else if (userProvider.user is InstructorEntity) {
             final instructor = userProvider.user as InstructorEntity;
-            return ProfileScreen<InstructorEntity>(
-              user: instructor,
-              userType: 'Instructor',
+
+            // Create fresh instances for this route
+            final apiManager = ApiManager(token: token);
+            final profileRepo = ProfileRepoImpl(apiManager);
+            final updateInstructorProfileUseCase = UpdateInstructorProfileUseCase(profileRepo);
+
+            return BlocProvider<ProfileCubit<InstructorEntity>>(
+              create: (context) {
+                print('🎯 Creating ProfileCubit for Instructor');
+                print('📝 Instructor ID: ${instructor.id}');
+
+                return ProfileCubit<InstructorEntity>(
+                  updateProfileUseCase: updateInstructorProfileUseCase,
+                );
+              },
+              child: ProfileScreen<InstructorEntity>(
+                user: instructor,
+                userType: 'Instructor',
+              ),
             );
           }
 

@@ -52,35 +52,7 @@ class _HomescreenState extends State<HomeScreen> {
   }
 
   void _navigateToProfileScreen(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-
-    if (userProvider.user is StudentEntity) {
-      final student = userProvider.user as StudentEntity;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ProfileScreen<StudentEntity>(
-            user: student,
-            userType: 'Student',
-          ),
-        ),
-      );
-    } else if (userProvider.user is InstructorEntity) {
-      final instructor = userProvider.user as InstructorEntity;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ProfileScreen<InstructorEntity>(
-            user: instructor,
-            userType: 'Instructor',
-          ),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User data not available')),
-      );
-    }
+    Navigator.pushNamed(context, ProfileScreen.routeName);
   }
 
   String _getUserProfileImage() {

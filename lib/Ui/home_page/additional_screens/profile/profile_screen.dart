@@ -1,29 +1,10 @@
 import 'dart:io';
-import 'package:codexa_mobile/Domain/usecases/profile/update_instructor_profile_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/profile/update_student_profile_usecase.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_cubit/profile_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
-import 'package:codexa_mobile/Domain/usecases/profile/update_profile_usecase.dart';
-import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
-import 'profile_cubit/profile_cubit.dart';
-
-// ui/screens/profile_screen.dart
-import 'dart:io';
-import 'package:codexa_mobile/Domain/usecases/profile/update_instructor_profile_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/profile/update_student_profile_usecase.dart';
-import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_cubit/profile_states.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
-//import 'package:image_picker/image_picker.dart';
-import 'package:codexa_mobile/Domain/entities/student_entity.dart';
-import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
-import 'package:codexa_mobile/Domain/usecases/profile/update_profile_usecase.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'profile_cubit/profile_cubit.dart';
@@ -51,13 +32,14 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   File? _selectedImage;
 
   // Image picker fields
-  //final ImagePicker _imagePicker = ImagePicker();
   bool _isPickingImage = false;
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
+    print('🎯 ProfileScreen initialized for ${widget.userType}');
+    print('👤 User: ${widget.user}');
   }
 
   void _initializeControllers() {
@@ -106,6 +88,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     setState(() {
       _isEditing = true;
     });
+    print('✏️ Started editing profile');
   }
 
   void _cancelEditing() {
@@ -114,76 +97,18 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
       _selectedImage = null;
       _initializeControllers(); // Reset to original values
     });
+    print('❌ Cancelled editing');
   }
 
   // Image picking methods
   Future<void> _pickImageFromGallery() async {
-    // if (_isPickingImage) return;
-
-    // setState(() {
-    //   _isPickingImage = true;
-    // });
-
-    // try {
-    //   final XFile? image = await _imagePicker.pickImage(
-    //     source: ImageSource.gallery,
-    //     maxWidth: 800,
-    //     maxHeight: 800,
-    //     imageQuality: 80,
-    //   );
-
-    //   if (image != null && mounted) {
-    //     setState(() {
-    //       _selectedImage = File(image.path);
-    //     });
-    //     _showSuccessSnackBar('Image selected from gallery');
-    //   }
-    // } catch (e) {
-    //   if (mounted) {
-    //     _showErrorSnackBar(
-    //         'Failed to pick image from gallery: ${_getUserFriendlyError(e)}');
-    //   }
-    // } finally {
-    //   if (mounted) {
-    //     setState(() {
-    //       _isPickingImage = false;
-    //     });
-    //   }
-    // }
+    // Image picking implementation commented out
+    print('🖼️ Pick image from gallery');
   }
 
   Future<void> _takePhotoWithCamera() async {
-    // if (_isPickingImage) return;
-
-    // setState(() {
-    //   _isPickingImage = true;
-    // });
-
-    // try {
-    //   final XFile? image = await _imagePicker.pickImage(
-    //     source: ImageSource.camera,
-    //     maxWidth: 800,
-    //     maxHeight: 800,
-    //     imageQuality: 80,
-    //   );
-
-    //   if (image != null && mounted) {
-    //     setState(() {
-    //       _selectedImage = File(image.path);
-    //     });
-    //     _showSuccessSnackBar('Photo taken successfully');
-    //   }
-    // } catch (e) {
-    //   if (mounted) {
-    //     _showErrorSnackBar('Failed to take photo: ${_getUserFriendlyError(e)}');
-    //   }
-    // } finally {
-    //   if (mounted) {
-    //     setState(() {
-    //       _isPickingImage = false;
-    //     });
-    //   }
-    // }
+    // Camera implementation commented out
+    print('📸 Take photo with camera');
   }
 
   String _getUserFriendlyError(dynamic error) {
@@ -223,8 +148,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 child: Text(
                   'Change Profile Picture',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               if (_isPickingImage)
@@ -314,9 +239,11 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   }
 
   T _createUpdatedUser() {
+    print('🔄 Creating updated user...');
+
     if (widget.user is StudentEntity) {
       final original = widget.user as StudentEntity;
-      return StudentEntity(
+      final updatedStudent = StudentEntity(
         id: original.id,
         name: nameController.text.trim(),
         email: emailController.text.trim(),
@@ -330,9 +257,11 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         authProvider: original.authProvider,
         token: original.token,
       ) as T;
+      print('📝 Updated Student: ${updatedStudent.toString()}');
+      return updatedStudent;
     } else if (widget.user is InstructorEntity) {
       final original = widget.user as InstructorEntity;
-      return InstructorEntity(
+      final updatedInstructor = InstructorEntity(
         id: original.id,
         name: nameController.text.trim(),
         email: emailController.text.trim(),
@@ -346,17 +275,22 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         token: original.token,
         isAdmin: original.isAdmin,
       ) as T;
+      print('📝 Updated Instructor: ${updatedInstructor.toString()}');
+      return updatedInstructor;
     }
     throw Exception('Unsupported user type');
   }
 
   void _updateAuthProvider(T updatedUser) {
+    print('🔄 Updating auth provider with new user data');
     final authProvider = Provider.of<UserProvider>(context, listen: false);
     if (updatedUser is StudentEntity) {
       authProvider.user = updatedUser;
+      print('✅ Updated Student in auth provider');
     } else if (updatedUser is InstructorEntity) {
       // If you have a separate instructor provider, update it here
       // authProvider.instructor = updatedUser;
+      print('✅ Updated Instructor in auth provider');
     }
   }
 
@@ -385,204 +319,175 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return Stack(
-      children: [
-        BlocProvider<ProfileCubit<T>>(
-          create: (_) => ProfileCubit<T>(
-            updateProfileUseCase: _getUpdateProfileUseCase(),
-          ),
-          child: BlocConsumer<ProfileCubit<T>, ProfileState>(
-            listener: (context, state) {
-              if (state is ProfileSuccess<T>) {
-                _updateAuthProvider(state.user);
+    print('🎯 Building ProfileScreen for ${widget.userType}');
 
-                setState(() {
-                  _isEditing = false;
-                  _selectedImage = null;
-                });
+    return BlocConsumer<ProfileCubit<T>, ProfileState>(
+      listener: (context, state) {
+        print('🎯 BlocConsumer Listener - Current state: $state');
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Profile updated successfully'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+        if (state is ProfileSuccess<T>) {
+          print('✅ Profile update successful!');
+          _updateAuthProvider(state.user);
 
-                Future.delayed(const Duration(milliseconds: 1500), () {
-                  if (mounted) {
-                    Navigator.pop(context);
-                  }
-                });
-              } else if (state is ProfileError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content:
-                        Text(state.failure.errorMessage ?? 'An error occurred'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            builder: (context, state) {
-              return Scaffold(
-                appBar: AppBar(
-                  backgroundColor: theme.appBarTheme.backgroundColor,
-                  title: Text("${widget.userType} Profile"),
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  actions: [
-                    if (!_isEditing)
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: _startEditing,
-                        tooltip: 'Edit Profile',
-                      ),
-                  ],
+          setState(() {
+            _isEditing = false;
+            _selectedImage = null;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (mounted) {
+              print('🔙 Navigating back after successful update');
+              Navigator.pop(context);
+            }
+          });
+        } else if (state is ProfileError) {
+          print('❌ Profile error: ${state.failure.errorMessage}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.failure.errorMessage ?? 'An error occurred'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else if (state is ProfileLoading) {
+          print('⏳ Profile update in progress...');
+        }
+      },
+      builder: (context, state) {
+        print('🎯 BlocConsumer Builder - Current state: $state');
+
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: theme.appBarTheme.backgroundColor,
+            title: Text("${widget.userType} Profile"),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                print('🔙 Back button pressed');
+                Navigator.pop(context);
+              },
+            ),
+            actions: [
+              if (!_isEditing)
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: _startEditing,
+                  tooltip: 'Edit Profile',
                 ),
-                body: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      // Profile image section
-                      _buildProfileImageSection(),
-                      const SizedBox(height: 32),
+            ],
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // Profile image section
+                _buildProfileImageSection(),
+                const SizedBox(height: 32),
 
-                      // Form fields
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              // Selected image info
-                              if (_isEditing && _selectedImage != null) ...[
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: colors.primary.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: colors.primary.withOpacity(0.3),
-                                    ),
-                                  ),
-                                  child: Row(
+                // Form fields
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Selected image info
+                        if (_isEditing && _selectedImage != null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: colors.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: colors.primary.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.check_circle,
+                                    color: colors.primary, size: 24),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
                                     children: [
-                                      Icon(Icons.check_circle,
-                                          color: colors.primary, size: 24),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'New image selected',
-                                              style: theme.textTheme.bodyMedium
-                                                  ?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                                color: colors.primary,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              _selectedImage!.path
-                                                  .split('/')
-                                                  .last,
-                                              style: theme.textTheme.bodySmall
-                                                  ?.copyWith(
-                                                color: colors.onSurface
-                                                    .withOpacity(0.7),
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ],
+                                      Text(
+                                        'New image selected',
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: colors.primary,
                                         ),
                                       ),
-                                      IconButton(
-                                        onPressed: _removeSelectedImage,
-                                        icon: Icon(Icons.delete_outline,
-                                            color: colors.error),
-                                        tooltip: 'Remove selected image',
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _selectedImage!.path
+                                            .split('/')
+                                            .last,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                          color: colors.onSurface
+                                              .withOpacity(0.7),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
                                   ),
                                 ),
-                                const SizedBox(height: 20),
+                                IconButton(
+                                  onPressed: _removeSelectedImage,
+                                  icon: Icon(Icons.delete_outline,
+                                      color: colors.error),
+                                  tooltip: 'Remove selected image',
+                                ),
                               ],
-
-                              // Name field
-                              _buildModernTextField(
-                                controller: nameController,
-                                label: "Full Name",
-                                icon: Icons.person_outline,
-                                enabled: _isEditing,
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Email field
-                              _buildModernTextField(
-                                controller: emailController,
-                                label: "Email Address",
-                                icon: Icons.email_outlined,
-                                enabled: _isEditing,
-                                keyboardType: TextInputType.emailAddress,
-                              ),
-                              const SizedBox(height: 20),
-
-                              const SizedBox(height: 40),
-
-                              // Action buttons
-                              if (_isEditing) ...[
-                                state is ProfileLoading
-                                    ? _buildLoadingState()
-                                    : _buildActionButtons(),
-                              ]
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
+                          const SizedBox(height: 20),
+                        ],
 
-        // Loading overlay for image picking
-        if (_isPickingImage)
-          Container(
-            color: Colors.black54,
-            child: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Loading...',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+                        // Name field
+                        _buildModernTextField(
+                          controller: nameController,
+                          label: "Full Name",
+                          icon: Icons.person_outline,
+                          enabled: _isEditing,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Email field
+                        _buildModernTextField(
+                          controller: emailController,
+                          label: "Email Address",
+                          icon: Icons.email_outlined,
+                          enabled: _isEditing,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 20),
+
+                        const SizedBox(height: 40),
+
+                        // Action buttons
+                        if (_isEditing) ...[
+                          state is ProfileLoading
+                              ? _buildLoadingState()
+                              : _buildActionButtons(),
+                        ]
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-      ],
+        );
+      },
     );
-  }
-
-  dynamic _getUpdateProfileUseCase() {
-    if (widget.user is StudentEntity) {
-      return context.read<UpdateStudentProfileUseCase>();
-    } else if (widget.user is InstructorEntity) {
-      return context.read<UpdateInstructorProfileUseCase>();
-    }
-    throw Exception('Unsupported user type');
   }
 
   Widget _buildModernTextField({
@@ -745,6 +650,10 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           fit: BoxFit.cover,
           width: double.infinity,
           height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            print('❌ Error loading selected image: $error');
+            return _buildDefaultProfileIcon();
+          },
         ),
       );
     }
@@ -758,6 +667,16 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              print('❌ Error loading network image: $error');
+              return _buildDefaultProfileIcon();
+            },
           ),
         );
       } else if (imageUrl.startsWith('assets/') || imageUrl.startsWith('/')) {
@@ -767,12 +686,20 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
+            errorBuilder: (context, error, stackTrace) {
+              print('❌ Error loading asset image: $error');
+              return _buildDefaultProfileIcon();
+            },
           ),
         );
       }
     }
 
     // Default placeholder
+    return _buildDefaultProfileIcon();
+  }
+
+  Widget _buildDefaultProfileIcon() {
     return Icon(
       Icons.person,
       size: 48,
@@ -798,8 +725,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             child: Text(
               "Cancel",
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -807,18 +734,45 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         Expanded(
           child: ElevatedButton(
             onPressed: () {
+              print('💾 Save Changes button pressed');
+              print('👤 Current user type: ${widget.user.runtimeType}');
+              print('📝 Name: ${nameController.text}');
+              print('📧 Email: ${emailController.text}');
+
+              // Validation
               if (nameController.text.isEmpty) {
+                print('❌ Validation failed: Name is empty');
                 _showErrorSnackBar('Please enter your name');
                 return;
               }
 
               if (emailController.text.isEmpty) {
+                print('❌ Validation failed: Email is empty');
                 _showErrorSnackBar('Please enter your email');
                 return;
               }
 
-              final updatedUser = _createUpdatedUser();
-              context.read<ProfileCubit<T>>().updateProfile(updatedUser);
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(emailController.text)) {
+                print('❌ Validation failed: Invalid email format');
+                _showErrorSnackBar('Please enter a valid email address');
+                return;
+              }
+
+              try {
+                final updatedUser = _createUpdatedUser();
+                print('🔄 Updated user created, calling cubit...');
+
+                final cubit = context.read<ProfileCubit<T>>();
+                print('🎯 Cubit found: ${cubit.runtimeType}');
+                print('🎯 Current cubit state: ${cubit.state}');
+
+                cubit.updateProfile(updatedUser);
+                print('🚀 updateProfile method called successfully');
+              } catch (e, stackTrace) {
+                print('💥 Error calling cubit: $e');
+                print('📋 Stack trace: $stackTrace');
+                _showErrorSnackBar('Error: $e');
+              }
             },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -826,14 +780,14 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 borderRadius: BorderRadius.circular(12),
               ),
               backgroundColor:
-                  Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+              Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
             ),
             child: Text(
               "Save Changes",
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: Theme.of(context).colorScheme.onPrimary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -851,8 +805,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         Text(
           'Updating profile...',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-              ),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          ),
         ),
       ],
     );
@@ -860,6 +814,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
   @override
   void dispose() {
+    print('🗑️ Disposing ProfileScreen');
     nameController.dispose();
     emailController.dispose();
     super.dispose();

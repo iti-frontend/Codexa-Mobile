@@ -37,16 +37,22 @@ class SettingsInstructorTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final instructor = userProvider.user;
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            // Profile header
-            const ProfileHeader(
-              name: 'Codexa',
-              email: 'codexa@example.com',
-              image: 'assets/images/review-1.jpg',
+            // Profile header - NOW CLICKABLE
+            GestureDetector(
+              onTap: () => _navigateToProfileScreen(context),
+              child: ProfileHeader(
+                name: instructor?.name ?? 'Codexa',
+                email: instructor?.email ?? 'codexa@example.com',
+                image: 'assets/images/review-1.jpg',
+              ),
             ),
 
             const SizedBox(height: 20),
@@ -69,9 +75,8 @@ class SettingsInstructorTab extends StatelessWidget {
                   const SettingsGridItem(
                       icon: Icons.color_lens, label: 'Theme'),
                   SettingsGridItem(
-                    icon: Icons.person_outline,
-                    label: 'Profile',
-                    onTap: () => _navigateToProfileScreen(context),
+                    icon: Icons.help_outline,
+                    label: 'Help',
                   ),
                   const SettingsGridItem(
                       icon: Icons.info_outline, label: 'About'),
@@ -87,7 +92,7 @@ class SettingsInstructorTab extends StatelessWidget {
               title: 'Logout',
               onTap: () {
                 final userProvider =
-                    Provider.of<UserProvider>(context, listen: false);
+                Provider.of<UserProvider>(context, listen: false);
                 userProvider.logout();
                 Navigator.pushReplacementNamed(context, LoginScreen.routeName);
               },

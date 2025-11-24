@@ -14,12 +14,20 @@ class ProfileRepoImpl implements ProfileRepo {
   ProfileRepoImpl(this.apiManager);
 
   @override
-  Future<Either<Failures, StudentEntity>> updateProfile({
-    required StudentEntity student,
-  }) async {
+  Future<Either<Failures, StudentEntity>> updateStudentProfile(
+      StudentEntity student,
+      ) async {
     try {
+      print('🌐 Calling API for student profile update...');
+      print('🔗 Endpoint: ${ApiConstants.studentEndpointProfile}');
+      print('📦 Request Body: ${{
+        "name": student.name,
+        "email": student.email,
+        "profileImage": student.profileImage
+      }}');
+
       final response = await apiManager.putData(
-        ApiConstants.studentEndpointProfile(student.id!),
+        ApiConstants.studentEndpointProfile,
         body: {
           "name": student.name,
           "email": student.email,
@@ -27,26 +35,62 @@ class ProfileRepoImpl implements ProfileRepo {
         },
       );
 
+      print('📡 API Response Status: ${response.statusCode}');
+      print('📡 API Response Data: ${response.data}');
+
       if (response.statusCode == 200) {
-        final updatedStudentDto =
-            StudentDto.fromJson(response.data['data'] as Map<String, dynamic>);
-        return Right(updatedStudentDto.toEntity(student.token));
+        final responseData = response.data;
+
+        if (responseData is Map<String, dynamic>) {
+          if (responseData.containsKey('student')) {
+            print('✅ Response has student field');
+            final studentData = responseData['student'];
+            if (studentData is Map<String, dynamic>) {
+              final updatedStudentDto = StudentDto.fromJson(studentData);
+              return Right(updatedStudentDto.toEntity(student.token));
+            } else {
+              return Left(Failures(errorMessage: 'Student data is not a Map'));
+            }
+          } else {
+            print('❌ Response missing student field. Available keys: ${responseData.keys}');
+            return Left(Failures(errorMessage: 'Response missing student data'));
+          }
+        } else {
+          return Left(Failures(errorMessage: 'Invalid response format'));
+        }
+      } else if (response.statusCode == 404) {
+        return Left(Failures(errorMessage: 'Student not found'));
       } else {
-        return Left(Failures(
-          errorMessage: response.data?['message']?.toString() ?? 'Server Error',
-        ));
+        String errorMessage = 'Failed to update profile: ${response.statusCode}';
+
+        if (response.data is Map<String, dynamic>) {
+          final errorData = response.data as Map<String, dynamic>;
+          errorMessage = errorData['message']?.toString() ?? errorMessage;
+        }
+
+        return Left(Failures(errorMessage: errorMessage));
       }
-    } catch (e) {
-      return Left(Failures(errorMessage: e.toString()));
+    } catch (e, stackTrace) {
+      print('💥 API call failed: $e');
+      print('📋 Stack trace: $stackTrace');
+      return Left(Failures(errorMessage: 'Network error: $e'));
     }
   }
-
   @override
   Future<Either<Failures, InstructorEntity>> updateInstructorProfile(
-      InstructorEntity instructor) async {
+      InstructorEntity instructor,
+      ) async {
     try {
+      print('🌐 Calling API for instructor profile update...');
+      print('🔗 Endpoint: ${ApiConstants.instructorEndpointProfile}');
+      print('📦 Request Body: ${{
+        "name": instructor.name,
+        "email": instructor.email,
+        "profileImage": instructor.profileImage,
+      }}');
+
       final response = await apiManager.putData(
-        ApiConstants.instructorEndpointProfile(instructor.id!),
+        ApiConstants.instructorEndpointProfile, // No ID in URL
         body: {
           "name": instructor.name,
           "email": instructor.email,
@@ -54,45 +98,46 @@ class ProfileRepoImpl implements ProfileRepo {
         },
       );
 
-      if (response.statusCode == 200) {
-        final updatedInstructorDto = InstructorDto.fromJson(
-            response.data['data'] as Map<String, dynamic>);
-        return Right(updatedInstructorDto.toEntity(instructor.token));
-      } else {
-        return Left(Failures(
-          errorMessage: response.data?['message']?.toString() ?? 'Server Error',
-        ));
-      }
-    } catch (e) {
-      return Left(Failures(errorMessage: e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failures, StudentEntity>> updateStudentProfile(
-    StudentEntity student,
-  ) async {
-    try {
-      final response = await apiManager.putData(
-        ApiConstants.studentEndpointProfile(student.id!),
-        body: {
-          "name": student.name,
-          "email": student.email,
-          "profileImage": student.profileImage,
-        },
-      );
+      print('📡 API Response Status: ${response.statusCode}');
+      print('📡 API Response Data: ${response.data}');
 
       if (response.statusCode == 200) {
-        final updatedStudentDto =
-            StudentDto.fromJson(response.data['data'] as Map<String, dynamic>);
-        return Right(updatedStudentDto.toEntity(student.token));
+        // Your backend returns: { message: "Profile updated", instructor: {...} }
+        final responseData = response.data;
+
+        if (responseData is Map<String, dynamic>) {
+          if (responseData.containsKey('instructor')) {
+            print('✅ Response has instructor field');
+            final instructorData = responseData['instructor'];
+            if (instructorData is Map<String, dynamic>) {
+              final updatedInstructorDto = InstructorDto.fromJson(instructorData);
+              return Right(updatedInstructorDto.toEntity(instructor.token));
+            } else {
+              return Left(Failures(errorMessage: 'Instructor data is not a Map'));
+            }
+          } else {
+            print('❌ Response missing instructor field. Available keys: ${responseData.keys}');
+            return Left(Failures(errorMessage: 'Response missing instructor data'));
+          }
+        } else {
+          return Left(Failures(errorMessage: 'Invalid response format'));
+        }
+      } else if (response.statusCode == 404) {
+        return Left(Failures(errorMessage: 'Instructor not found'));
       } else {
-        return Left(Failures(
-          errorMessage: response.data?['message']?.toString() ?? 'Server Error',
-        ));
+        String errorMessage = 'Failed to update profile: ${response.statusCode}';
+
+        if (response.data is Map<String, dynamic>) {
+          final errorData = response.data as Map<String, dynamic>;
+          errorMessage = errorData['message']?.toString() ?? errorMessage;
+        }
+
+        return Left(Failures(errorMessage: errorMessage));
       }
-    } catch (e) {
-      return Left(Failures(errorMessage: e.toString()));
+    } catch (e, stackTrace) {
+      print('💥 API call failed: $e');
+      print('📋 Stack trace: $stackTrace');
+      return Left(Failures(errorMessage: 'Network error: $e'));
     }
   }
 }
