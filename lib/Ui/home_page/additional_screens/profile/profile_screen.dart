@@ -1,0 +1,821 @@
+import 'dart:io';
+import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_cubit/profile_states.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
+import 'package:codexa_mobile/Domain/entities/student_entity.dart';
+import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
+import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
+import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
+import 'profile_cubit/profile_cubit.dart';
+import 'package:image_picker/image_picker.dart';
+
+class ProfileScreen<T> extends StatefulWidget {
+  static const String routeName = "/profile";
+
+  final T user;
+  final String userType;
+
+  const ProfileScreen({
+    super.key,
+    required this.user,
+    required this.userType,
+  });
+
+  @override
+  State<ProfileScreen<T>> createState() => _ProfileScreenState<T>();
+}
+
+class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
+  late TextEditingController nameController;
+  late TextEditingController emailController;
+  final ImagePicker _imagePicker = ImagePicker();
+  bool _isEditing = false;
+  File? _selectedImage;
+
+  // Image picker fields
+  bool _isPickingImage = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeControllers();
+    print('🎯 ProfileScreen initialized for ${widget.userType}');
+    print('👤 User: ${widget.user}');
+  }
+
+  void _initializeControllers() {
+    if (widget.user is StudentEntity) {
+      final student = widget.user as StudentEntity;
+      nameController = TextEditingController(text: student.name ?? '');
+      emailController = TextEditingController(text: student.email ?? '');
+    } else if (widget.user is InstructorEntity) {
+      final instructor = widget.user as InstructorEntity;
+      nameController = TextEditingController(text: instructor.name ?? '');
+      emailController = TextEditingController(text: instructor.email ?? '');
+    } else {
+      nameController = TextEditingController();
+      emailController = TextEditingController();
+    }
+  }
+
+  String get _userName {
+    if (widget.user is StudentEntity) {
+      return (widget.user as StudentEntity).name ?? 'Unknown Student';
+    } else if (widget.user is InstructorEntity) {
+      return (widget.user as InstructorEntity).name ?? 'Unknown Instructor';
+    }
+    return 'Unknown User';
+  }
+
+  String get _userEmail {
+    if (widget.user is StudentEntity) {
+      return (widget.user as StudentEntity).email ?? '';
+    } else if (widget.user is InstructorEntity) {
+      return (widget.user as InstructorEntity).email ?? '';
+    }
+    return '';
+  }
+
+  String get _userProfileImage {
+    if (widget.user is StudentEntity) {
+      return (widget.user as StudentEntity).profileImage ?? '';
+    } else if (widget.user is InstructorEntity) {
+      return (widget.user as InstructorEntity).profileImage ?? '';
+    }
+    return '';
+  }
+
+  void _startEditing() {
+    setState(() {
+      _isEditing = true;
+    });
+    print('✏️ Started editing profile');
+  }
+
+  void _cancelEditing() {
+    setState(() {
+      _isEditing = false;
+      _selectedImage = null;
+      _initializeControllers(); // Reset to original values
+    });
+    print('❌ Cancelled editing');
+  }
+
+  // Image picking methods
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        setState(() {
+          _selectedImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick image: $e')),
+      );
+    }
+  }
+  Future<void> _takePhotoWithCamera() async {
+    // Camera implementation commented out
+    print('📸 Take photo with camera');
+  }
+
+  String _getUserFriendlyError(dynamic error) {
+    final errorString = error.toString();
+
+    if (errorString.contains('permission') ||
+        errorString.contains('PERMISSION')) {
+      return 'Please grant camera and storage permissions in app settings';
+    } else if (errorString.contains('cancel') ||
+        errorString.contains('CANCEL')) {
+      return 'Operation cancelled';
+    } else if (errorString.contains('No implementation found')) {
+      return 'Camera/Gallery feature not available on this device';
+    } else {
+      return 'An error occurred. Please try again.';
+    }
+  }
+
+  void _showImageSourceDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Change Profile Picture',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (_isPickingImage)
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('Loading...'),
+                    ],
+                  ),
+                )
+              else ...[
+                // _buildImageSourceOption(
+                //   icon: Icons.camera_alt,
+                //   title: 'Take Photo',
+                //   onTap: _takePhotoWithCamera,
+                // ),
+                _buildImageSourceOption(
+                  icon: Icons.photo_library,
+                  title: 'Choose from Gallery',
+                  onTap: _pickImageFromGallery,
+                ),
+              ],
+              const SizedBox(height: 8),
+              Container(
+                margin: const EdgeInsets.all(16),
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Cancel'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageSourceOption({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          color: Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+        ),
+      ),
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.bodyLarge,
+      ),
+      trailing: Icon(
+        Icons.arrow_forward_ios,
+        size: 16,
+        color: Colors.grey[400],
+      ),
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
+    );
+  }
+
+  void _removeSelectedImage() {
+    setState(() {
+      _selectedImage = null;
+    });
+    _showSuccessSnackBar('Image selection removed');
+  }
+
+  T _createUpdatedUser() {
+    print('🔄 Creating updated user...');
+
+    if (widget.user is StudentEntity) {
+      final original = widget.user as StudentEntity;
+      final updatedStudent = StudentEntity(
+        id: original.id,
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        profileImage: _selectedImage != null
+            ? _selectedImage!.path
+            : original.profileImage,
+        role: original.role,
+        isAdmin: original.isAdmin,
+        isActive: original.isActive,
+        emailVerified: original.emailVerified,
+        authProvider: original.authProvider,
+        token: original.token,
+      ) as T;
+      return updatedStudent;
+    } else if (widget.user is InstructorEntity) {
+      final original = widget.user as InstructorEntity;
+      final updatedInstructor = InstructorEntity(
+        id: original.id,
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        profileImage: _selectedImage != null
+            ? _selectedImage!.path
+            : original.profileImage,
+        role: original.role,
+        isActive: original.isActive,
+        emailVerified: original.emailVerified,
+        authProvider: original.authProvider,
+        token: original.token,
+        isAdmin: original.isAdmin,
+      ) as T;
+      return updatedInstructor;
+    }
+    throw Exception('Unsupported user type');
+  }
+
+  void _updateAuthProvider(T updatedUser) {
+    print('🔄 Updating auth provider with new user data');
+    final authProvider = Provider.of<UserProvider>(context, listen: false);
+
+    // Use the new updateUser method
+    authProvider.updateUser(updatedUser);
+
+    print('✅ Updated user in auth provider: ${updatedUser.runtimeType}');
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    print('🎯 Building ProfileScreen for ${widget.userType}');
+
+    return BlocConsumer<ProfileCubit<T>, ProfileState>(
+      listener: (context, state) {
+        print('🎯 BlocConsumer Listener - Current state: $state');
+
+        if (state is ProfileSuccess<T>) {
+          print('✅ Profile update successful!');
+          _updateAuthProvider(state.user);
+
+          setState(() {
+            _isEditing = false;
+            _selectedImage = null;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (mounted) {
+              print('🔙 Navigating back after successful update');
+              Navigator.pop(context);
+            }
+          });
+        } else if (state is ProfileError) {
+          print('❌ Profile error: ${state.failure.errorMessage}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.failure.errorMessage ?? 'An error occurred'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else if (state is ProfileLoading) {
+          print('⏳ Profile update in progress...');
+        }
+      },
+      builder: (context, state) {
+        print('🎯 BlocConsumer Builder - Current state: $state');
+
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: theme.appBarTheme.backgroundColor,
+            title: Text("${widget.userType} Profile"),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                print('🔙 Back button pressed');
+                Navigator.pop(context);
+              },
+            ),
+            actions: [
+              if (!_isEditing)
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: _startEditing,
+                  tooltip: 'Edit Profile',
+                ),
+            ],
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // Profile image section
+                _buildProfileImageSection(),
+                const SizedBox(height: 32),
+
+                // Form fields
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Selected image info
+                        if (_isEditing && _selectedImage != null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: colors.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: colors.primary.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.check_circle,
+                                    color: colors.primary, size: 24),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'New image selected',
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: colors.primary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _selectedImage!.path
+                                            .split('/')
+                                            .last,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                          color: colors.onSurface
+                                              .withOpacity(0.7),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: _removeSelectedImage,
+                                  icon: Icon(Icons.delete_outline,
+                                      color: colors.error),
+                                  tooltip: 'Remove selected image',
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+
+                        // Name field
+                        _buildModernTextField(
+                          controller: nameController,
+                          label: "Full Name",
+                          icon: Icons.person_outline,
+                          enabled: _isEditing,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Email field
+                        _buildModernTextField(
+                          controller: emailController,
+                          label: "Email Address",
+                          icon: Icons.email_outlined,
+                          enabled: _isEditing,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 20),
+
+                        const SizedBox(height: 40),
+
+                        // Action buttons
+                        if (_isEditing) ...[
+                          state is ProfileLoading
+                              ? _buildLoadingState()
+                              : _buildActionButtons(),
+                        ]
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildModernTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required bool enabled,
+    TextInputType keyboardType = TextInputType.text,
+    ValueChanged<String>? onChanged,
+  }) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: enabled ? colors.surface : colors.surface.withOpacity(0.5),
+        boxShadow: [
+          if (enabled)
+            BoxShadow(
+              color: colors.shadow.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        enabled: enabled,
+        keyboardType: keyboardType,
+        onChanged: onChanged,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: enabled ? colors.onSurface : colors.onSurface.withOpacity(0.5),
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(
+            color: colors.onSurface.withOpacity(0.6),
+          ),
+          prefixIcon: Container(
+            margin: const EdgeInsets.all(12),
+            child: Icon(
+              icon,
+              color: enabled
+                  ? theme.bottomNavigationBarTheme.selectedItemColor
+                  : colors.onSurface.withOpacity(0.3),
+              size: 20,
+            ),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: colors.outline.withOpacity(0.3),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: colors.primary,
+              width: 2,
+            ),
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 18,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileImageSection() {
+    final theme = Theme.of(context);
+
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).colorScheme.surfaceVariant,
+                border: Border.all(
+                  color: theme.colorScheme.primary.withOpacity(0.2),
+                  width: 3,
+                ),
+              ),
+              child: _getProfileImageWidget(),
+            ),
+
+            // Camera icon
+            if (_isEditing)
+              Positioned(
+                bottom: 4,
+                right: 4,
+                child: GestureDetector(
+                  onTap: _showImageSourceDialog,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: theme.bottomNavigationBarTheme.selectedItemColor,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 2,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.camera_alt,
+                      color: theme.colorScheme.onPrimary,
+                      size: 16,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          _isEditing ? 'Profile Preview' : _userName,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        if (_isEditing) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Tap the camera icon to change photo',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.6),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _getProfileImageWidget() {
+    if (_selectedImage != null) {
+      return ClipOval(
+        child: Image.file(
+          _selectedImage!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            print('❌ Error loading selected image: $error');
+            return _buildDefaultProfileIcon();
+          },
+        ),
+      );
+    }
+
+    final imageUrl = _userProfileImage;
+    if (imageUrl.isNotEmpty) {
+      if (imageUrl.startsWith('http')) {
+        return ClipOval(
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              print('❌ Error loading network image: $error');
+              return _buildDefaultProfileIcon();
+            },
+          ),
+        );
+      } else if (imageUrl.startsWith('assets/') || imageUrl.startsWith('/')) {
+        return ClipOval(
+          child: Image.asset(
+            imageUrl,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (context, error, stackTrace) {
+              print('❌ Error loading asset image: $error');
+              return _buildDefaultProfileIcon();
+            },
+          ),
+        );
+      }
+    }
+
+    // Default placeholder
+    return _buildDefaultProfileIcon();
+  }
+
+  Widget _buildDefaultProfileIcon() {
+    return Icon(
+      Icons.person,
+      size: 48,
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _cancelEditing,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outline,
+              ),
+            ),
+            child: Text(
+              "Cancel",
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {
+
+              // Validation
+              if (nameController.text.isEmpty) {
+                _showErrorSnackBar('Please enter your name');
+                return;
+              }
+
+              if (emailController.text.isEmpty) {
+                _showErrorSnackBar('Please enter your email');
+                return;
+              }
+
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(emailController.text)) {
+                print('❌ Validation failed: Invalid email format');
+                _showErrorSnackBar('Please enter a valid email address');
+                return;
+              }
+
+              try {
+                final updatedUser = _createUpdatedUser();
+                final cubit = context.read<ProfileCubit<T>>();
+                cubit.updateProfile(updatedUser);
+                print('🚀 updateProfile method called successfully');
+              } catch (e, stackTrace){
+                _showErrorSnackBar('Error: $e');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              backgroundColor:
+              Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+            ),
+            child: Text(
+              "Save Changes",
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Column(
+      children: [
+        CircularProgressIndicator(
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Updating profile...',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    print('🗑️ Disposing ProfileScreen');
+    nameController.dispose();
+    emailController.dispose();
+    super.dispose();
+  }
+}

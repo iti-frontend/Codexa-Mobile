@@ -1,3 +1,6 @@
+import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
+import 'package:codexa_mobile/Domain/entities/student_entity.dart';
+import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/courses_instructor.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/home_tab_instructor/home_tab_instructor.dart';
@@ -36,6 +39,21 @@ class _HomescreenState extends State<HomeScreen> {
       _isUserLoaded = true;
     });
   }
+  void _navigateToProfileScreen(BuildContext context) {
+    Navigator.pushNamed(context, ProfileScreen.routeName);
+  }
+  String _getUserProfileImage() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    if (userProvider.user is StudentEntity) {
+      final student = userProvider.user as StudentEntity;
+      return student.profileImage ?? 'assets/images/review-1.jpg';
+    } else if (userProvider.user is InstructorEntity) {
+      final instructor = userProvider.user as InstructorEntity;
+      return instructor.profileImage ?? 'assets/images/review-1.jpg';
+    }
+    return 'assets/images/review-1.jpg'; // Fallback to dummy image
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +80,8 @@ class _HomescreenState extends State<HomeScreen> {
       CommunityInstructorTab(),
       SettingsInstructorTab(),
     ];
-
+    // Get the real user profile image
+    final userProfileImage = _getUserProfileImage();
     if (role?.toLowerCase() == "student") {
       return Scaffold(
         appBar: selectedIndex == 3
@@ -75,8 +94,9 @@ class _HomescreenState extends State<HomeScreen> {
             : AppBar(
                 automaticallyImplyLeading: false,
                 backgroundColor: theme.appBarTheme.backgroundColor,
-                title: CustomAppbar(profileImage: "assets/images/review-1.jpg"),
-              ),
+          title: GestureDetector(
+            onTap: () => _navigateToProfileScreen(context),
+            child: CustomAppbar(profileImage: userProfileImage),),              ),
         bottomNavigationBar: CustomBottomNavBar(
           selectedIndex: selectedIndex,
           onItemTapped: (index) => setState(() => selectedIndex = index),
@@ -97,8 +117,10 @@ class _HomescreenState extends State<HomeScreen> {
           : AppBar(
               automaticallyImplyLeading: false,
               backgroundColor: theme.appBarTheme.backgroundColor,
-              title: CustomAppbar(profileImage: "assets/images/review-1.jpg"),
-            ),
+        title: GestureDetector(
+          onTap: () => _navigateToProfileScreen(context),
+          child: CustomAppbar(profileImage: userProfileImage),
+        ),          ),
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: selectedIndex,
         onItemTapped: (index) => setState(() => selectedIndex = index),

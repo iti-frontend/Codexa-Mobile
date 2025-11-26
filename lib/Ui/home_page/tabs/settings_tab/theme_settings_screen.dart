@@ -4,6 +4,7 @@ import 'package:codexa_mobile/Ui/utils/provider_ui/theme_provider.dart';
 
 class ThemeSettingsScreen extends StatelessWidget {
   const ThemeSettingsScreen({super.key});
+  static const String routeName = "/theme-settings";
 
   @override
   Widget build(BuildContext context) {

@@ -11,6 +11,8 @@ class UserProvider extends ChangeNotifier {
   String? role;
   dynamic user;
 
+  bool get isLoggedIn => token != null && user != null;
+
   bool _loaded = false;
 
   UserProvider(this.prefs);
@@ -54,6 +56,30 @@ class UserProvider extends ChangeNotifier {
       await prefs.setString('user', encoded);
     }
 
+    notifyListeners();
+  }
+
+  // Update user data and notify listeners
+  Future<void> updateUser(dynamic updatedUser) async {
+    user = updatedUser;
+
+    // Also update in SharedPreferences for persistence
+    if (updatedUser != null) {
+      String encoded = jsonEncode(updatedUser);
+      await prefs.setString('user', encoded);
+    }
+
+    notifyListeners(); // This triggers UI rebuild
+    print('✅ User updated in provider and SharedPreferences');
+  }
+
+  // ADD THIS SETTER: Alternative way to update user
+  set setUser(dynamic newUser) {
+    user = newUser;
+    if (newUser != null) {
+      final encoded = jsonEncode(newUser);
+      prefs.setString('user', encoded);
+    }
     notifyListeners();
   }
 

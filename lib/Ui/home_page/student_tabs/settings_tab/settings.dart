@@ -1,4 +1,7 @@
+import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/tabs/settings_tab/theme_settings_screen.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/settings_grid_item.dart';
@@ -11,18 +14,66 @@ import 'package:provider/provider.dart';
 class SettingsStudentTab extends StatelessWidget {
   const SettingsStudentTab({super.key});
 
+  void _navigateToProfileScreen(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final student = userProvider.user;
+
+    if (student != null) {
+      Navigator.pushNamed(context, ProfileScreen.routeName);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User data not available')),
+      );
+    }
+  }
+
+  // Add these helper methods
+  String _getUserName(dynamic student) {
+    if (student is StudentEntity) {
+      return student.name ?? 'User';
+    } else if (student is Map) {
+      return student['name'] ?? 'User';
+    }
+    return 'User';
+  }
+
+  String _getUserEmail(dynamic student) {
+    if (student is StudentEntity) {
+      return student.email ?? 'user@example.com';
+    } else if (student is Map) {
+      return student['email'] ?? 'user@example.com';
+    }
+    return 'user@example.com';
+  }
+
+  String _getUserImage(dynamic student) {
+    if (student is StudentEntity) {
+      return student.profileImage ?? 'assets/images/review-1.jpg';
+    } else if (student is Map) {
+      return student['profileImage'] ?? 'assets/images/review-1.jpg';
+    }
+    return 'assets/images/review-1.jpg';
+  }
+
   @override
   Widget build(BuildContext context) {
+    // CHANGE: Use listen: true to rebuild when user data changes
+    final userProvider = Provider.of<UserProvider>(context, listen: true);
+    final student = userProvider.user;
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            // Profile header
-            const ProfileHeader(
-              name: 'Codexa',
-              email: 'codexa@example.com',
-              image: 'assets/images/review-1.jpg',
+            // Profile header - using actual user data - NOW CLICKABLE
+            GestureDetector(
+              onTap: () => _navigateToProfileScreen(context),
+              child: ProfileHeader(
+                name: _getUserName(student),
+                email: _getUserEmail(student),
+                image: _getUserImage(student),
+              ),
             ),
 
             const SizedBox(height: 20),
@@ -36,15 +87,24 @@ class SettingsStudentTab extends StatelessWidget {
                 crossAxisCount: 3,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                childAspectRatio: 1.2, // fixes overflow
-                children: const [
-                  SettingsGridItem(
+                childAspectRatio: 1.2,
+                children: [
+                  const SettingsGridItem(
                       icon: Icons.notifications, label: 'Notifications'),
-                  SettingsGridItem(icon: Icons.lock, label: 'Privacy'),
-                  SettingsGridItem(icon: Icons.language, label: 'Language'),
-                  SettingsGridItem(icon: Icons.color_lens, label: 'Theme'),
-                  SettingsGridItem(icon: Icons.help_outline, label: 'Help'),
-                  SettingsGridItem(icon: Icons.info_outline, label: 'About'),
+                  const SettingsGridItem(icon: Icons.lock, label: 'Privacy'),
+                  const SettingsGridItem(
+                      icon: Icons.language, label: 'Language'),
+                  SettingsGridItem(
+                      icon: Icons.color_lens, label: 'Theme',
+                      onTap: () {
+                      Navigator.pushNamed(context, ThemeSettingsScreen.routeName);
+                    },),
+                  const SettingsGridItem(
+                      icon: Icons.help_outline,
+                      label: 'Help'
+                  ),
+                  const SettingsGridItem(
+                      icon: Icons.info_outline, label: 'About'),
                 ],
               ),
             ),
@@ -57,7 +117,7 @@ class SettingsStudentTab extends StatelessWidget {
               title: 'Logout',
               onTap: () {
                 final userProvider =
-                    Provider.of<UserProvider>(context, listen: false);
+                Provider.of<UserProvider>(context, listen: false);
                 userProvider.logout();
                 Navigator.pushReplacementNamed(context, LoginScreen.routeName);
               },

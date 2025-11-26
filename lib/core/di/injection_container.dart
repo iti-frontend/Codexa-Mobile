@@ -2,12 +2,16 @@ import 'package:codexa_mobile/Data/Repository/add_course_repo_impl.dart';
 import 'package:codexa_mobile/Data/Repository/auth_repository.dart';
 import 'package:codexa_mobile/Data/Repository/courses_repository.dart';
 import 'package:codexa_mobile/Data/Repository/coumminty_repo_impl.dart';
+import 'package:codexa_mobile/Data/Repository/profile_repo_impl.dart'; // ADD THIS IMPORT
 import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
 import 'package:codexa_mobile/Data/services/likes_persistence_service.dart';
+import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
+import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:codexa_mobile/Domain/repo/add_course_repo.dart';
 import 'package:codexa_mobile/Domain/repo/auth_repo.dart';
 import 'package:codexa_mobile/Domain/repo/community_repo.dart';
 import 'package:codexa_mobile/Domain/repo/get_courses_repo.dart';
+import 'package:codexa_mobile/Domain/repo/profile_repo.dart'; // ADD THIS IMPORT
 import 'package:codexa_mobile/Domain/usecases/auth/login_instructor_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/login_student_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/register_instructor_usecase.dart';
@@ -27,6 +31,8 @@ import 'package:codexa_mobile/Domain/usecases/courses/delete_course_usecase.dart
 import 'package:codexa_mobile/Domain/usecases/courses/get_courses_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/update_course_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/update_course_videos_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/profile/update_student_profile_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/profile/update_instructor_profile_usecase.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_viewModel/LoginBloc.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_viewModel/register_bloc.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/comment_cubit.dart';
@@ -36,6 +42,7 @@ import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/communi
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/enroll_cubit/enroll_courses_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_cubit/profile_cubit.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -89,34 +96,38 @@ void _registerDataSources() {
   // ApiManager - LazySingleton with reactive token management
   // Reads token dynamically from SharedPreferences in interceptor
   sl.registerLazySingleton<ApiManager>(
-    () => ApiManager(prefs: sl<SharedPreferences>()),
+        () => ApiManager(prefs: sl<SharedPreferences>()),
   );
 
   // LikesPersistenceService - LazySingleton for persistent likes storage
   sl.registerLazySingleton<LikesPersistenceService>(
-    () => LikesPersistenceService(sl<SharedPreferences>()),
+        () => LikesPersistenceService(sl<SharedPreferences>()),
   );
 }
 
 void _registerRepositories() {
   // Auth Repository
   sl.registerLazySingleton<AuthRepo>(
-    () => AuthRepoImpl(sl<ApiManager>()),
+        () => AuthRepoImpl(sl<ApiManager>()),
   );
 
   // Courses Repository
   sl.registerLazySingleton<GetCoursesRepo>(
-    () => CoursesRepoImpl(sl<ApiManager>()),
+        () => CoursesRepoImpl(sl<ApiManager>()),
   );
 
   // Community Repository
   sl.registerLazySingleton<CommunityRepo>(
-    () => CommunityRepoImpl(sl<ApiManager>()),
+        () => CommunityRepoImpl(sl<ApiManager>()),
   );
 
   // Instructor Course Repository
   sl.registerLazySingleton<CourseInstructorRepo>(
-    () => CourseInstructorRepoImpl(apiManager: sl<ApiManager>()),
+        () => CourseInstructorRepoImpl(apiManager: sl<ApiManager>()),
+  );
+
+  sl.registerLazySingleton<ProfileRepo>(
+        () => ProfileRepoImpl(sl<ApiManager>()),
   );
 }
 
@@ -128,6 +139,7 @@ void _registerUseCases() {
   _registerAuthUseCases();
   _registerCoursesUseCases();
   _registerCommunityUseCases();
+  _registerProfileUseCases();
 }
 
 void _registerAuthUseCases() {
@@ -145,11 +157,11 @@ void _registerCoursesUseCases() {
   sl.registerLazySingleton(() => GetCoursesUseCase(sl<GetCoursesRepo>()));
   sl.registerLazySingleton(() => AddCourseUseCase(sl<CourseInstructorRepo>()));
   sl.registerLazySingleton(
-      () => UpdateCourseUseCase(sl<CourseInstructorRepo>()));
+          () => UpdateCourseUseCase(sl<CourseInstructorRepo>()));
   sl.registerLazySingleton(
-      () => DeleteCourseUseCase(sl<CourseInstructorRepo>()));
+          () => DeleteCourseUseCase(sl<CourseInstructorRepo>()));
   sl.registerLazySingleton(
-      () => UploadVideosUseCase(sl<CourseInstructorRepo>()));
+          () => UploadVideosUseCase(sl<CourseInstructorRepo>()));
 }
 
 void _registerCommunityUseCases() {
@@ -164,6 +176,12 @@ void _registerCommunityUseCases() {
   sl.registerLazySingleton(() => DeleteReplyUseCase(sl<CommunityRepo>()));
 }
 
+void _registerProfileUseCases() {
+  // Profile use cases
+  sl.registerLazySingleton(() => UpdateStudentProfileUseCase(sl<ProfileRepo>()));
+  sl.registerLazySingleton(() => UpdateInstructorProfileUseCase(sl<ProfileRepo>()));
+}
+
 // =============================================================================
 // PRESENTATION LAYER - CUBITS
 // =============================================================================
@@ -173,7 +191,7 @@ void _registerCubits() {
 
   // Auth Cubits
   sl.registerFactory(
-    () => AuthViewModel(
+        () => AuthViewModel(
       loginStudentUseCase: sl<LoginStudentUseCase>(),
       registerStudentUseCase: sl<RegisterStudentUseCase>(),
       socialLoginStudentUseCase: sl<SocialLoginStudentUseCase>(),
@@ -184,7 +202,7 @@ void _registerCubits() {
   );
 
   sl.registerFactory(
-    () => RegisterViewModel(
+        () => RegisterViewModel(
       registerStudentUseCase: sl<RegisterStudentUseCase>(),
       socialLoginStudentUseCase: sl<SocialLoginStudentUseCase>(),
       registerInstructorUseCase: sl<RegisterInstructorUseCase>(),
@@ -194,11 +212,11 @@ void _registerCubits() {
 
   // Courses Cubits
   sl.registerFactory(
-    () => StudentCoursesCubit(sl<GetCoursesUseCase>()),
+        () => StudentCoursesCubit(sl<GetCoursesUseCase>()),
   );
 
   sl.registerFactory(
-    () => InstructorCoursesCubit(
+        () => InstructorCoursesCubit(
       getCoursesUseCase: sl<GetCoursesUseCase>(),
       addCourseUseCase: sl<AddCourseUseCase>(),
       updateCourseUseCase: sl<UpdateCourseUseCase>(),
@@ -208,7 +226,7 @@ void _registerCubits() {
   );
 
   sl.registerFactory(
-    () => EnrollCubit(
+        () => EnrollCubit(
       enrollUseCase: sl<GetCoursesUseCase>(),
       token: sl<SharedPreferences>().getString('token') ?? '',
     ),
@@ -216,7 +234,7 @@ void _registerCubits() {
 
   // Community Cubits
   sl.registerFactory(
-    () => CommunityPostsCubit(
+        () => CommunityPostsCubit(
       getAllPostsUseCase: sl<GetAllPostsUseCase>(),
       createPostUseCase: sl<CreatePostUseCase>(),
       deletePostUseCase: sl<DeletePostUseCase>(),
@@ -224,20 +242,34 @@ void _registerCubits() {
   );
 
   sl.registerFactory(
-    () => LikeCubit(sl<ToggleLikeUseCase>()),
+        () => LikeCubit(sl<ToggleLikeUseCase>()),
   );
 
   sl.registerFactory(
-    () => CommentCubit(
+        () => CommentCubit(
       addCommentUseCase: sl<AddCommentUseCase>(),
       deleteCommentUseCase: sl<DeleteCommentUseCase>(),
     ),
   );
 
   sl.registerFactory(
-    () => ReplyCubit(
+        () => ReplyCubit(
       addReplyUseCase: sl<AddReplyUseCase>(),
       deleteReplyUseCase: sl<DeleteReplyUseCase>(),
+    ),
+  );
+
+  // Register Student ProfileCubit
+  sl.registerFactory<ProfileCubit<StudentEntity>>(
+        () => ProfileCubit<StudentEntity>(
+      updateProfileUseCase: sl<UpdateStudentProfileUseCase>(),
+    ),
+  );
+
+// Register Instructor ProfileCubit
+  sl.registerFactory<ProfileCubit<InstructorEntity>>(
+        () => ProfileCubit<InstructorEntity>(
+      updateProfileUseCase: sl<UpdateInstructorProfileUseCase>(),
     ),
   );
 }
@@ -249,7 +281,7 @@ void _registerCubits() {
 void _registerProviders() {
   // UserProvider - LazySingleton with injected SharedPreferences
   sl.registerFactory(
-    () => UserProvider(sl<SharedPreferences>()),
+        () => UserProvider(sl<SharedPreferences>()),
   );
 
   // ThemeProvider - No dependencies, but register for consistency

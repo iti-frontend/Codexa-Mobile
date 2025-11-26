@@ -22,10 +22,8 @@ class ProfileHeader extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundImage: AssetImage(image),
-            ),
+            // Updated CircleAvatar to handle both network and asset images
+            _buildProfileImage(image),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -51,6 +49,59 @@ class ProfileHeader extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildProfileImage(String imageUrl) {
+    if (imageUrl.startsWith('http')) {
+      // It's a network image
+      return CircleAvatar(
+        radius: 30,
+        backgroundColor: Colors.grey[300], // Background color while loading
+        child: ClipOval(
+          child: Image.network(
+            imageUrl,
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return _buildDefaultIcon();
+            },
+          ),
+        ),
+      );
+    } else {
+      // It's an asset image
+      return CircleAvatar(
+        radius: 30,
+        backgroundImage: AssetImage(imageUrl),
+        onBackgroundImageError: (exception, stackTrace) {
+          print('Failed to load asset image: $exception');
+        },
+        child: _buildDefaultIcon(),
+      );
+    }
+  }
+  Widget _buildLoadingIndicator() {
+    return const CircularProgressIndicator(
+      strokeWidth: 2,
+      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+    );
+  }
+
+  Widget _buildDefaultIcon() {
+    return const Icon(
+      Icons.person,
+      color: Colors.white,
+      size: 30,
     );
   }
 }

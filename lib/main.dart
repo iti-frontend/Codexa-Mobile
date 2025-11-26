@@ -1,6 +1,9 @@
+import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
+import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_view/register_role_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/tabs/settings_tab/theme_settings_screen.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/splash_screen/splash_screen.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/theme_provider.dart';
@@ -24,7 +27,8 @@ import 'Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/likes_cub
 import 'Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/comment_cubit.dart';
 import 'Ui/utils/provider_ui/auth_provider.dart';
 import 'Ui/auth/register/register_viewModel/register_bloc.dart';
-
+import 'Ui/home_page/additional_screens/profile/profile_screen.dart';
+import 'Ui/home_page/additional_screens/profile/profile_cubit/profile_cubit.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
@@ -87,6 +91,7 @@ class MyApp extends StatelessWidget {
               BlocProvider(create: (_) => sl<LikeCubit>()),
               BlocProvider(create: (_) => sl<CommentCubit>()),
               BlocProvider(create: (_) => sl<ReplyCubit>()),
+              BlocProvider(create: (_) => sl<ProfileCubit>()),
             ],
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
@@ -101,6 +106,39 @@ class MyApp extends StatelessWidget {
                 RegisterScreen.routeName: (_) => RegisterScreen(),
                 LoginScreen.routeName: (_) => LoginScreen(),
                 HomeScreen.routeName: (_) => HomeScreen(),
+                ProfileScreen.routeName: (_) {
+                  final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+                  if (userProvider.user != null) {
+                    final user = userProvider.user!;
+                    final userType = userProvider.role ?? 'User';
+
+                    if (userType.toLowerCase().contains('student') && user is StudentEntity) {
+                      return BlocProvider<ProfileCubit<StudentEntity>>(
+                        create: (context) => sl<ProfileCubit<StudentEntity>>(),
+                        child: ProfileScreen<StudentEntity>(
+                          user: user,
+                          userType: 'Student',
+                        ),
+                      );
+                    } else if (userType.toLowerCase().contains('instructor') && user is InstructorEntity) {
+                      return BlocProvider<ProfileCubit<InstructorEntity>>(
+                        create: (context) => sl<ProfileCubit<InstructorEntity>>(),
+                        child: ProfileScreen<InstructorEntity>(
+                          user: user,
+                          userType: 'Instructor',
+                        ),
+                      );
+                    }
+                  }
+
+                  return Scaffold(
+                    body: Center(
+                      child: Text('User data not available'),
+                    ),
+                  );
+                },
+                ThemeSettingsScreen.routeName: (_) => ThemeSettingsScreen(),
               },
             ),
           );
