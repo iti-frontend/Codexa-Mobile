@@ -96,7 +96,14 @@ class ApiConstants {
   // ============================
   // !Profile
   // ============================
-  static String studentEndpointProfile= '/students/profile/';
+  static String studentEndpointProfile = '/students/profile/';
 
-  static String instructorEndpointProfile= '/instructors/profile/';
+  static String instructorEndpointProfile = '/instructors/profile/';
+
+  // ============================
+  // !Favorite
+  // ============================
+
+  static String addCourseToFavorite = '/favourites/toggle';
+  static String getFavoriteCourses = '/favourites';
 }

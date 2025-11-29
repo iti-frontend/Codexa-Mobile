@@ -44,6 +44,9 @@ class CourseProgressItem extends StatelessWidget {
   final String? categoryTitle;
   final String? categoryPercentage;
   final String instructorName;
+  final bool isFavourite;
+  final bool showFavouriteButton;
+  final VoidCallback? onFavouriteTap;
 
   const CourseProgressItem({
     super.key,
@@ -53,6 +56,9 @@ class CourseProgressItem extends StatelessWidget {
     this.categoryPercentage,
     this.hasCategory = false,
     required this.instructorName,
+    this.isFavourite = false,
+    this.showFavouriteButton = false,
+    this.onFavouriteTap,
   });
 
   @override
@@ -91,14 +97,35 @@ class CourseProgressItem extends StatelessWidget {
                   ),
                 ),
               if (hasCategory) const SizedBox(height: 4),
-              Text(
-                title,
-                style: TextStyle(
-                  color: theme.dividerTheme.color,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-                overflow: TextOverflow.ellipsis,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        color: theme.dividerTheme.color,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (showFavouriteButton)
+                    InkWell(
+                      onTap: onFavouriteTap,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Icon(
+                          isFavourite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavourite
+                              ? Colors.red
+                              : theme.dividerTheme.color,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(

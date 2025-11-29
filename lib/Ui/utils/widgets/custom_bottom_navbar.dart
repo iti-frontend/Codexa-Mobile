@@ -33,9 +33,9 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
       "label": "Community",
     },
     {
-      "icon": CupertinoIcons.settings,
-      "activeIcon": CupertinoIcons.settings_solid,
-      "label": "Settings",
+      "icon": CupertinoIcons.square_favorites_alt,
+      "activeIcon": CupertinoIcons.square_favorites_alt_fill,
+      "label": "Favorites",
     },
   ];
 
