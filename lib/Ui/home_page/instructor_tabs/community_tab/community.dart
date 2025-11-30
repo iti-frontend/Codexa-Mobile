@@ -38,6 +38,8 @@ class _CommunityInstructorTabState extends State<CommunityInstructorTab> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
         buildWhen: (prev, curr) => prev != curr,
@@ -136,7 +138,7 @@ class _CommunityInstructorTabState extends State<CommunityInstructorTab> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCreatePostDialog,
-        backgroundColor: AppColorsDark.accentBlue,
+        backgroundColor: theme.progressIndicatorTheme.color,
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text(
           'Create Post',

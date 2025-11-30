@@ -92,7 +92,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   Widget build(BuildContext context) {
     final contentLength = _contentController.text.length;
     final remainingChars = maxContentLength - contentLength;
-
+    final theme = Theme.of(context);
     return BlocListener<CommunityPostsCubit, CommunityPostsState>(
       listener: (context, state) {
         if (state is PostOperationSuccess) {
@@ -125,7 +125,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColorsDark.accentBlue,
+                  color: theme.progressIndicatorTheme.color,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(16),
                     topRight: Radius.circular(16),
@@ -172,8 +172,8 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColorsDark.accentBlue,
+                            borderSide:  BorderSide(
+                              color: theme.progressIndicatorTheme.color ?? Colors.blueAccent,
                               width: 2,
                             ),
                           ),
@@ -222,9 +222,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                             ? 'Add Image'
                             : 'Change Image'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColorsDark.accentBlue,
+                          foregroundColor: theme.progressIndicatorTheme.color,
                           side:
-                              const BorderSide(color: AppColorsDark.accentBlue),
+                            BorderSide(color: theme.progressIndicatorTheme.color ?? Colors.blueAccent),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -246,7 +246,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                   child: ElevatedButton(
                     onPressed: _isPosting ? null : _submitPost,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColorsDark.accentBlue,
+                      backgroundColor: theme.progressIndicatorTheme.color,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

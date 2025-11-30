@@ -71,6 +71,7 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: SingleChildScrollView(
@@ -92,10 +93,10 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                         Text(
                           'My Courses',
                           style: TextStyle(
-                            color: AppColorsDark.primaryText,
+                            color: theme.iconTheme.color,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
@@ -104,14 +105,14 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: AppColorsDark.primaryText,
+                            color: theme.iconTheme.color,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Center(
+                          child:  Center(
                             child: Text(
                               'You haven\'t enrolled in any courses yet',
                               style: TextStyle(
-                                color: AppColorsDark.secondaryText,
+                                color: theme.dividerTheme.color,
                                 fontSize: 14,
                               ),
                             ),
@@ -124,10 +125,10 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                       Text(
                         'My Courses',
                         style: TextStyle(
-                          color: AppColorsDark.accentBlue,
+                          color: theme.iconTheme.color,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
@@ -154,13 +155,13 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                 width: 280,
                                 margin: const EdgeInsets.only(right: 16),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: theme.cardTheme.color,
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.white.withOpacity(0.1),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
+                                        color: Colors.black.withOpacity(0.04),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 6)
                                     ),
                                   ],
                                 ),
@@ -178,15 +179,14 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                             vertical: 6,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: AppColorsDark.accentBlue
-                                                .withOpacity(0.2),
+                                            color: theme.progressIndicatorTheme.color,
                                             borderRadius:
                                                 BorderRadius.circular(8),
                                           ),
                                           child: Text(
                                             course.category!,
-                                            style: const TextStyle(
-                                              color: AppColorsDark.accentBlue,
+                                            style:  TextStyle(
+                                              color: theme.iconTheme.color,
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -196,9 +196,9 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                       // Course title
                                       Text(
                                         course.title ?? 'Untitled Course',
-                                        style: const TextStyle(
+                                        style:  TextStyle(
                                           color:
-                                              AppColorsDark.seconderyBackground,
+                                          theme.iconTheme.color,
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -209,19 +209,18 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                       // Instructor name
                                       Row(
                                         children: [
-                                          const Icon(
+                                           Icon(
                                             Icons.person_outline,
                                             size: 16,
-                                            color: AppColorsDark.secondaryText,
+                                            color: theme.dividerTheme.color,
                                           ),
                                           const SizedBox(width: 4),
                                           Expanded(
                                             child: Text(
                                               course.instructor?.name ??
                                                   'Unknown Instructor',
-                                              style: const TextStyle(
-                                                color:
-                                                    AppColorsDark.secondaryText,
+                                              style:  TextStyle(
+                                                color: theme.dividerTheme.color,
                                                 fontSize: 14,
                                               ),
                                               maxLines: 1,
@@ -237,15 +236,15 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 8),
                                         decoration: BoxDecoration(
-                                          color: AppColorsDark.accentBlue,
+                                          color: theme.progressIndicatorTheme.color,
                                           borderRadius:
                                               BorderRadius.circular(8),
                                         ),
-                                        child: const Center(
+                                        child:  Center(
                                           child: Text(
                                             'Continue Learning',
                                             style: TextStyle(
-                                              color: AppColorsDark.primaryText,
+                                              color: theme.iconTheme.color,
                                               fontSize: 14,
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -267,10 +266,10 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                 return const SizedBox();
               },
             ),
-            const Text(
+             Text(
               'Category',
               style: TextStyle(
-                  color: AppColorsDark.accentBlue,
+                  color: theme.iconTheme.color,
                   fontSize: 24,
                   fontWeight: FontWeight.bold),
             ),
@@ -279,8 +278,8 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
               context: context,
               title: categoryTitles[selectedCategoryIndex],
               onPressed: () {},
-              backgroundColor: Colors.white,
-              textColor: AppColorsDark.accentBlue,
+              backgroundColor: theme.cardTheme.color ?? Colors.white,
+              textColor: theme.iconTheme.color ?? Colors.black,
               dropdownItems: categoryTitles,
               selectedValue: categoryTitles[selectedCategoryIndex],
               onChanged: (value) {

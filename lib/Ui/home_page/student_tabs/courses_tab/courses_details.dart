@@ -101,7 +101,7 @@ class _CourseDetailsState extends State<CourseDetails> {
               icon: Icons.attach_money_outlined,
               title: "Price",
               value: "\$${_currentCourse.price ?? 0}",
-              valueColor: AppColorsDark.accentBlue,
+              valueColor: AppColorsDark.accentGreen,
             ),
             const SizedBox(height: 20),
             _buildDetailItem(
@@ -243,7 +243,7 @@ class _CourseDetailsState extends State<CourseDetails> {
                       final isLoading = state is EnrollLoading;
                       return ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColorsDark.accentBlue,
+                          backgroundColor: AppColorsDark.accentGreen,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -313,7 +313,7 @@ class _CourseDetailsState extends State<CourseDetails> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isLocked ? Colors.grey.shade400 : AppColorsDark.accentBlue,
+              color: isLocked ? Colors.grey.shade400 : AppColorsDark.accentGreen,
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -371,7 +371,7 @@ class _CourseDetailsState extends State<CourseDetails> {
           else
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColorsDark.accentBlue,
+                backgroundColor: AppColorsDark.accentGreen,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 shape: RoundedRectangleBorder(
@@ -409,7 +409,7 @@ class _CourseDetailsState extends State<CourseDetails> {
   Widget _sectionTitle(IconData icon, String title) {
     return Row(
       children: [
-        Icon(icon, color: AppColorsDark.accentBlue, size: 22),
+        Icon(icon, color: AppColorsDark.accentGreen, size: 22),
         const SizedBox(width: 8),
         Text(
           title,
@@ -432,7 +432,7 @@ class _CourseDetailsState extends State<CourseDetails> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: AppColorsDark.accentBlue, size: 22),
+        Icon(icon, color: AppColorsDark.accentGreen, size: 22),
         const SizedBox(width: 10),
         Expanded(
           child: Column(

@@ -8,7 +8,6 @@ import 'package:codexa_mobile/Domain/entities/community_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/post_details_screen.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 
 class CommunityStudentTab extends StatefulWidget {
   const CommunityStudentTab({super.key});
@@ -38,6 +37,8 @@ class _CommunityStudentTabState extends State<CommunityStudentTab> {
 
   @override
   Widget build(BuildContext context) {
+
+    final theme = Theme.of(context);
     return Scaffold(
       body: BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
         buildWhen: (prev, curr) => prev != curr,
@@ -102,7 +103,6 @@ class _CommunityStudentTabState extends State<CommunityStudentTab> {
             return LayoutBuilder(
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth > 700;
-
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: Center(
@@ -136,7 +136,7 @@ class _CommunityStudentTabState extends State<CommunityStudentTab> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCreatePostDialog,
-        backgroundColor: AppColorsDark.accentBlue,
+        backgroundColor: theme.progressIndicatorTheme.color,
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text(
           'Create Post',

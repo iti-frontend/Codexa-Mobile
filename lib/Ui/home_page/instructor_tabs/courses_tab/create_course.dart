@@ -51,6 +51,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
   @override
   Widget build(BuildContext context) {
     final cubit = widget.cubit;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -72,7 +73,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
                 icon: Icons.title,
                 validator: (val) =>
                     val == null || val.isEmpty ? 'Enter title' : null,
-              ),
+              theme: theme),
               const SizedBox(height: 15),
 
               // Category
@@ -80,7 +81,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
                 controller: _categoryController,
                 label: "Category",
                 icon: Icons.category_outlined,
-              ),
+                  theme: theme),
               const SizedBox(height: 15),
 
               // Description
@@ -89,7 +90,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
                 label: "Description",
                 icon: Icons.article_outlined,
                 maxLines: 4,
-              ),
+                  theme: theme),
               const SizedBox(height: 15),
 
               // Price
@@ -103,7 +104,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
                   return null;
                 },
                 keyboardType: TextInputType.number,
-              ),
+                  theme: theme),
               const SizedBox(height: 15),
 
               // Videos Upload
@@ -133,7 +134,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
                 icon: const Icon(Icons.upload_file),
                 label: const Text("Select Videos"),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColorsDark.accentBlue,
+                  backgroundColor: theme.progressIndicatorTheme.color,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -160,7 +161,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColorsDark.accentBlue,
+                    backgroundColor: theme.progressIndicatorTheme.color,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -241,6 +242,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
     int maxLines = 1,
     String? Function(String?)? validator,
     TextInputType? keyboardType,
+    ThemeData? theme
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,9 +269,8 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
           keyboardType: keyboardType,
           style: TextStyle(
             fontSize: 16,
-            color: AppColorsDark.accentBlue,
+            backgroundColor: theme?.progressIndicatorTheme.color,
           ),
-          cursorColor: AppColorsDark.accentBlue,
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
@@ -280,7 +281,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: AppColorsDark.accentBlue, width: 2),
+              borderSide: BorderSide(color: theme!.progressIndicatorTheme.color ?? Colors.blueAccent, width: 2),
               borderRadius: BorderRadius.circular(12),
             ),
           ),
