@@ -24,6 +24,19 @@ class CustomAppbar extends StatelessWidget {
       elevation: 0,
       title: Row(
         children: [
+          GestureDetector(
+            onTap: () {
+              Scaffold.of(context).openDrawer();
+            },
+            child: Icon(
+              CupertinoIcons.cart,
+              color: theme.iconTheme.color,
+              size: 28,
+            ),
+          ),
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.02,
+          ),
           // Profile avatar - MAKE THIS CLICKABLE
           GestureDetector(
             onTap: onProfileTap,
@@ -101,6 +114,10 @@ class CustomAppbar extends StatelessWidget {
               ),
             ],
           ),
+
+          SizedBox(width: MediaQuery.of(context).size.width * 0.02),
+
+          // Cart icon
 
           SizedBox(width: MediaQuery.of(context).size.width * 0.02),
 

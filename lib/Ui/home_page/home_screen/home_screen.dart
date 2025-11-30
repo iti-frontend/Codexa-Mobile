@@ -1,6 +1,7 @@
 import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
 import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/cart_feature/screens/cart_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/courses_instructor.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/home_tab_instructor/home_tab_instructor.dart';
@@ -8,7 +9,7 @@ import 'package:codexa_mobile/Ui/home_page/instructor_tabs/settings_tab/settings
 import 'package:codexa_mobile/Ui/home_page/student_tabs/community_tab/community.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_student.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/home_tab/home.dart';
-import 'package:codexa_mobile/Ui/home_page/student_tabs/settings_tab/settings.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/settings_tab/student_favorites.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_appbar.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_bottom_navbar.dart';
@@ -39,9 +40,11 @@ class _HomescreenState extends State<HomeScreen> {
       _isUserLoaded = true;
     });
   }
+
   void _navigateToProfileScreen(BuildContext context) {
     Navigator.pushNamed(context, ProfileScreen.routeName);
   }
+
   String _getUserProfileImage() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     if (userProvider.user is StudentEntity) {
@@ -53,7 +56,6 @@ class _HomescreenState extends State<HomeScreen> {
     }
     return 'assets/images/review-1.jpg'; // Fallback to dummy image
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +73,7 @@ class _HomescreenState extends State<HomeScreen> {
       HomeStudentTab(),
       StudentCoursesTab(),
       CommunityStudentTab(),
-      SettingsStudentTab(),
+      FavoriteStudentTab(),
     ];
 
     List<Widget> instructorTabs = [
@@ -84,22 +86,20 @@ class _HomescreenState extends State<HomeScreen> {
     final userProfileImage = _getUserProfileImage();
     if (role?.toLowerCase() == "student") {
       return Scaffold(
-        appBar: selectedIndex == 3
-            ? AppBar(
-                automaticallyImplyLeading: false,
-                title: Text('Settings',
-                    style: TextStyle(color: theme.iconTheme.color)),
-                backgroundColor: theme.appBarTheme.backgroundColor,
-              )
-            : AppBar(
-                automaticallyImplyLeading: false,
-                backgroundColor: theme.appBarTheme.backgroundColor,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: theme.appBarTheme.backgroundColor,
           title: GestureDetector(
             onTap: () => _navigateToProfileScreen(context),
-            child: CustomAppbar(profileImage: userProfileImage),),              ),
+            child: CustomAppbar(profileImage: userProfileImage),
+          ),
+        ),
         bottomNavigationBar: CustomBottomNavBar(
           selectedIndex: selectedIndex,
           onItemTapped: (index) => setState(() => selectedIndex = index),
+        ),
+        drawer: const Drawer(
+          child: CartScreen(),
         ),
         body: studentTabs[selectedIndex],
       );
@@ -107,23 +107,20 @@ class _HomescreenState extends State<HomeScreen> {
 
     // Instructor View
     return Scaffold(
-      appBar: selectedIndex == 3
-          ? AppBar(
-              automaticallyImplyLeading: false,
-              title: Text('Settings',
-                  style: TextStyle(color: theme.iconTheme.color)),
-              backgroundColor: theme.appBarTheme.backgroundColor,
-            )
-          : AppBar(
-              automaticallyImplyLeading: false,
-              backgroundColor: theme.appBarTheme.backgroundColor,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         title: GestureDetector(
           onTap: () => _navigateToProfileScreen(context),
           child: CustomAppbar(profileImage: userProfileImage),
-        ),          ),
+        ),
+      ),
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: selectedIndex,
         onItemTapped: (index) => setState(() => selectedIndex = index),
+      ),
+      drawer: const Drawer(
+        child: CartScreen(),
       ),
       body: instructorTabs[selectedIndex],
     );
