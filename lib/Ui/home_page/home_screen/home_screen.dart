@@ -1,6 +1,7 @@
 import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
 import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/cart_feature/screens/cart_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/courses_instructor.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/home_tab_instructor/home_tab_instructor.dart';
@@ -98,9 +99,7 @@ class _HomescreenState extends State<HomeScreen> {
           onItemTapped: (index) => setState(() => selectedIndex = index),
         ),
         drawer: const Drawer(
-          child: Center(
-            child: Text("Cart Drawer"),
-          ),
+          child: CartScreen(),
         ),
         body: studentTabs[selectedIndex],
       );
@@ -121,9 +120,7 @@ class _HomescreenState extends State<HomeScreen> {
         onItemTapped: (index) => setState(() => selectedIndex = index),
       ),
       drawer: const Drawer(
-        child: Center(
-          child: Text("Cart Drawer"),
-        ),
+        child: CartScreen(),
       ),
       body: instructorTabs[selectedIndex],
     );
