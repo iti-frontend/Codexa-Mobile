@@ -201,7 +201,7 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) =>
-                                          CourseDetails(course: course),
+                                          CourseDetailsWrapper(course: course),
                                     ),
                                   );
                                 },
@@ -408,7 +408,8 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => CourseDetails(course: course),
+                                  builder: (_) =>
+                                      CourseDetailsWrapper(course: course),
                                 ),
                               )
                             },

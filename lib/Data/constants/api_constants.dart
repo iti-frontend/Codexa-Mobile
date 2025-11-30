@@ -101,9 +101,16 @@ class ApiConstants {
   static String instructorEndpointProfile = '/instructors/profile/';
 
   // ============================
-  // !Favorite
+  // !Favorites
   // ============================
 
   static String addCourseToFavorite = '/favourites/toggle';
   static String getFavoriteCourses = '/favourites';
+
+  // ============================
+  // !Cart
+  // ============================
+  static const String addToCart = '/cart';
+  static const String getCart = '/cart';
+  static String removeFromCart(String courseId) => '/cart/$courseId';
 }

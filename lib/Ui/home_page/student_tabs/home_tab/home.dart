@@ -286,8 +286,8 @@ class HomeStudentTab extends StatelessWidget {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) =>
-                                          CourseDetails(course: randomCourse),
+                                      builder: (_) => CourseDetailsWrapper(
+                                          course: randomCourse),
                                     ));
                               },
                               child: const Text("View Course"),

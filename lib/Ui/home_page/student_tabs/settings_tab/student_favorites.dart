@@ -191,7 +191,8 @@ class _FavouritesViewState extends State<FavouritesView> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => CourseDetails(course: course),
+                                  builder: (_) =>
+                                      CourseDetailsWrapper(course: course),
                                 ),
                               );
                             },

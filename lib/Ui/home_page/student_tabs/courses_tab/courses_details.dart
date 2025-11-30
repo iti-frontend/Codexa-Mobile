@@ -1,13 +1,53 @@
 import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/video_player_course.dart';
-import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/enroll_cubit/enroll_courses_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/enroll_cubit/enroll_courses_state.dart';
+import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_state.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
+import 'package:codexa_mobile/Data/Repository/cart_repository_impl.dart';
+import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
+import 'package:codexa_mobile/Domain/usecases/cart/cart_usecases.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Wrapper widget to provide CartCubit
+class CourseDetailsWrapper extends StatelessWidget {
+  final CourseEntity course;
+
+  const CourseDetailsWrapper({
+    super.key,
+    required this.course,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<SharedPreferences>(
+      future: SharedPreferences.getInstance(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final prefs = snapshot.data!;
+        final apiManager = ApiManager(prefs: prefs);
+        final cartRepo = CartRepositoryImpl(apiManager);
+
+        return BlocProvider(
+          create: (_) => CartCubit(
+            addToCartUseCase: AddToCartUseCase(cartRepo),
+            getCartUseCase: GetCartUseCase(cartRepo),
+            removeFromCartUseCase: RemoveFromCartUseCase(cartRepo),
+          ),
+          child: CourseDetails(course: course),
+        );
+      },
+    );
+  }
+}
 
 class CourseDetails extends StatefulWidget {
   final CourseEntity course;
@@ -188,51 +228,20 @@ class _CourseDetailsState extends State<CourseDetails> {
               Center(
                 child: SizedBox(
                   width: double.infinity,
-                  child: BlocConsumer<EnrollCubit, EnrollState>(
+                  child: BlocConsumer<CartCubit, CartState>(
                     listener: (context, state) {
-                      if (state is EnrollSuccess) {
-                        // Update enrollment status
-                        setState(() {
-                          _isEnrolled = true;
-                          // Update the course's enrolled students list
-                          final userId = _getUserId(userProvider.user);
-                          if (userId != null) {
-                            _currentCourse = CourseEntity(
-                              id: _currentCourse.id,
-                              title: _currentCourse.title,
-                              description: _currentCourse.description,
-                              price: _currentCourse.price,
-                              category: _currentCourse.category,
-                              level: _currentCourse.level,
-                              instructor: _currentCourse.instructor,
-                              enrolledStudents: [
-                                ...(_currentCourse.enrolledStudents ?? []),
-                                userId
-                              ],
-                              videos: _currentCourse.videos,
-                              progress: _currentCourse.progress,
-                              createdAt: _currentCourse.createdAt,
-                              updatedAt: _currentCourse.updatedAt,
-                              v: _currentCourse.v,
-                            );
-                          }
-                        });
-
-                        // Refresh courses list
-                        context.read<StudentCoursesCubit>().fetchCourses();
-
+                      if (state is AddToCartSuccess) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                                'Enrolled successfully! Videos are now unlocked.'),
+                          SnackBar(
+                            content: Text(state.message),
                             behavior: SnackBarBehavior.floating,
                             backgroundColor: Colors.green,
                           ),
                         );
-                      } else if (state is EnrollFailureState) {
+                      } else if (state is AddToCartError) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(state.errorMessage),
+                            content: Text(state.message),
                             behavior: SnackBarBehavior.floating,
                             backgroundColor: Colors.red,
                           ),
@@ -240,7 +249,7 @@ class _CourseDetailsState extends State<CourseDetails> {
                       }
                     },
                     builder: (context, state) {
-                      final isLoading = state is EnrollLoading;
+                      final isLoading = state is CartLoading;
                       return ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColorsDark.accentBlue,
@@ -253,8 +262,12 @@ class _CourseDetailsState extends State<CourseDetails> {
                         onPressed: isLoading
                             ? null
                             : () {
-                                final cubit = context.read<EnrollCubit>();
-                                cubit.enroll(courseId: _currentCourse.id!);
+                                print(
+                                    '🔵 [BUTTON] Add to Cart button pressed!');
+                                print(
+                                    '🔵 [BUTTON] Course ID: ${_currentCourse.id}');
+                                final cubit = context.read<CartCubit>();
+                                cubit.addToCart(_currentCourse.id!);
                               },
                         child: isLoading
                             ? const SizedBox(
@@ -266,7 +279,7 @@ class _CourseDetailsState extends State<CourseDetails> {
                                 ),
                               )
                             : const Text(
-                                "Enroll Now",
+                                "Add to Cart",
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
