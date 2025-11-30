@@ -1,5 +1,8 @@
+import 'package:codexa_mobile/Ui/utils/provider_ui/theme_provider.dart';
+import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class CustomBottomNavBar extends StatefulWidget {
   final int selectedIndex;
@@ -42,7 +45,8 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accentBlue = const Color(0xFF4A90E2);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
 
     return Container(
       margin: const EdgeInsets.all(10),
@@ -50,7 +54,14 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
       decoration: BoxDecoration(
         color:
             theme.bottomNavigationBarTheme.backgroundColor ?? theme.cardColor,
-        borderRadius: BorderRadius.circular(24),
+          border: Border(
+          top: BorderSide(
+            width: 0.1, // thin line
+            color: themeProvider.currentTheme == ThemeMode.light
+                ? AppColorsLight.secondaryText     // Light Mode
+                : AppColorsDark.secondaryText,      // Dark Mode
+          ),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -59,7 +70,9 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
           final iconData =
               isActive ? items[index]['activeIcon'] : items[index]['icon'];
 
-          final color = isActive ? accentBlue : theme.iconTheme.color;
+          final color = isActive ? themeProvider.currentTheme == ThemeMode.light
+              ? AppColorsLight.accentBlue     // Light Mode
+              : AppColorsDark.accentGreen : theme.iconTheme.color;
 
           return GestureDetector(
             onTap: () => widget.onItemTapped(index),

@@ -12,7 +12,7 @@ class AppThemeData {
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       backgroundColor: AppColorsDark.cardBackground,
-      selectedItemColor: AppColorsDark.accentBlue,
+      selectedItemColor: AppColorsDark.accentGreen,
       unselectedItemColor: AppColorsDark.secondaryText,
       elevation: 4,
     ),
@@ -23,7 +23,7 @@ class AppThemeData {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColorsDark.accentBlue,
+        backgroundColor: AppColorsDark.accentGreen,
         foregroundColor: AppColorsDark.primaryText,
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

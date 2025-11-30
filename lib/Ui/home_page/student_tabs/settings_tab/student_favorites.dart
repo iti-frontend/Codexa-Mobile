@@ -67,20 +67,20 @@ class _FavouritesViewState extends State<FavouritesView> {
     // Listen to favourite toggle events from other tabs
     _favouriteSubscription =
         FavouriteToggleNotifier().stream.listen((event) async {
-      print(
-          '🔵 [SETTINGS_TAB] Received toggle event: courseId=${event.courseId}, isFavourite=${event.isFavourite}');
-      print('🔵 [SETTINGS_TAB] Waiting 500ms for backend to update...');
+          print(
+              '🔵 [SETTINGS_TAB] Received toggle event: courseId=${event.courseId}, isFavourite=${event.isFavourite}');
+          print('🔵 [SETTINGS_TAB] Waiting 500ms for backend to update...');
 
-      // Wait a bit for backend to update
-      await Future.delayed(const Duration(milliseconds: 500));
+          // Wait a bit for backend to update
+          await Future.delayed(const Duration(milliseconds: 500));
 
-      if (mounted) {
-        print('🟢 [SETTINGS_TAB] Refreshing favourites list...');
-        context.read<FavouritesCubit>().getFavourites(refresh: true);
-      } else {
-        print('🔴 [SETTINGS_TAB] Widget unmounted, skipping refresh');
-      }
-    });
+          if (mounted) {
+            print('🟢 [SETTINGS_TAB] Refreshing favourites list...');
+            context.read<FavouritesCubit>().getFavourites(refresh: true);
+          } else {
+            print('🔴 [SETTINGS_TAB] Widget unmounted, skipping refresh');
+          }
+        });
   }
 
   @override
@@ -105,6 +105,8 @@ class _FavouritesViewState extends State<FavouritesView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BlocListener<ToggleFavouriteCubit, ToggleFavouriteState>(
       listener: (context, state) {
         if (state is ToggleFavouriteSuccess) {
@@ -121,10 +123,10 @@ class _FavouritesViewState extends State<FavouritesView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Favourites',
               style: TextStyle(
-                color: AppColorsDark.accentBlue,
+                color: theme.iconTheme.color,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -141,14 +143,17 @@ class _FavouritesViewState extends State<FavouritesView> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.favorite_border,
-                              size: 64, color: Colors.grey[400]),
+                          Icon(
+                            Icons.favorite_border,
+                            size: 64,
+                            color: theme.dividerTheme.color,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'No favourites yet',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Colors.grey[600],
+                              color: theme.iconTheme.color,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -157,7 +162,12 @@ class _FavouritesViewState extends State<FavouritesView> {
                     );
                   } else if (state is FavouritesError &&
                       context.read<FavouritesCubit>().allCourses.isEmpty) {
-                    return Center(child: Text('Error: ${state.message}'));
+                    return Center(
+                      child: Text(
+                        'Error: ${state.message}',
+                        style: TextStyle(color: theme.iconTheme.color),
+                      ),
+                    );
                   }
 
                   final courses = context.read<FavouritesCubit>().allCourses;
@@ -172,7 +182,7 @@ class _FavouritesViewState extends State<FavouritesView> {
                       controller: _scrollController,
                       // padding: const EdgeInsets.all(16), // Padding handled by parent
                       itemCount:
-                          courses.length + (state is FavouritesLoading ? 1 : 0),
+                      courses.length + (state is FavouritesLoading ? 1 : 0),
                       itemBuilder: (context, index) {
                         if (index >= courses.length) {
                           return const Center(
@@ -199,7 +209,7 @@ class _FavouritesViewState extends State<FavouritesView> {
                             child: DashboardCard(
                               child: CourseProgressItem(
                                 instructorName:
-                                    course.instructor?.name ?? "Unknown",
+                                course.instructor?.name ?? "Unknown",
                                 categoryTitle: course.category ?? "General",
                                 hasCategory: true,
                                 title: course.title ?? "Untitled",

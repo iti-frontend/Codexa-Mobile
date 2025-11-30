@@ -12,14 +12,10 @@ import 'package:provider/provider.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Wrapper widget to provide CartCubit
 class CourseDetailsWrapper extends StatelessWidget {
   final CourseEntity course;
 
-  const CourseDetailsWrapper({
-    super.key,
-    required this.course,
-  });
+  const CourseDetailsWrapper({super.key, required this.course});
 
   @override
   Widget build(BuildContext context) {
@@ -52,10 +48,7 @@ class CourseDetailsWrapper extends StatelessWidget {
 class CourseDetails extends StatefulWidget {
   final CourseEntity course;
 
-  const CourseDetails({
-    super.key,
-    required this.course,
-  });
+  const CourseDetails({super.key, required this.course});
 
   @override
   State<CourseDetails> createState() => _CourseDetailsState();
@@ -77,9 +70,7 @@ class _CourseDetailsState extends State<CourseDetails> {
     final userId = _getUserId(userProvider.user);
 
     if (userId != null && _currentCourse.enrolledStudents != null) {
-      setState(() {
-        _isEnrolled = _currentCourse.enrolledStudents!.contains(userId);
-      });
+      setState(() => _isEnrolled = _currentCourse.enrolledStudents!.contains(userId));
     }
   }
 
@@ -104,83 +95,55 @@ class _CourseDetailsState extends State<CourseDetails> {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final isInstructor = userProvider.role == 'instructor';
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(_currentCourse.title ?? "Course Details"),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: theme.colorScheme.onBackground,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionTitle(Icons.article_outlined, "Description"),
+            _sectionTitle(Icons.article_outlined, "Description", theme),
             const SizedBox(height: 10),
             Text(
               _currentCourse.description?.isNotEmpty == true
                   ? _currentCourse.description!
                   : "No description available for this course.",
-              style: const TextStyle(
-                fontSize: 16,
-                color: AppColorsDark.secondaryText,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.iconTheme.color,
                 height: 1.6,
               ),
             ),
             const SizedBox(height: 25),
             const Divider(),
-            _buildDetailItem(
-              icon: Icons.category_outlined,
-              title: "Category",
-              value: _currentCourse.category ?? "No category",
-            ),
+            _buildDetailItem(Icons.category_outlined, "Category", _currentCourse.category ?? "No category", theme),
             const SizedBox(height: 20),
-            _buildDetailItem(
-              icon: Icons.attach_money_outlined,
-              title: "Price",
-              value: "\$${_currentCourse.price ?? 0}",
-              valueColor: AppColorsDark.accentBlue,
-            ),
+            _buildDetailItem(Icons.attach_money_outlined, "Price", "\$${_currentCourse.price ?? 0}", theme, valueColor: theme.progressIndicatorTheme.color),
             const SizedBox(height: 20),
-            _buildDetailItem(
-              icon: Icons.stacked_bar_chart,
-              title: "Level",
-              value: _currentCourse.level ?? "N/A",
-              valueColor: AppColorsDark.secondaryText,
-            ),
+            _buildDetailItem(Icons.stacked_bar_chart, "Level", _currentCourse.level ?? "N/A", theme, valueColor: theme.iconTheme.color),
             const SizedBox(height: 25),
             const Divider(),
             if (_currentCourse.instructor != null)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _sectionTitle(Icons.person_outline, "Instructor"),
+                  _sectionTitle(Icons.person_outline, "Instructor", theme),
                   const SizedBox(height: 10),
-                  Text(
-                    _currentCourse.instructor!.name ?? "N/A",
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: AppColorsDark.cardBackground,
-                    ),
-                  ),
-                  Text(
-                    _currentCourse.instructor!.email ?? "N/A",
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: AppColorsDark.secondaryText,
-                    ),
-                  ),
+                  Text(_currentCourse.instructor!.name ?? "N/A", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, color: theme.iconTheme.color)),
+                  Text(_currentCourse.instructor!.email ?? "N/A", style: theme.textTheme.bodySmall?.copyWith(color: theme.iconTheme.color)),
                   const SizedBox(height: 25),
                   const Divider(),
                 ],
               ),
-            _sectionTitle(Icons.play_circle_outline, "Videos"),
+            _sectionTitle(Icons.play_circle_outline, "Videos", theme),
             const SizedBox(height: 10),
-            if (_currentCourse.videos != null &&
-                _currentCourse.videos!.isNotEmpty)
+            if (_currentCourse.videos != null && _currentCourse.videos!.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: _currentCourse.videos!.map((video) {
@@ -192,103 +155,72 @@ class _CourseDetailsState extends State<CourseDetails> {
                     videoTitle: videoTitle,
                     videoUrl: videoUrl,
                     isLocked: !_isEnrolled && !isInstructor,
+                    theme: theme,
                   );
                 }).toList(),
               )
             else
-              const Text(
-                "No videos available yet.",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColorsDark.secondaryText,
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: Text(
+                    "No videos available yet.",
+                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.iconTheme.color),
+                  ),
                 ),
               ),
             const SizedBox(height: 25),
             const Divider(),
-            _buildDetailItem(
-              icon: Icons.people_outline,
-              title: "Enrolled Students",
-              value:
-                  "${_currentCourse.enrolledStudents?.length ?? 0} student(s) enrolled",
-            ),
+            _buildDetailItem(Icons.people_outline, "Enrolled Students", "${_currentCourse.enrolledStudents?.length ?? 0} student(s) enrolled", theme),
             const SizedBox(height: 25),
-            _buildDetailItem(
-              icon: Icons.access_time_outlined,
-              title: "Created At",
-              value: formatDate(_currentCourse.createdAt),
-            ),
+            _buildDetailItem(Icons.access_time_outlined, "Created At", formatDate(_currentCourse.createdAt), theme),
             const SizedBox(height: 10),
-            _buildDetailItem(
-              icon: Icons.update,
-              title: "Updated At",
-              value: formatDate(_currentCourse.updatedAt),
-            ),
+            _buildDetailItem(Icons.update, "Updated At", formatDate(_currentCourse.updatedAt), theme),
             if (!isInstructor && !_isEnrolled) ...[
               const SizedBox(height: 40),
-              Center(
-                child: SizedBox(
-                  width: double.infinity,
-                  child: BlocConsumer<CartCubit, CartState>(
-                    listener: (context, state) {
-                      if (state is AddToCartSuccess) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            behavior: SnackBarBehavior.floating,
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      } else if (state is AddToCartError) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            behavior: SnackBarBehavior.floating,
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    },
-                    builder: (context, state) {
-                      final isLoading = state is CartLoading;
-                      return ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColorsDark.accentBlue,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: isLoading
-                            ? null
-                            : () {
-                                print(
-                                    '🔵 [BUTTON] Add to Cart button pressed!');
-                                print(
-                                    '🔵 [BUTTON] Course ID: ${_currentCourse.id}');
-                                final cubit = context.read<CartCubit>();
-                                cubit.addToCart(_currentCourse.id!);
-                              },
-                        child: isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                "Add to Cart",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
+              SizedBox(
+                width: double.infinity,
+                child: BlocConsumer<CartCubit, CartState>(
+                  listener: (context, state) {
+                    if (state is AddToCartSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(state.message), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
                       );
-                    },
-                  ),
+                    } else if (state is AddToCartError) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(state.message), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
+                      );
+                    }
+                  },
+                  builder: (context, state) {
+                    final isLoading = state is CartLoading;
+                    return ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.progressIndicatorTheme.color,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      onPressed: isLoading
+                          ? null
+                          : () => context.read<CartCubit>().addToCart(_currentCourse.id!),
+                      child: isLoading
+                          ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                          : Text(
+                        "Add to Cart",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3,
+                          color: theme.iconTheme.color,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -298,180 +230,125 @@ class _CourseDetailsState extends State<CourseDetails> {
     );
   }
 
-  Widget _buildVideoItem({
-    required String videoTitle,
-    required String videoUrl,
-    required bool isLocked,
-  }) {
-    return Container(
+  Widget _buildVideoItem({required String videoTitle, required String videoUrl, required bool isLocked, required ThemeData theme}) {
+    return Card(
+      elevation: isLocked ? 0 : 2,
+      color: isLocked ? theme.dividerTheme.color : theme.cardTheme.color,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isLocked ? Colors.grey.shade100 : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border:
-            isLocked ? Border.all(color: Colors.grey.shade300, width: 1) : null,
-        boxShadow: isLocked
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                )
-              ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: isLocked ? Colors.grey.shade400 : AppColorsDark.accentBlue,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isLocked ? Icons.lock_outline : Icons.play_arrow_rounded,
-              color: Colors.white,
-              size: 26,
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: isLocked ? theme.dividerTheme.color : theme.progressIndicatorTheme.color,
+          child: Icon(
+            isLocked ? Icons.lock_outline : Icons.play_arrow_rounded,
+            color: theme.iconTheme.color,
+          ),
+        ),
+        title: Text(
+          videoTitle,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: theme.iconTheme.color),
+        ),
+        subtitle: isLocked
+            ? Text(
+          "Enroll to unlock",
+          style: TextStyle(
+            fontStyle: FontStyle.italic,
+            color: theme.iconTheme.color,
+          ),
+        )
+            : null,
+        trailing: isLocked
+            ? Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: theme.progressIndicatorTheme.color,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            "Locked",
+            style: TextStyle(
+              color: theme.iconTheme.color,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(width: 14),
+        )
+            : ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: theme.progressIndicatorTheme.color,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          onPressed: () {
+            if (videoUrl.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Video URL is empty")));
+              return;
+            }
+            Navigator.push(context, MaterialPageRoute(builder: (_) => VideoPlayerScreen(url: videoUrl)));
+          },
+          child: Text(
+            "Watch",
+            style: TextStyle(
+              color: theme.iconTheme.color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionTitle(IconData icon, String title, ThemeData theme) {
+    return Row(
+      children: [
+        Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: theme.iconTheme.color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailItem(IconData icon, String title, String value, ThemeData theme, {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  videoTitle,
+                  title,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: theme.iconTheme.color,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: isLocked ? Colors.grey.shade600 : Colors.black87,
+                    color: valueColor ?? theme.iconTheme.color,
+                    height: 1.4,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                if (isLocked) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    "Enroll to unlock",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          if (isLocked)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                "Locked",
-                style: TextStyle(
-                  color: Colors.grey.shade700,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            )
-          else
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColorsDark.accentBlue,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
-              ),
-              onPressed: () {
-                if (videoUrl.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Video URL is empty")),
-                  );
-                  return;
-                }
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => VideoPlayerScreen(url: videoUrl),
-                  ),
-                );
-              },
-              child: const Text(
-                "Watch",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
         ],
       ),
-    );
-  }
-
-  Widget _sectionTitle(IconData icon, String title) {
-    return Row(
-      children: [
-        Icon(icon, color: AppColorsDark.accentBlue, size: 22),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColorsDark.primaryBackground,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailItem({
-    required IconData icon,
-    required String title,
-    required String value,
-    Color? valueColor,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: AppColorsDark.accentBlue, size: 22),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: valueColor ?? AppColorsDark.secondaryText,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

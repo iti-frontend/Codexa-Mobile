@@ -1,9 +1,14 @@
+import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/search_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/tabs/settings_tab/theme_settings_screen.dart';
+import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'dart:io';
+
+import 'package:provider/provider.dart';
 
 class CustomAppbar extends StatelessWidget {
   final String profileImage;
@@ -20,7 +25,7 @@ class CustomAppbar extends StatelessWidget {
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor:
-          theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
+      theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
       elevation: 0,
       title: Row(
         children: [
@@ -92,57 +97,47 @@ class CustomAppbar extends StatelessWidget {
 
           SizedBox(width: MediaQuery.of(context).size.width * 0.02),
 
-          // Chat icon with blue dot
-          Stack(
-            children: [
-              Icon(
-                CupertinoIcons.chat_bubble,
-                color: theme.iconTheme.color,
-                size: 28,
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: accentBlue,
-                    shape: BoxShape.circle,
-                  ),
+          // theme icon
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => ThemeSettingsScreen()),
+              );
+            },
+            child: Stack(
+              children: [
+                Icon(
+                  Icons.brightness_6, // theme icon
+                  color: theme.iconTheme.color,
+                  size: 28,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+
 
           SizedBox(width: MediaQuery.of(context).size.width * 0.02),
 
-          // Cart icon
 
-          SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-
-          // Notification icon with blue dot
-          Stack(
-            children: [
-              Icon(
-                CupertinoIcons.bell,
-                color: theme.iconTheme.color,
-                size: 28,
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: accentBlue,
-                    shape: BoxShape.circle,
-                  ),
+          // logout icon
+          GestureDetector(
+            onTap: () {
+              final userProvider = Provider.of<UserProvider>(context, listen: false);
+              userProvider.logout();
+              Navigator.pushReplacementNamed(context, LoginScreen.routeName);
+            },
+            child: Stack(
+              children: [
+                Icon(
+                  Icons.logout,
+                  color: theme.iconTheme.color,
+                  size: 28,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+
         ],
       ),
     );

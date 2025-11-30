@@ -4,7 +4,6 @@ import 'package:codexa_mobile/Domain/entities/cart_entity.dart';
 import 'package:codexa_mobile/Domain/usecases/cart/cart_usecases.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_state.dart';
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,17 +44,19 @@ class _CartScreenContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        title: const Text(
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
+        foregroundColor: theme.appBarTheme.foregroundColor ?? theme.iconTheme.color,
+        title: Text(
           'Shopping Cart',
-          style: TextStyle(
+          style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            color: theme.iconTheme.color
           ),
         ),
         centerTitle: false,
@@ -66,7 +67,7 @@ class _CartScreenContent extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: AppColorsDark.accentGreen,
+                backgroundColor: Colors.green,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -101,21 +102,20 @@ class _CartScreenContent extends StatelessWidget {
                   Icon(
                     Icons.error_outline,
                     size: 64,
-                    color: Colors.grey.shade400,
+                    color: theme.disabledColor,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     state.message,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 16,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.disabledColor,
                     ),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () => context.read<CartCubit>().getCart(),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColorsDark.accentBlue,
+                      backgroundColor: theme.primaryColor,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 12,
@@ -124,10 +124,10 @@ class _CartScreenContent extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Retry',
-                      style: TextStyle(
-                        color: Colors.white,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -156,23 +156,21 @@ class _CartScreenContent extends StatelessWidget {
                     Icon(
                       Icons.shopping_cart_outlined,
                       size: 100,
-                      color: Colors.grey.shade300,
+                      color: theme.disabledColor,
                     ),
                     const SizedBox(height: 24),
                     Text(
                       'Your cart is empty',
-                      style: TextStyle(
-                        fontSize: 20,
+                      style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade700,
+                        color: theme.disabledColor,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Add courses to get started',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade500,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.disabledColor,
                       ),
                     ),
                   ],
@@ -226,14 +224,16 @@ class _CartItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: theme.shadowColor.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -249,13 +249,13 @@ class _CartItemCard extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColorsDark.accentBlue.withOpacity(0.1),
+                color: theme.primaryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 Icons.play_circle_outline,
                 size: 40,
-                color: AppColorsDark.accentBlue,
+                color: theme.progressIndicatorTheme.color,
               ),
             ),
             const SizedBox(width: 16),
@@ -266,10 +266,9 @@ class _CartItemCard extends StatelessWidget {
                 children: [
                   Text(
                     item.title ?? 'Untitled Course',
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: theme.iconTheme.color,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -282,15 +281,14 @@ class _CartItemCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColorsDark.accentBlue.withOpacity(0.1),
+                        color: theme.primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         item.category!,
-                        style: TextStyle(
-                          fontSize: 11,
+                        style: theme.textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: AppColorsDark.accentBlue,
+                          color: theme.iconTheme.color,
                         ),
                       ),
                     ),
@@ -298,10 +296,9 @@ class _CartItemCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     '\$${item.price?.toStringAsFixed(2) ?? '0.00'}',
-                    style: TextStyle(
-                      fontSize: 18,
+                    style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColorsDark.accentBlue,
+                      color: theme.progressIndicatorTheme.color,
                     ),
                   ),
                 ],
@@ -310,9 +307,9 @@ class _CartItemCard extends StatelessWidget {
             // Delete Button
             IconButton(
               onPressed: onDelete,
-              icon: const Icon(
+              icon: Icon(
                 Icons.delete_outline,
-                color: Colors.red,
+                color: theme.colorScheme.error,
               ),
               tooltip: 'Remove from cart',
             ),
@@ -333,13 +330,15 @@ class _CartBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: theme.shadowColor.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -352,20 +351,18 @@ class _CartBottomBar extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Total:',
-                  style: TextStyle(
-                    fontSize: 18,
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: theme.iconTheme.color,
                   ),
                 ),
                 Text(
                   '\$${totalPrice.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 24,
+                  style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: AppColorsDark.accentBlue,
+                    color: theme.iconTheme.color,
                   ),
                 ),
               ],
@@ -387,19 +384,18 @@ class _CartBottomBar extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColorsDark.accentBlue,
+                  backgroundColor: theme.progressIndicatorTheme.color,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
+                child: Text(
                   'Proceed to Payment',
-                  style: TextStyle(
-                    fontSize: 16,
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: theme.iconTheme.color,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -411,4 +407,3 @@ class _CartBottomBar extends StatelessWidget {
     );
   }
 }
-
