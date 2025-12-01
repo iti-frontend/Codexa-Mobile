@@ -58,7 +58,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
         title: Text(widget.course == null ? 'Create Course' : 'Edit Course'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: theme.iconTheme.color,
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
@@ -110,10 +110,10 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
               // Videos Upload
               Text(
                 "Videos",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: theme.iconTheme.color,
                 ),
               ),
               const SizedBox(height: 8),
@@ -132,7 +132,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
               const SizedBox(height: 10),
               ElevatedButton.icon(
                 icon: const Icon(Icons.upload_file),
-                label: const Text("Select Videos"),
+                label: Text("Select Videos",style: TextStyle(color: Colors.white),),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.progressIndicatorTheme.color,
                   padding:
@@ -140,6 +140,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
+                  foregroundColor: Colors.white
                 ),
                 onPressed: () async {
                   final result = await FilePicker.platform.pickFiles(
@@ -249,14 +250,14 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
       children: [
         Row(
           children: [
-            if (icon != null) Icon(icon, color: Colors.black, size: 22),
+            if (icon != null) Icon(icon, color: theme!.iconTheme.color, size: 22),
             if (icon != null) const SizedBox(width: 8),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: theme!.iconTheme.color,
               ),
             ),
           ],
@@ -270,6 +271,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
           style: TextStyle(
             fontSize: 16,
             backgroundColor: theme?.progressIndicatorTheme.color,
+              color: theme.iconTheme.color
           ),
           decoration: InputDecoration(
             filled: true,

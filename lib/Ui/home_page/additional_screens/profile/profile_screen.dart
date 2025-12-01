@@ -145,12 +145,14 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   }
 
   void _showImageSourceDialog() {
+    final theme = Theme.of(context);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
+          color: theme.cardTheme.color,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
@@ -164,8 +166,9 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 padding: const EdgeInsets.all(16),
                 child: Text(
                   'Change Profile Picture',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: theme.iconTheme.color,
                   ),
                 ),
               ),
@@ -203,8 +206,14 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    side: BorderSide(color: theme.dividerColor),
                   ),
-                  child: const Text('Cancel'),
+                  child: Text(
+                    'Cancel',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.iconTheme.color,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -219,27 +228,31 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     required String title,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+
     return ListTile(
       leading: Container(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withOpacity(0.1),
+          color: theme.progressIndicatorTheme.color?.withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
           icon,
-          color: Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+          color: theme.progressIndicatorTheme.color,
         ),
       ),
       title: Text(
         title,
-        style: Theme.of(context).textTheme.bodyLarge,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.iconTheme.color,
+        ),
       ),
       trailing: Icon(
         Icons.arrow_forward_ios,
         size: 16,
-        color: Colors.grey[400],
+        color: theme.iconTheme.color,
       ),
       onTap: () {
         Navigator.pop(context);
@@ -329,7 +342,6 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
 
     print('🎯 Building ProfileScreen for ${widget.userType}');
 
@@ -376,10 +388,17 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
         return Scaffold(
           appBar: AppBar(
-            backgroundColor: theme.appBarTheme.backgroundColor,
-            title: Text("${widget.userType} Profile"),
+            backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
+            foregroundColor: theme.iconTheme.color,
+            title: Text(
+              "${widget.userType} Profile",
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.iconTheme.color,
+              ),
+            ),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
+              icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
               onPressed: () {
                 print('🔙 Back button pressed');
                 Navigator.pop(context);
@@ -388,7 +407,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             actions: [
               if (!_isEditing)
                 IconButton(
-                  icon: const Icon(Icons.edit),
+                  icon: Icon(Icons.edit, color: theme.iconTheme.color),
                   onPressed: _startEditing,
                   tooltip: 'Edit Profile',
                 ),
@@ -399,7 +418,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             child: Column(
               children: [
                 // Profile image section
-                _buildProfileImageSection(),
+                _buildProfileImageSection(theme),
                 const SizedBox(height: 32),
 
                 // Form fields
@@ -412,16 +431,16 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: colors.primary.withOpacity(0.1),
+                              color: theme.progressIndicatorTheme.color?.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: colors.primary.withOpacity(0.3),
+                                color: theme.progressIndicatorTheme.color?.withOpacity(0.3) ?? Colors.blue,
                               ),
                             ),
                             child: Row(
                               children: [
                                 Icon(Icons.check_circle,
-                                    color: colors.primary, size: 24),
+                                    color: theme.progressIndicatorTheme.color, size: 24),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
@@ -433,7 +452,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                                         style: theme.textTheme.bodyMedium
                                             ?.copyWith(
                                           fontWeight: FontWeight.w600,
-                                          color: colors.primary,
+                                          color: theme.progressIndicatorTheme.color,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -443,8 +462,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                                             .last,
                                         style: theme.textTheme.bodySmall
                                             ?.copyWith(
-                                          color: colors.onSurface
-                                              .withOpacity(0.7),
+                                          color: theme.iconTheme.color?.withOpacity(0.7),
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -454,7 +472,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                                 IconButton(
                                   onPressed: _removeSelectedImage,
                                   icon: Icon(Icons.delete_outline,
-                                      color: colors.error),
+                                      color: theme.iconTheme.color),
                                   tooltip: 'Remove selected image',
                                 ),
                               ],
@@ -465,6 +483,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
                         // Name field
                         _buildModernTextField(
+                          theme: theme,
                           controller: nameController,
                           label: "Full Name",
                           icon: Icons.person_outline,
@@ -474,6 +493,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
                         // Email field
                         _buildModernTextField(
+                          theme: theme,
                           controller: emailController,
                           label: "Email Address",
                           icon: Icons.email_outlined,
@@ -487,8 +507,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                         // Action buttons
                         if (_isEditing) ...[
                           state is ProfileLoading
-                              ? _buildLoadingState()
-                              : _buildActionButtons(),
+                              ? _buildLoadingState(theme)
+                              : _buildActionButtons(theme),
                         ]
                       ],
                     ),
@@ -503,6 +523,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   }
 
   Widget _buildModernTextField({
+    required ThemeData theme,
     required TextEditingController controller,
     required String label,
     required IconData icon,
@@ -510,17 +531,14 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     TextInputType keyboardType = TextInputType.text,
     ValueChanged<String>? onChanged,
   }) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: enabled ? colors.surface : colors.surface.withOpacity(0.5),
+        color: enabled ? theme.cardTheme.color : theme.cardTheme.color?.withOpacity(0.5),
         boxShadow: [
           if (enabled)
             BoxShadow(
-              color: colors.shadow.withOpacity(0.1),
+              color: theme.shadowColor.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -532,20 +550,20 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         keyboardType: keyboardType,
         onChanged: onChanged,
         style: theme.textTheme.bodyLarge?.copyWith(
-          color: enabled ? colors.onSurface : colors.onSurface.withOpacity(0.5),
+          color: enabled ? theme.dividerTheme.color : theme.iconTheme.color?.withOpacity(0.5),
         ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
-            color: colors.onSurface.withOpacity(0.6),
+            color: theme.iconTheme.color?.withOpacity(0.6),
           ),
           prefixIcon: Container(
             margin: const EdgeInsets.all(12),
             child: Icon(
               icon,
               color: enabled
-                  ? theme.bottomNavigationBarTheme.selectedItemColor
-                  : colors.onSurface.withOpacity(0.3),
+                  ? theme.progressIndicatorTheme.color
+                  : theme.iconTheme.color?.withOpacity(0.3),
               size: 20,
             ),
           ),
@@ -556,13 +574,13 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(
-              color: colors.outline.withOpacity(0.3),
+              color: theme.dividerColor.withOpacity(0.3),
             ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(
-              color: colors.primary,
+              color: theme.progressIndicatorTheme.color ?? Colors.blue,
               width: 2,
             ),
           ),
@@ -577,9 +595,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     );
   }
 
-  Widget _buildProfileImageSection() {
-    final theme = Theme.of(context);
-
+  Widget _buildProfileImageSection(ThemeData theme) {
     return Column(
       children: [
         Stack(
@@ -590,13 +606,13 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Theme.of(context).colorScheme.surfaceVariant,
+                color: theme.colorScheme.surfaceVariant,
                 border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.2),
+                  color: theme.progressIndicatorTheme.color?.withOpacity(0.2) ?? Colors.blue.withOpacity(0.2),
                   width: 3,
                 ),
               ),
-              child: _getProfileImageWidget(),
+              child: _getProfileImageWidget(theme),
             ),
 
             // Camera icon
@@ -610,7 +626,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: theme.bottomNavigationBarTheme.selectedItemColor,
+                      color: theme.progressIndicatorTheme.color,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -626,7 +642,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                     ),
                     child: Icon(
                       Icons.camera_alt,
-                      color: theme.colorScheme.onPrimary,
+                      color: theme.iconTheme.color,
                       size: 16,
                     ),
                   ),
@@ -639,6 +655,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           _isEditing ? 'Profile Preview' : _userName,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
+            color: theme.iconTheme.color,
           ),
         ),
         if (_isEditing) ...[
@@ -646,7 +663,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           Text(
             'Tap the camera icon to change photo',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+              color: theme.iconTheme.color?.withOpacity(0.6),
             ),
           ),
         ],
@@ -654,7 +671,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     );
   }
 
-  Widget _getProfileImageWidget() {
+  Widget _getProfileImageWidget(ThemeData theme) {
     if (_selectedImage != null) {
       return ClipOval(
         child: Image.file(
@@ -664,7 +681,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           height: double.infinity,
           errorBuilder: (context, error, stackTrace) {
             print('❌ Error loading selected image: $error');
-            return _buildDefaultProfileIcon();
+            return _buildDefaultProfileIcon(theme);
           },
         ),
       );
@@ -687,7 +704,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             },
             errorBuilder: (context, error, stackTrace) {
               print('❌ Error loading network image: $error');
-              return _buildDefaultProfileIcon();
+              return _buildDefaultProfileIcon(theme);
             },
           ),
         );
@@ -700,7 +717,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             height: double.infinity,
             errorBuilder: (context, error, stackTrace) {
               print('❌ Error loading asset image: $error');
-              return _buildDefaultProfileIcon();
+              return _buildDefaultProfileIcon(theme);
             },
           ),
         );
@@ -708,18 +725,18 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     }
 
     // Default placeholder
-    return _buildDefaultProfileIcon();
+    return _buildDefaultProfileIcon(theme);
   }
 
-  Widget _buildDefaultProfileIcon() {
+  Widget _buildDefaultProfileIcon(ThemeData theme) {
     return Icon(
       Icons.person,
       size: 48,
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
+      color: theme.iconTheme.color,
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(ThemeData theme) {
     return Row(
       children: [
         Expanded(
@@ -731,13 +748,14 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 borderRadius: BorderRadius.circular(12),
               ),
               side: BorderSide(
-                color: Theme.of(context).colorScheme.outline,
+                color: theme.dividerColor,
               ),
             ),
             child: Text(
               "Cancel",
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              style: theme.textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
+                color: theme.iconTheme.color,
               ),
             ),
           ),
@@ -778,13 +796,12 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              backgroundColor:
-              Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+              backgroundColor: theme.progressIndicatorTheme.color,
             ),
             child: Text(
               "Save Changes",
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimary,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.iconTheme.color,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -794,17 +811,17 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildLoadingState(ThemeData theme) {
     return Column(
       children: [
         CircularProgressIndicator(
-          color: Theme.of(context).colorScheme.primary,
+          color: theme.progressIndicatorTheme.color,
         ),
         const SizedBox(height: 16),
         Text(
           'Updating profile...',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.iconTheme.color?.withOpacity(0.6),
           ),
         ),
       ],

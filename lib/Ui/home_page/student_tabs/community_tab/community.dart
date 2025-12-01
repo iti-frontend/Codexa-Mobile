@@ -37,111 +37,121 @@ class _CommunityStudentTabState extends State<CommunityStudentTab> {
 
   @override
   Widget build(BuildContext context) {
-
     final theme = Theme.of(context);
+
     return Scaffold(
-      body: BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
-        buildWhen: (prev, curr) => prev != curr,
-        builder: (context, state) {
-          if (state is CommunityPostsLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Stack(
+        children: [
+          BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
+            buildWhen: (prev, curr) => prev != curr,
+            builder: (context, state) {
+              if (state is CommunityPostsLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-          if (state is CommunityPostsError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline,
-                      size: 64, color: Colors.red.shade300),
-                  const SizedBox(height: 16),
-                  Text(
-                    state.message,
-                    style: TextStyle(color: Colors.grey.shade600),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () =>
-                        context.read<CommunityPostsCubit>().fetchPosts(),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (state is CommunityPostsLoaded) {
-            final posts = state.posts;
-
-            if (posts.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.post_add, size: 80, color: Colors.grey.shade300),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No posts yet',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade600,
+              if (state is CommunityPostsError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline,
+                          size: 64, color: Colors.red.shade300),
+                      const SizedBox(height: 16),
+                      Text(
+                        state.message,
+                        style: TextStyle(color: Colors.grey.shade600),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Be the first to share something!',
-                      style: TextStyle(color: Colors.grey.shade500),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth > 700;
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1000),
-                      child: isWide
-                          ? Wrap(
-                              spacing: 16,
-                              runSpacing: 16,
-                              children: posts.map((post) {
-                                return SizedBox(
-                                  width: 480,
-                                  child: _buildPostCard(context, post),
-                                );
-                              }).toList(),
-                            )
-                          : Column(
-                              children: posts.map((post) {
-                                return _buildPostCard(context, post);
-                              }).toList(),
-                            ),
-                    ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () =>
+                            context.read<CommunityPostsCubit>().fetchPosts(),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
                   ),
                 );
-              },
-            );
-          }
+              }
 
-          return const Center(child: Text("No posts available"));
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreatePostDialog,
-        backgroundColor: theme.progressIndicatorTheme.color,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'Create Post',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+              if (state is CommunityPostsLoaded) {
+                final posts = state.posts;
+
+                if (posts.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.post_add, size: 80, color: Colors.grey.shade300),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No posts yet',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Be the first to share something!',
+                          style: TextStyle(color: Colors.grey.shade500),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth > 700;
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1000),
+                          child: isWide
+                              ? Wrap(
+                            spacing: 16,
+                            runSpacing: 16,
+                            children: posts.map((post) {
+                              return SizedBox(
+                                width: 480,
+                                child: _buildPostCard(context, post),
+                              );
+                            }).toList(),
+                          )
+                              : Column(
+                            children: posts.map((post) {
+                              return _buildPostCard(context, post);
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }
+
+              return const Center(child: Text("No posts available"));
+            },
+          ),
+
+          // Positioned Create Post Button - Higher up
+          Positioned(
+            right: 20,
+            bottom: 100, // Adjust this value to position higher/lower
+            child: FloatingActionButton.extended(
+              onPressed: _showCreatePostDialog,
+              backgroundColor: theme.progressIndicatorTheme.color,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text(
+                'Create Post',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
