@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'dart:io';
+import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
 
 import 'package:provider/provider.dart';
 
@@ -404,7 +405,24 @@ class CustomAppbar extends StatelessWidget {
     } else if (imageUrl.startsWith('assets/')) {
       return AssetImage(imageUrl);
     } else if (imageUrl.startsWith('/')) {
-      return FileImage(File(imageUrl));
+      final lower = imageUrl.toLowerCase();
+      final looksLikeLocal = lower.startsWith('/storage') ||
+          lower.startsWith('/data') ||
+          lower.startsWith('file:');
+      if (looksLikeLocal) {
+        try {
+          final file = File(imageUrl);
+          if (file.existsSync()) return FileImage(file);
+        } catch (e) {
+          // ignore and fall back to treating as server-relative
+        }
+      }
+
+      // Treat as server-relative
+      final base = ApiManager.baseUrl;
+      final normalizedBase =
+          base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+      return NetworkImage('$normalizedBase$imageUrl');
     } else {
       return AssetImage('assets/$imageUrl');
     }

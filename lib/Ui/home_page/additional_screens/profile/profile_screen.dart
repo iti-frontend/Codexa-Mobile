@@ -11,6 +11,8 @@ import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'profile_cubit/profile_cubit.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen<T> extends StatefulWidget {
   static const String routeName = "/profile";
@@ -37,6 +39,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
   // Image picker fields
   bool _isPickingImage = false;
+  bool _isUploadingImage = false;
 
   @override
   void initState() {
@@ -119,6 +122,110 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to pick image: $e')),
       );
+    }
+  }
+
+  /// Upload profile image to server and return the public URL or path.
+  /// Returns null on failure.
+  Future<String?> _uploadProfileImage(File file) async {
+    setState(() {
+      _isUploadingImage = true;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final apiManager = ApiManager(prefs: prefs);
+
+      // Try uploading with PUT (many APIs accept PUT for updating profile image)
+      final response = await apiManager.putMultipartData(
+        '/uploads/profile',
+        file: file,
+        fileFieldName: 'image',
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        String? url;
+
+        // Try multiple common shapes returned by file upload endpoints
+        try {
+          if (data is Map) {
+            // 1) { data: { url: '...' } } or { data: { path: '...' } }
+            final d = data['data'];
+            if (d is Map) {
+              url = d['url'] ??
+                  d['path'] ??
+                  d['filePath'] ??
+                  d['profileImage'] ??
+                  d['location'];
+            }
+
+            // 2) top-level url/path
+            url ??= data['url'] ??
+                data['path'] ??
+                data['filePath'] ??
+                data['profileImage'] ??
+                data['location'];
+
+            // 3) files array: { files: [{ url: '...' }] } or { files: [{ path: '...' }] }
+            if (url == null &&
+                data['files'] is List &&
+                data['files'].isNotEmpty) {
+              final f0 = data['files'][0];
+              if (f0 is Map) {
+                url =
+                    f0['url'] ?? f0['path'] ?? f0['filePath'] ?? f0['location'];
+              } else if (f0 is String) {
+                url = f0;
+              }
+            }
+          } else if (data is List && data.isNotEmpty) {
+            // 4) response is a list: [{ path: '...'}]
+            final first = data[0];
+            if (first is Map) {
+              url = first['url'] ??
+                  first['path'] ??
+                  first['filePath'] ??
+                  first['location'];
+            } else if (first is String) {
+              url = first;
+            }
+          } else if (data is String) {
+            // 5) response is just a string path/url
+            url = data;
+          }
+        } catch (e) {
+          // parsing failed — fall through to null
+          print('⚠️ _uploadProfileImage: parsing response failed: $e');
+        }
+
+        // Final normalization: if we have a leading-slash path, prefix baseUrl
+        if (url != null) {
+          if (url.startsWith('/')) {
+            final base = ApiManager.baseUrl;
+            final normalizedBase =
+                base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+            url = normalizedBase + url;
+          }
+          return url;
+        }
+
+        // If we couldn't parse a url, but response contains a readable body, show it briefly
+        _showErrorSnackBar('Image uploaded but response shape unexpected');
+        return null;
+      } else {
+        _showErrorSnackBar('Image upload failed (${response.statusCode})');
+        return null;
+      }
+    } catch (e) {
+      _showErrorSnackBar('Image upload failed: $e');
+      return null;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingImage = false;
+        });
+      }
     }
   }
 
@@ -246,7 +353,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     _showSuccessSnackBar('Image selection removed');
   }
 
-  T _createUpdatedUser() {
+  T _createUpdatedUser({String? uploadedImageUrl}) {
     print('🔄 Creating updated user...');
 
     if (widget.user is StudentEntity) {
@@ -255,9 +362,10 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         id: original.id,
         name: nameController.text.trim(),
         email: emailController.text.trim(),
-        profileImage: _selectedImage != null
-            ? _selectedImage!.path
-            : original.profileImage,
+        profileImage: uploadedImageUrl ??
+            (_selectedImage != null
+                ? _selectedImage!.path
+                : original.profileImage),
         role: original.role,
         isAdmin: original.isAdmin,
         isActive: original.isActive,
@@ -272,9 +380,10 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         id: original.id,
         name: nameController.text.trim(),
         email: emailController.text.trim(),
-        profileImage: _selectedImage != null
-            ? _selectedImage!.path
-            : original.profileImage,
+        profileImage: uploadedImageUrl ??
+            (_selectedImage != null
+                ? _selectedImage!.path
+                : original.profileImage),
         role: original.role,
         isActive: original.isActive,
         emailVerified: original.emailVerified,
@@ -856,7 +965,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             },
           ),
         );
-      } else if (imageUrl.startsWith('assets/') || imageUrl.startsWith('/')) {
+      } else if (imageUrl.startsWith('assets/')) {
         return ClipOval(
           child: Image.asset(
             imageUrl,
@@ -865,6 +974,59 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             height: double.infinity,
             errorBuilder: (context, error, stackTrace) {
               print('❌ Error loading asset image: $error');
+              return _buildDefaultProfileIcon(theme);
+            },
+          ),
+        );
+      } else if (imageUrl.startsWith('/')) {
+        // Decide if this is a local filepath or a server-relative path.
+        // Treat as local file ONLY for common mobile local prefixes to avoid attempting
+        // filesystem operations on server-relative paths like '/uploads/...'.
+        final lower = imageUrl.toLowerCase();
+        final looksLikeLocal = lower.startsWith('/storage') ||
+            lower.startsWith('/data') ||
+            lower.startsWith('file:');
+
+        if (looksLikeLocal) {
+          try {
+            final localFile = File(imageUrl);
+            if (localFile.existsSync()) {
+              return ClipOval(
+                child: Image.file(
+                  localFile,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                  errorBuilder: (context, error, stackTrace) {
+                    print('❌ Error loading file image: $error');
+                    return _buildDefaultProfileIcon(theme);
+                  },
+                ),
+              );
+            }
+          } catch (e) {
+            // ignore and treat as server-relative below
+            print('⚠️ Failed checking local file: $e');
+          }
+        }
+
+        // Treat as server-relative path
+        final base = ApiManager.baseUrl;
+        final normalizedBase =
+            base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+        final fullUrl = '${normalizedBase}${imageUrl}';
+        return ClipOval(
+          child: Image.network(
+            fullUrl,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const Center(child: CircularProgressIndicator());
+            },
+            errorBuilder: (context, error, stackTrace) {
+              print('❌ Error loading network image: $error');
               return _buildDefaultProfileIcon(theme);
             },
           ),
@@ -911,34 +1073,48 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         const SizedBox(width: 16),
         Expanded(
           child: ElevatedButton(
-            onPressed: () {
-              // Validation
-              if (nameController.text.isEmpty) {
-                _showErrorSnackBar('Please enter your name');
-                return;
-              }
+            onPressed: _isUploadingImage
+                ? null
+                : () async {
+                    // Validation
+                    if (nameController.text.isEmpty) {
+                      _showErrorSnackBar('Please enter your name');
+                      return;
+                    }
 
-              if (emailController.text.isEmpty) {
-                _showErrorSnackBar('Please enter your email');
-                return;
-              }
+                    if (emailController.text.isEmpty) {
+                      _showErrorSnackBar('Please enter your email');
+                      return;
+                    }
 
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                  .hasMatch(emailController.text)) {
-                print('❌ Validation failed: Invalid email format');
-                _showErrorSnackBar('Please enter a valid email address');
-                return;
-              }
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                        .hasMatch(emailController.text)) {
+                      print('❌ Validation failed: Invalid email format');
+                      _showErrorSnackBar('Please enter a valid email address');
+                      return;
+                    }
 
-              try {
-                final updatedUser = _createUpdatedUser();
-                final cubit = context.read<ProfileCubit<T>>();
-                cubit.updateProfile(updatedUser);
-                print('🚀 updateProfile method called successfully');
-              } catch (e) {
-                _showErrorSnackBar('Error: $e');
-              }
-            },
+                    try {
+                      String? uploadedUrl;
+                      if (_selectedImage != null) {
+                        // Upload selected image first
+                        uploadedUrl =
+                            await _uploadProfileImage(_selectedImage!);
+                        if (uploadedUrl == null) {
+                          // upload failed and snackbar already shown
+                          return;
+                        }
+                      }
+
+                      final updatedUser =
+                          _createUpdatedUser(uploadedImageUrl: uploadedUrl);
+                      final cubit = context.read<ProfileCubit<T>>();
+                      cubit.updateProfile(updatedUser);
+                      print('🚀 updateProfile method called successfully');
+                    } catch (e) {
+                      _showErrorSnackBar('Error: $e');
+                    }
+                  },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
