@@ -44,6 +44,42 @@ class CommunityRepoImpl implements CommunityRepo {
   }
 
   // ==============================
+  // 🚀 Get User Posts
+  // ==============================
+  @override
+  Future<Either<Failures, List<CommunityEntity>>> getUserPosts(
+      String userId) async {
+    try {
+      final response = await apiManager.getData(
+        ApiConstants.communityGetAll,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+
+        final List<dynamic> dataList = (data is Map && data['data'] != null)
+            ? data['data']
+            : (data is List ? data : []);
+
+        final allPosts =
+            dataList.map((item) => CommunityDto.fromJson(item)).toList();
+
+        // Filter posts by author ID
+        final userPosts =
+            allPosts.where((post) => post.author?.id == userId).toList();
+
+        return Right(userPosts);
+      } else {
+        return Left(Failures(
+          errorMessage: response.data?['message']?.toString() ?? "Server Error",
+        ));
+      }
+    } catch (e) {
+      return Left(Failures(errorMessage: e.toString()));
+    }
+  }
+
+  // ==============================
   // 🚀 Create Post
   // ==============================
   @override

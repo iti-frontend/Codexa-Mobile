@@ -3,14 +3,9 @@ import 'package:codexa_mobile/Ui/home_page/additional_screens/video_player_cours
 import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_state.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
-import 'package:codexa_mobile/Data/Repository/cart_repository_impl.dart';
-import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
-import 'package:codexa_mobile/Domain/usecases/cart/cart_usecases.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class CourseDetailsWrapper extends StatelessWidget {
   final CourseEntity course;
@@ -19,29 +14,7 @@ class CourseDetailsWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<SharedPreferences>(
-      future: SharedPreferences.getInstance(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final prefs = snapshot.data!;
-        final apiManager = ApiManager(prefs: prefs);
-        final cartRepo = CartRepositoryImpl(apiManager);
-
-        return BlocProvider(
-          create: (_) => CartCubit(
-            addToCartUseCase: AddToCartUseCase(cartRepo),
-            getCartUseCase: GetCartUseCase(cartRepo),
-            removeFromCartUseCase: RemoveFromCartUseCase(cartRepo),
-          ),
-          child: CourseDetails(course: course),
-        );
-      },
-    );
+    return CourseDetails(course: course);
   }
 }
 
@@ -70,7 +43,8 @@ class _CourseDetailsState extends State<CourseDetails> {
     final userId = _getUserId(userProvider.user);
 
     if (userId != null && _currentCourse.enrolledStudents != null) {
-      setState(() => _isEnrolled = _currentCourse.enrolledStudents!.contains(userId));
+      setState(() =>
+          _isEnrolled = _currentCourse.enrolledStudents!.contains(userId));
     }
   }
 
@@ -122,11 +96,16 @@ class _CourseDetailsState extends State<CourseDetails> {
             ),
             const SizedBox(height: 25),
             const Divider(),
-            _buildDetailItem(Icons.category_outlined, "Category", _currentCourse.category ?? "No category", theme),
+            _buildDetailItem(Icons.category_outlined, "Category",
+                _currentCourse.category ?? "No category", theme),
             const SizedBox(height: 20),
-            _buildDetailItem(Icons.attach_money_outlined, "Price", "\$${_currentCourse.price ?? 0}", theme, valueColor: theme.progressIndicatorTheme.color),
+            _buildDetailItem(Icons.attach_money_outlined, "Price",
+                "\$${_currentCourse.price ?? 0}", theme,
+                valueColor: theme.progressIndicatorTheme.color),
             const SizedBox(height: 20),
-            _buildDetailItem(Icons.stacked_bar_chart, "Level", _currentCourse.level ?? "N/A", theme, valueColor: theme.iconTheme.color),
+            _buildDetailItem(Icons.stacked_bar_chart, "Level",
+                _currentCourse.level ?? "N/A", theme,
+                valueColor: theme.iconTheme.color),
             const SizedBox(height: 25),
             const Divider(),
             if (_currentCourse.instructor != null)
@@ -135,15 +114,21 @@ class _CourseDetailsState extends State<CourseDetails> {
                 children: [
                   _sectionTitle(Icons.person_outline, "Instructor", theme),
                   const SizedBox(height: 10),
-                  Text(_currentCourse.instructor!.name ?? "N/A", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, color: theme.iconTheme.color)),
-                  Text(_currentCourse.instructor!.email ?? "N/A", style: theme.textTheme.bodySmall?.copyWith(color: theme.iconTheme.color)),
+                  Text(_currentCourse.instructor!.name ?? "N/A",
+                      style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.iconTheme.color)),
+                  Text(_currentCourse.instructor!.email ?? "N/A",
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.iconTheme.color)),
                   const SizedBox(height: 25),
                   const Divider(),
                 ],
               ),
             _sectionTitle(Icons.play_circle_outline, "Videos", theme),
             const SizedBox(height: 10),
-            if (_currentCourse.videos != null && _currentCourse.videos!.isNotEmpty)
+            if (_currentCourse.videos != null &&
+                _currentCourse.videos!.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: _currentCourse.videos!.map((video) {
@@ -165,17 +150,24 @@ class _CourseDetailsState extends State<CourseDetails> {
                   padding: const EdgeInsets.symmetric(vertical: 40),
                   child: Text(
                     "No videos available yet.",
-                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.iconTheme.color),
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(color: theme.iconTheme.color),
                   ),
                 ),
               ),
             const SizedBox(height: 25),
             const Divider(),
-            _buildDetailItem(Icons.people_outline, "Enrolled Students", "${_currentCourse.enrolledStudents?.length ?? 0} student(s) enrolled", theme),
+            _buildDetailItem(
+                Icons.people_outline,
+                "Enrolled Students",
+                "${_currentCourse.enrolledStudents?.length ?? 0} student(s) enrolled",
+                theme),
             const SizedBox(height: 25),
-            _buildDetailItem(Icons.access_time_outlined, "Created At", formatDate(_currentCourse.createdAt), theme),
+            _buildDetailItem(Icons.access_time_outlined, "Created At",
+                formatDate(_currentCourse.createdAt), theme),
             const SizedBox(height: 10),
-            _buildDetailItem(Icons.update, "Updated At", formatDate(_currentCourse.updatedAt), theme),
+            _buildDetailItem(Icons.update, "Updated At",
+                formatDate(_currentCourse.updatedAt), theme),
             if (!isInstructor && !_isEnrolled) ...[
               const SizedBox(height: 40),
               SizedBox(
@@ -184,41 +176,88 @@ class _CourseDetailsState extends State<CourseDetails> {
                   listener: (context, state) {
                     if (state is AddToCartSuccess) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(state.message), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
+                        SnackBar(
+                            content: Text(state.message),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating),
                       );
                     } else if (state is AddToCartError) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(state.message), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
+                        SnackBar(
+                            content: Text(state.message),
+                            backgroundColor: Colors.red,
+                            behavior: SnackBarBehavior.floating),
+                      );
+                    } else if (state is RemoveFromCartSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(state.message),
+                            backgroundColor: Colors.orange,
+                            behavior: SnackBarBehavior.floating),
+                      );
+                    } else if (state is RemoveFromCartError) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(state.message),
+                            backgroundColor: Colors.red,
+                            behavior: SnackBarBehavior.floating),
                       );
                     }
                   },
                   builder: (context, state) {
+                    final cubit = context.read<CartCubit>();
+                    final isInCart = cubit.currentCart?.items?.any(
+                            (item) => item.courseId == _currentCourse.id) ??
+                        false;
                     final isLoading = state is CartLoading;
+
                     return ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.progressIndicatorTheme.color,
+                        backgroundColor: isInCart
+                            ? Colors.red.shade400
+                            : theme.progressIndicatorTheme.color,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
                       onPressed: isLoading
                           ? null
-                          : () => context.read<CartCubit>().addToCart(_currentCourse.id!),
+                          : () {
+                              if (isInCart) {
+                                cubit.removeFromCart(_currentCourse.id!);
+                              } else {
+                                cubit.addToCart(_currentCourse.id!);
+                              }
+                            },
                       child: isLoading
                           ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                          : Text(
-                        "Add to Cart",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.3,
-                          color: theme.iconTheme.color,
-                        ),
-                      ),
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  isInCart
+                                      ? Icons.remove_shopping_cart
+                                      : Icons.add_shopping_cart,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  isInCart ? "Remove from Cart" : "Add to Cart",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.3,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
                     );
                   },
                 ),
@@ -230,7 +269,11 @@ class _CourseDetailsState extends State<CourseDetails> {
     );
   }
 
-  Widget _buildVideoItem({required String videoTitle, required String videoUrl, required bool isLocked, required ThemeData theme}) {
+  Widget _buildVideoItem(
+      {required String videoTitle,
+      required String videoUrl,
+      required bool isLocked,
+      required ThemeData theme}) {
     return Card(
       elevation: isLocked ? 0 : 2,
       color: isLocked ? theme.dividerTheme.color : theme.cardTheme.color,
@@ -238,7 +281,9 @@ class _CourseDetailsState extends State<CourseDetails> {
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: isLocked ? theme.dividerTheme.color : theme.progressIndicatorTheme.color,
+          backgroundColor: isLocked
+              ? theme.dividerTheme.color
+              : theme.progressIndicatorTheme.color,
           child: Icon(
             isLocked ? Icons.lock_outline : Icons.play_arrow_rounded,
             color: theme.iconTheme.color,
@@ -252,48 +297,54 @@ class _CourseDetailsState extends State<CourseDetails> {
         ),
         subtitle: isLocked
             ? Text(
-          "Enroll to unlock",
-          style: TextStyle(
-            fontStyle: FontStyle.italic,
-            color: theme.iconTheme.color,
-          ),
-        )
+                "Enroll to unlock",
+                style: TextStyle(
+                  fontStyle: FontStyle.italic,
+                  color: theme.iconTheme.color,
+                ),
+              )
             : null,
         trailing: isLocked
             ? Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: theme.progressIndicatorTheme.color,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            "Locked",
-            style: TextStyle(
-              color: theme.iconTheme.color,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        )
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: theme.progressIndicatorTheme.color,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  "Locked",
+                  style: TextStyle(
+                    color: theme.iconTheme.color,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
             : ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: theme.progressIndicatorTheme.color,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-          onPressed: () {
-            if (videoUrl.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Video URL is empty")));
-              return;
-            }
-            Navigator.push(context, MaterialPageRoute(builder: (_) => VideoPlayerScreen(url: videoUrl)));
-          },
-          child: Text(
-            "Watch",
-            style: TextStyle(
-              color: theme.iconTheme.color,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.progressIndicatorTheme.color,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () {
+                  if (videoUrl.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Video URL is empty")));
+                    return;
+                  }
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => VideoPlayerScreen(url: videoUrl)));
+                },
+                child: Text(
+                  "Watch",
+                  style: TextStyle(
+                    color: theme.iconTheme.color,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -315,7 +366,9 @@ class _CourseDetailsState extends State<CourseDetails> {
     );
   }
 
-  Widget _buildDetailItem(IconData icon, String title, String value, ThemeData theme, {Color? valueColor}) {
+  Widget _buildDetailItem(
+      IconData icon, String title, String value, ThemeData theme,
+      {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
