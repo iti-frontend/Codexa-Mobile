@@ -18,12 +18,14 @@ class CustomAppbar extends StatelessWidget {
   final String userName;
   final VoidCallback? onProfileTap;
   final VoidCallback? onCreatePostTap;
+  final bool showCart;
 
   const CustomAppbar({
     required this.profileImage,
     required this.userName,
     this.onProfileTap,
     this.onCreatePostTap,
+    this.showCart = true,
     super.key,
   });
 
@@ -74,10 +76,11 @@ class CustomAppbar extends StatelessWidget {
                 ),
 
                 // Cart Icon with Badge
-                _buildCartIconWithBadgeWidget(
-                  context: context,
-                  theme: theme,
-                ),
+                if (showCart)
+                  _buildCartIconWithBadgeWidget(
+                    context: context,
+                    theme: theme,
+                  ),
 
                 const SizedBox(width: 8),
 
@@ -127,22 +130,25 @@ class CustomAppbar extends StatelessWidget {
     required BuildContext context,
     required ThemeData theme,
   }) {
-    // Get cart count safely without BlocBuilder to avoid dependency issues
-    int cartCount = 0;
-    try {
-      final cartCubit = context.read<CartCubit>();
-      if (cartCubit.state is CartLoaded) {
-        final state = cartCubit.state as CartLoaded;
-        cartCount = state.cart.items?.length ?? 0;
-      }
-    } catch (_) {
-      // CartCubit not available, keep count as 0
-    }
+    return BlocBuilder<CartCubit, CartState>(
+      builder: (context, state) {
+        int cartCount = 0;
+        if (state is CartLoaded) {
+          cartCount = state.cart.items?.length ?? 0;
+        } else {
+          // Fallback to currentCart from cubit for optimistic updates or other states
+          try {
+            final cubit = context.read<CartCubit>();
+            cartCount = cubit.currentCart?.items?.length ?? 0;
+          } catch (_) {}
+        }
 
-    return _buildCartIconWithBadge(
-      context: context,
-      theme: theme,
-      count: cartCount,
+        return _buildCartIconWithBadge(
+          context: context,
+          theme: theme,
+          count: cartCount,
+        );
+      },
     );
   }
 

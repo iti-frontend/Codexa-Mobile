@@ -1,46 +1,11 @@
-import 'package:codexa_mobile/Data/Repository/cart_repository_impl.dart';
-import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
 import 'package:codexa_mobile/Domain/entities/cart_entity.dart';
-import 'package:codexa_mobile/Domain/usecases/cart/cart_usecases.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<SharedPreferences>(
-      future: SharedPreferences.getInstance(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final prefs = snapshot.data!;
-        final apiManager = ApiManager(prefs: prefs);
-        final cartRepo = CartRepositoryImpl(apiManager);
-
-        return BlocProvider(
-          create: (_) => CartCubit(
-            addToCartUseCase: AddToCartUseCase(cartRepo),
-            getCartUseCase: GetCartUseCase(cartRepo),
-            removeFromCartUseCase: RemoveFromCartUseCase(cartRepo),
-          )..getCart(),
-          child: const _CartScreenContent(),
-        );
-      },
-    );
-  }
-}
-
-class _CartScreenContent extends StatelessWidget {
-  const _CartScreenContent({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -51,13 +16,12 @@ class _CartScreenContent extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
-        foregroundColor: theme.appBarTheme.foregroundColor ?? theme.iconTheme.color,
+        foregroundColor:
+            theme.appBarTheme.foregroundColor ?? theme.iconTheme.color,
         title: Text(
           'Shopping Cart',
           style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.iconTheme.color
-          ),
+              fontWeight: FontWeight.bold, color: theme.iconTheme.color),
         ),
         centerTitle: false,
       ),
@@ -140,13 +104,6 @@ class _CartScreenContent extends StatelessWidget {
           if (state is CartLoaded) {
             final cart = state.cart;
             final items = cart.items ?? [];
-
-            print('🛒 [CART_SCREEN] Cart loaded');
-            print('🛒 [CART_SCREEN] Items count: ${items.length}');
-            print('🛒 [CART_SCREEN] Total price: ${cart.totalPrice}');
-            if (items.isNotEmpty) {
-              print('🛒 [CART_SCREEN] First item: ${items.first.title}');
-            }
 
             if (items.isEmpty) {
               return Center(

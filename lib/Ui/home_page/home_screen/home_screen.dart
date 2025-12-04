@@ -8,7 +8,6 @@ import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/communi
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/widgets/create_post_dialog.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/courses_instructor.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/home_tab_instructor/home_tab_instructor.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/settings_tab/settings.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/community_tab/community.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_student.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/home_tab/home.dart';
@@ -72,8 +71,7 @@ class _HomescreenState extends State<HomeScreen> {
     );
   }
 
-  String _getUserName() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+  String _getUserName(UserProvider userProvider) {
     if (userProvider.user is StudentEntity) {
       final student = userProvider.user as StudentEntity;
       return student.name ?? 'Student';
@@ -84,16 +82,15 @@ class _HomescreenState extends State<HomeScreen> {
     return 'User';
   }
 
-  String _getUserProfileImage() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+  String _getUserProfileImage(UserProvider userProvider) {
     if (userProvider.user is StudentEntity) {
       final student = userProvider.user as StudentEntity;
-      return student.profileImage ?? 'assets/images/review-1.jpg';
+      return student.profileImage ?? '';
     } else if (userProvider.user is InstructorEntity) {
       final instructor = userProvider.user as InstructorEntity;
-      return instructor.profileImage ?? 'assets/images/review-1.jpg';
+      return instructor.profileImage ?? '';
     }
-    return 'assets/images/review-1.jpg'; // Fallback to dummy image
+    return ''; // Fallback to empty string, avatar will show default icon
   }
 
   Widget _buildFloatingChatButton(ThemeData theme) {
@@ -131,7 +128,8 @@ class _HomescreenState extends State<HomeScreen> {
       );
     }
 
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    // Use context.watch to listen for UserProvider changes
+    final userProvider = context.watch<UserProvider>();
     final role = userProvider.role;
     final theme = Theme.of(context);
 
@@ -146,11 +144,10 @@ class _HomescreenState extends State<HomeScreen> {
       HomeTabInstructor(),
       CoursesInstructorTab(),
       CommunityInstructorTab(),
-      SettingsInstructorTab(),
     ];
 
-    final userProfileImage = _getUserProfileImage();
-    final userName = _getUserName();
+    final userProfileImage = _getUserProfileImage(userProvider);
+    final userName = _getUserName(userProvider);
 
     // Show create post button for instructor AND student on community tab
     VoidCallback? onCreatePostTap;
@@ -174,6 +171,7 @@ class _HomescreenState extends State<HomeScreen> {
             userName: userName,
             onProfileTap: () => _navigateToProfileScreen(context),
             onCreatePostTap: onCreatePostTap,
+            showCart: role?.toLowerCase() == "student",
           ),
           Expanded(
             child: Stack(

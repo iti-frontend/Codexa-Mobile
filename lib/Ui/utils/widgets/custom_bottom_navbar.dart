@@ -1,3 +1,4 @@
+import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/theme_provider.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:flutter/cupertino.dart';
@@ -19,7 +20,8 @@ class CustomBottomNavBar extends StatefulWidget {
 }
 
 class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
-  final List<Map<String, dynamic>> items = const [
+  // Student tabs (4 items)
+  final List<Map<String, dynamic>> studentItems = const [
     {
       "icon": CupertinoIcons.home,
       "activeIcon": CupertinoIcons.house_fill,
@@ -42,11 +44,34 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     },
   ];
 
+  // Instructor tabs (3 items - no Favorites)
+  final List<Map<String, dynamic>> instructorItems = const [
+    {
+      "icon": CupertinoIcons.home,
+      "activeIcon": CupertinoIcons.house_fill,
+      "label": "Home",
+    },
+    {
+      "icon": CupertinoIcons.book,
+      "activeIcon": CupertinoIcons.book_fill,
+      "label": "Courses",
+    },
+    {
+      "icon": CupertinoIcons.person_2,
+      "activeIcon": CupertinoIcons.person_2_fill,
+      "label": "Community",
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
 
+    // Choose items based on role
+    final isInstructor = userProvider.role?.toLowerCase() == 'instructor';
+    final items = isInstructor ? instructorItems : studentItems;
 
     return Container(
       margin: const EdgeInsets.all(10),
@@ -54,12 +79,12 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
       decoration: BoxDecoration(
         color:
             theme.bottomNavigationBarTheme.backgroundColor ?? theme.cardColor,
-          border: Border(
+        border: Border(
           top: BorderSide(
             width: 0.1, // thin line
             color: themeProvider.currentTheme == ThemeMode.light
-                ? AppColorsLight.secondaryText     // Light Mode
-                : AppColorsDark.secondaryText,      // Dark Mode
+                ? AppColorsLight.secondaryText // Light Mode
+                : AppColorsDark.secondaryText, // Dark Mode
           ),
         ),
       ),
@@ -70,9 +95,11 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
           final iconData =
               isActive ? items[index]['activeIcon'] : items[index]['icon'];
 
-          final color = isActive ? themeProvider.currentTheme == ThemeMode.light
-              ? AppColorsLight.accentBlue     // Light Mode
-              : AppColorsDark.accentGreen : theme.iconTheme.color;
+          final color = isActive
+              ? themeProvider.currentTheme == ThemeMode.light
+                  ? AppColorsLight.accentBlue // Light Mode
+                  : AppColorsDark.accentGreen
+              : theme.iconTheme.color;
 
           return GestureDetector(
             onTap: () => widget.onItemTapped(index),

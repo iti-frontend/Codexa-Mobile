@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
+import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -29,7 +31,15 @@ class UserProvider extends ChangeNotifier {
 
     if (userJson != null) {
       try {
-        user = jsonDecode(userJson);
+        final Map<String, dynamic> userData = jsonDecode(userJson);
+        // Convert to proper Entity based on role
+        if (role?.toLowerCase() == 'student') {
+          user = StudentEntity.fromJson(userData);
+        } else if (role?.toLowerCase() == 'instructor') {
+          user = InstructorEntity.fromJson(userData);
+        } else {
+          user = userData; // Fallback to Map
+        }
       } catch (e) {
         print("Error decoding user json: $e");
       }

@@ -31,6 +31,7 @@ import 'Ui/auth/register/register_viewModel/register_bloc.dart';
 import 'Ui/home_page/additional_screens/profile/profile_screen.dart';
 import 'Ui/home_page/additional_screens/profile/profile_cubit/profile_cubit.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -83,7 +84,8 @@ class MyApp extends StatelessWidget {
             providers: [
               BlocProvider(create: (_) => sl<AuthViewModel>()),
               BlocProvider(create: (_) => sl<RegisterViewModel>()),
-              BlocProvider(create: (_) => sl<StudentCoursesCubit>()),
+              BlocProvider(
+                  create: (_) => sl<StudentCoursesCubit>()..fetchCourses()),
               BlocProvider(
                   create: (_) => sl<InstructorCoursesCubit>()..fetchCourses()),
               BlocProvider(create: (_) => sl<EnrollCubit>()),
@@ -93,6 +95,7 @@ class MyApp extends StatelessWidget {
               BlocProvider(create: (_) => sl<CommentCubit>()),
               BlocProvider(create: (_) => sl<ReplyCubit>()),
               BlocProvider(create: (_) => sl<ProfileCubit>()),
+              BlocProvider(create: (_) => sl<CartCubit>()..getCart()),
             ],
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
@@ -108,13 +111,15 @@ class MyApp extends StatelessWidget {
                 LoginScreen.routeName: (_) => LoginScreen(),
                 HomeScreen.routeName: (_) => HomeScreen(),
                 ProfileScreen.routeName: (_) {
-                  final userProvider = Provider.of<UserProvider>(context, listen: false);
+                  final userProvider =
+                      Provider.of<UserProvider>(context, listen: false);
 
                   if (userProvider.user != null) {
                     final user = userProvider.user!;
                     final userType = userProvider.role ?? 'User';
 
-                    if (userType.toLowerCase().contains('student') && user is StudentEntity) {
+                    if (userType.toLowerCase().contains('student') &&
+                        user is StudentEntity) {
                       return BlocProvider<ProfileCubit<StudentEntity>>(
                         create: (context) => sl<ProfileCubit<StudentEntity>>(),
                         child: ProfileScreen<StudentEntity>(
@@ -122,9 +127,11 @@ class MyApp extends StatelessWidget {
                           userType: 'Student',
                         ),
                       );
-                    } else if (userType.toLowerCase().contains('instructor') && user is InstructorEntity) {
+                    } else if (userType.toLowerCase().contains('instructor') &&
+                        user is InstructorEntity) {
                       return BlocProvider<ProfileCubit<InstructorEntity>>(
-                        create: (context) => sl<ProfileCubit<InstructorEntity>>(),
+                        create: (context) =>
+                            sl<ProfileCubit<InstructorEntity>>(),
                         child: ProfileScreen<InstructorEntity>(
                           user: user,
                           userType: 'Instructor',
