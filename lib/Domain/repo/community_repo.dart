@@ -8,6 +8,8 @@ import '../entities/community_entity.dart';
 abstract class CommunityRepo {
   Future<Either<Failures, List<CommunityEntity>>> getAllPosts();
 
+  Future<Either<Failures, List<CommunityEntity>>> getUserPosts(String userId);
+
   Future<Either<Failures, CommunityEntity>> createPost({
     required String content,
     File? imageFile,

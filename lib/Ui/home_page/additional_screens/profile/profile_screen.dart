@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_cubit/profile_states.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
+import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'profile_cubit/profile_cubit.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -42,6 +44,11 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     _initializeControllers();
     print('🎯 ProfileScreen initialized for ${widget.userType}');
     print('👤 User: ${widget.user}');
+
+    // Load user's community posts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CommunityPostsCubit>().fetchPosts();
+    });
   }
 
   void _initializeControllers() {
@@ -66,15 +73,6 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
       return (widget.user as InstructorEntity).name ?? 'Unknown Instructor';
     }
     return 'Unknown User';
-  }
-
-  String get _userEmail {
-    if (widget.user is StudentEntity) {
-      return (widget.user as StudentEntity).email ?? '';
-    } else if (widget.user is InstructorEntity) {
-      return (widget.user as InstructorEntity).email ?? '';
-    }
-    return '';
   }
 
   String get _userProfileImage {
@@ -121,26 +119,6 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to pick image: $e')),
       );
-    }
-  }
-  Future<void> _takePhotoWithCamera() async {
-    // Camera implementation commented out
-    print('📸 Take photo with camera');
-  }
-
-  String _getUserFriendlyError(dynamic error) {
-    final errorString = error.toString();
-
-    if (errorString.contains('permission') ||
-        errorString.contains('PERMISSION')) {
-      return 'Please grant camera and storage permissions in app settings';
-    } else if (errorString.contains('cancel') ||
-        errorString.contains('CANCEL')) {
-      return 'Operation cancelled';
-    } else if (errorString.contains('No implementation found')) {
-      return 'Camera/Gallery feature not available on this device';
-    } else {
-      return 'An error occurred. Please try again.';
     }
   }
 
@@ -375,7 +353,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           print('❌ Profile error: ${state.failure.errorMessage}');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.failure.errorMessage ?? 'An error occurred'),
+              content: Text(state.failure.errorMessage),
               backgroundColor: Colors.red,
             ),
           );
@@ -388,7 +366,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
         return Scaffold(
           appBar: AppBar(
-            backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
+            backgroundColor:
+                theme.appBarTheme.backgroundColor ?? theme.cardColor,
             foregroundColor: theme.iconTheme.color,
             title: Text(
               "${widget.userType} Profile",
@@ -413,113 +392,277 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 ),
             ],
           ),
-          body: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // Profile image section
-                _buildProfileImageSection(theme),
-                const SizedBox(height: 32),
+          body: _isEditing
+              ? Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      // Profile image section
+                      _buildProfileImageSection(theme),
+                      const SizedBox(height: 32),
 
-                // Form fields
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        // Selected image info
-                        if (_isEditing && _selectedImage != null) ...[
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: theme.progressIndicatorTheme.color?.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: theme.progressIndicatorTheme.color?.withOpacity(0.3) ?? Colors.blue,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.check_circle,
-                                    color: theme.progressIndicatorTheme.color, size: 24),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                      // Form fields
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              // Selected image info
+                              if (_isEditing && _selectedImage != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: theme.progressIndicatorTheme.color
+                                        ?.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: theme.progressIndicatorTheme.color
+                                              ?.withOpacity(0.3) ??
+                                          Colors.blue,
+                                    ),
+                                  ),
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        'New image selected',
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: theme.progressIndicatorTheme.color,
+                                      Icon(Icons.check_circle,
+                                          color: theme
+                                              .progressIndicatorTheme.color,
+                                          size: 24),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'New image selected',
+                                              style: theme.textTheme.bodyMedium
+                                                  ?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                                color: theme
+                                                    .progressIndicatorTheme
+                                                    .color,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              _selectedImage!.path
+                                                  .split('/')
+                                                  .last,
+                                              style: theme.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                color: theme.iconTheme.color
+                                                    ?.withOpacity(0.7),
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        _selectedImage!.path
-                                            .split('/')
-                                            .last,
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                          color: theme.iconTheme.color?.withOpacity(0.7),
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
+                                      IconButton(
+                                        onPressed: _removeSelectedImage,
+                                        icon: Icon(Icons.delete_outline,
+                                            color: theme.iconTheme.color),
+                                        tooltip: 'Remove selected image',
                                       ),
                                     ],
                                   ),
                                 ),
-                                IconButton(
-                                  onPressed: _removeSelectedImage,
-                                  icon: Icon(Icons.delete_outline,
-                                      color: theme.iconTheme.color),
-                                  tooltip: 'Remove selected image',
-                                ),
+                                const SizedBox(height: 20),
                               ],
-                            ),
+
+                              // Name field
+                              _buildModernTextField(
+                                theme: theme,
+                                controller: nameController,
+                                label: "Full Name",
+                                icon: Icons.person_outline,
+                                enabled: _isEditing,
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Email field
+                              _buildModernTextField(
+                                theme: theme,
+                                controller: emailController,
+                                label: "Email Address",
+                                icon: Icons.email_outlined,
+                                enabled: _isEditing,
+                                keyboardType: TextInputType.emailAddress,
+                              ),
+                              const SizedBox(height: 20),
+
+                              const SizedBox(height: 40),
+
+                              // Action buttons
+                              if (_isEditing) ...[
+                                state is ProfileLoading
+                                    ? _buildLoadingState(theme)
+                                    : _buildActionButtons(theme),
+                              ]
+                            ],
                           ),
-                          const SizedBox(height: 20),
-                        ],
-
-                        // Name field
-                        _buildModernTextField(
-                          theme: theme,
-                          controller: nameController,
-                          label: "Full Name",
-                          icon: Icons.person_outline,
-                          enabled: _isEditing,
                         ),
-                        const SizedBox(height: 20),
-
-                        // Email field
-                        _buildModernTextField(
-                          theme: theme,
-                          controller: emailController,
-                          label: "Email Address",
-                          icon: Icons.email_outlined,
-                          enabled: _isEditing,
-                          keyboardType: TextInputType.emailAddress,
+                      ),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          children: [
+                            _buildProfileImageSection(theme),
+                            const SizedBox(height: 32),
+                            _buildModernTextField(
+                              theme: theme,
+                              controller: nameController,
+                              label: "Full Name",
+                              icon: Icons.person_outline,
+                              enabled: false,
+                            ),
+                            const SizedBox(height: 20),
+                            _buildModernTextField(
+                              theme: theme,
+                              controller: emailController,
+                              label: "Email Address",
+                              icon: Icons.email_outlined,
+                              enabled: false,
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 20),
-
-                        const SizedBox(height: 40),
-
-                        // Action buttons
-                        if (_isEditing) ...[
-                          state is ProfileLoading
-                              ? _buildLoadingState(theme)
-                              : _buildActionButtons(theme),
-                        ]
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 32),
+                      // Community Activity Section
+                      _buildCommunityActivitySection(theme),
+                      const SizedBox(height: 32),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
         );
       },
     );
+  }
+
+  /// Build Community Activity Section
+  Widget _buildCommunityActivitySection(ThemeData theme) {
+    final currentUserId = _getCurrentUserId();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Community Activity',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Posts & engagement in the community',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+        BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
+          builder: (context, state) {
+            if (state is CommunityPostsLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is CommunityPostsLoaded) {
+              // Filter posts to show only current user's posts
+              final userPosts = state.posts
+                  .where((post) => post.author?.id == currentUserId)
+                  .toList();
+
+              if (userPosts.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: theme.cardTheme.color,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: theme.dividerColor),
+                    ),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.post_add,
+                            size: 48,
+                            color: theme.iconTheme.color?.withOpacity(0.3),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No community posts yet',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withOpacity(0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: userPosts.length,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                itemBuilder: (context, index) {
+                  final post = userPosts[index];
+                  return PostCard(post: post);
+                },
+              );
+            } else if (state is CommunityPostsError) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: theme.cardTheme.color,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: theme.dividerColor),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Error loading posts',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+  }
+
+  String _getCurrentUserId() {
+    if (widget.user is StudentEntity) {
+      return (widget.user as StudentEntity).id ?? '';
+    } else if (widget.user is InstructorEntity) {
+      return (widget.user as InstructorEntity).id ?? '';
+    }
+    return '';
   }
 
   Widget _buildModernTextField({
@@ -534,7 +677,9 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: enabled ? theme.cardTheme.color : theme.cardTheme.color?.withOpacity(0.5),
+        color: enabled
+            ? theme.cardTheme.color
+            : theme.cardTheme.color?.withOpacity(0.5),
         boxShadow: [
           if (enabled)
             BoxShadow(
@@ -550,7 +695,9 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         keyboardType: keyboardType,
         onChanged: onChanged,
         style: theme.textTheme.bodyLarge?.copyWith(
-          color: enabled ? theme.dividerTheme.color : theme.iconTheme.color?.withOpacity(0.5),
+          color: enabled
+              ? theme.dividerTheme.color
+              : theme.iconTheme.color?.withOpacity(0.5),
         ),
         decoration: InputDecoration(
           labelText: label,
@@ -608,7 +755,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 shape: BoxShape.circle,
                 color: theme.colorScheme.surfaceVariant,
                 border: Border.all(
-                  color: theme.progressIndicatorTheme.color?.withOpacity(0.2) ?? Colors.blue.withOpacity(0.2),
+                  color: theme.progressIndicatorTheme.color?.withOpacity(0.2) ??
+                      Colors.blue.withOpacity(0.2),
                   width: 3,
                 ),
               ),
@@ -764,7 +912,6 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         Expanded(
           child: ElevatedButton(
             onPressed: () {
-
               // Validation
               if (nameController.text.isEmpty) {
                 _showErrorSnackBar('Please enter your name');
@@ -776,7 +923,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 return;
               }
 
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(emailController.text)) {
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                  .hasMatch(emailController.text)) {
                 print('❌ Validation failed: Invalid email format');
                 _showErrorSnackBar('Please enter a valid email address');
                 return;
@@ -787,7 +935,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 final cubit = context.read<ProfileCubit<T>>();
                 cubit.updateProfile(updatedUser);
                 print('🚀 updateProfile method called successfully');
-              } catch (e, stackTrace){
+              } catch (e) {
                 _showErrorSnackBar('Error: $e');
               }
             },

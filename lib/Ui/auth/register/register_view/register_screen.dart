@@ -73,9 +73,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
       },
       builder: (context, state) {
         final authViewModel = context.read<RegisterViewModel>();
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        final backgroundColor = isDarkMode
+            ? AppColorsDark.primaryBackground
+            : AppColorsLight.primaryBackground;
+        final cardColor = isDarkMode
+            ? AppColorsDark.cardBackground
+            : AppColorsLight.cardBackground;
+        final textColor =
+            isDarkMode ? AppColorsDark.primaryText : AppColorsLight.primaryText;
+        final secondaryTextColor = isDarkMode
+            ? AppColorsDark.secondaryText
+            : AppColorsLight.secondaryText;
+        final buttonColor =
+            isDarkMode ? AppColorsDark.accentGreen : AppColorsLight.accentBlue;
+        final accentColor =
+            isDarkMode ? AppColorsDark.accentGreen : AppColorsLight.accentBlue;
 
         return Scaffold(
-          backgroundColor: AppColorsDark.accentBlue,
+          backgroundColor: backgroundColor,
           body: SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -85,7 +101,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   constraints: const BoxConstraints(maxWidth: 400),
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
-                    color: AppColorsDark.accentBlueAuth,
+                    color: cardColor,
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Form(
@@ -93,12 +109,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Register',
                           style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white),
+                              color: textColor),
                         ),
                         const SizedBox(height: 20),
 
@@ -106,19 +122,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Center(
                           child: Stack(
                             children: [
-                              const CircleAvatar(
+                              CircleAvatar(
                                 radius: 45,
-                                backgroundColor: Colors.white24,
+                                backgroundColor: isDarkMode
+                                    ? Colors.white24
+                                    : Colors.black12,
                                 child: Icon(Icons.person,
-                                    size: 50, color: Colors.white70),
+                                    size: 50,
+                                    color: isDarkMode
+                                        ? Colors.white70
+                                        : Colors.black54),
                               ),
                               Positioned(
                                 bottom: 0,
                                 right: 0,
                                 child: CircleAvatar(
                                   radius: 16,
-                                  backgroundColor: Colors.blueAccent,
-                                  child: Icon(Icons.edit,
+                                  backgroundColor: accentColor,
+                                  child: const Icon(Icons.edit,
                                       size: 16, color: Colors.white),
                                 ),
                               ),
@@ -128,8 +149,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SizedBox(height: 24),
 
                         // Full Name
-                        const Text('Full Name',
-                            style: TextStyle(color: Colors.white70)),
+                        Text('Full Name',
+                            style: TextStyle(color: secondaryTextColor)),
                         const SizedBox(height: 6),
                         CustomTextField(
                           hintText: 'Full Name',
@@ -141,8 +162,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SizedBox(height: 16),
 
                         // Email
-                        const Text('Email',
-                            style: TextStyle(color: Colors.white70)),
+                        Text('Email',
+                            style: TextStyle(color: secondaryTextColor)),
                         const SizedBox(height: 6),
                         CustomTextField(
                           hintText: 'username@gmail.com',
@@ -157,8 +178,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SizedBox(height: 16),
 
                         // Password
-                        const Text('Password',
-                            style: TextStyle(color: Colors.white70)),
+                        Text('Password',
+                            style: TextStyle(color: secondaryTextColor)),
                         const SizedBox(height: 6),
                         CustomTextField(
                           hintText: 'Password',
@@ -185,8 +206,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SizedBox(height: 8),
 
                         // Confirm Password
-                        const Text('Confirm Password',
-                            style: TextStyle(color: Colors.white70)),
+                        Text('Confirm Password',
+                            style: TextStyle(color: secondaryTextColor)),
                         const SizedBox(height: 6),
                         CustomTextField(
                           hintText: 'Confirm Password',
@@ -216,23 +237,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Register button
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColorsDark.accentBlue,
+                            backgroundColor: buttonColor,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),
                             minimumSize: const Size.fromHeight(48),
                           ),
-                          onPressed: () => _submitRegister(role),
-                          child: const Text('Register',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
+                          onPressed: state is RegisterLoadingState
+                              ? null
+                              : () => _submitRegister(role),
+                          child: state is RegisterLoadingState
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : Text('Register',
+                                  style: TextStyle(
+                                      color: isDarkMode
+                                          ? Colors.black
+                                          : Colors.white,
+                                      fontWeight: FontWeight.bold)),
                         ),
                         const SizedBox(height: 20),
 
-                        const Center(
+                        Center(
                             child: Text('or continue with',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(
+                                    color: isDarkMode
+                                        ? AppColorsDark.secondaryText
+                                        : AppColorsLight.secondaryText))),
                         const SizedBox(height: 16),
 
                         Row(
@@ -256,7 +293,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: RichText(
                             text: TextSpan(
                               text: "Already Have An Account ? ",
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : Colors.black87),
                               children: [
                                 WidgetSpan(
                                   child: GestureDetector(
@@ -264,12 +304,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       Navigator.pushReplacementNamed(
                                           context, LoginScreen.routeName);
                                     },
-                                    child: const Text('Login Now',
+                                    child: Text('Login Now',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             decoration:
                                                 TextDecoration.underline,
-                                            color: Color(0xFF1A73E8))),
+                                            color: isDarkMode
+                                                ? AppColorsDark.accentBlueAuth
+                                                : Color(0xFF1A73E8))),
                                   ),
                                 ),
                               ],

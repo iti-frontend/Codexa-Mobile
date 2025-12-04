@@ -79,9 +79,23 @@ class _LoginScreenState extends State<LoginScreen> {
       },
       builder: (context, state) {
         final authViewModel = context.read<AuthViewModel>();
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        final backgroundColor = isDarkMode
+            ? AppColorsDark.primaryBackground
+            : AppColorsLight.primaryBackground;
+        final cardColor = isDarkMode
+            ? AppColorsDark.cardBackground
+            : AppColorsLight.cardBackground;
+        final textColor =
+            isDarkMode ? AppColorsDark.primaryText : AppColorsLight.primaryText;
+        final secondaryTextColor = isDarkMode
+            ? AppColorsDark.secondaryText
+            : AppColorsLight.secondaryText;
+        final buttonColor =
+            isDarkMode ? AppColorsDark.accentGreen : AppColorsLight.accentBlue;
 
         return Scaffold(
-          backgroundColor: AppColorsDark.accentBlue,
+          backgroundColor: backgroundColor,
           body: SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -91,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   constraints: const BoxConstraints(maxWidth: 400),
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
-                    color: AppColorsDark.accentBlueAuth,
+                    color: cardColor,
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Form(
@@ -101,13 +115,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         const _Header(),
                         const SizedBox(height: 16),
-                        const Text('I am a:',
-                            style: TextStyle(color: Colors.white70)),
+                        Text('I am a:',
+                            style: TextStyle(
+                                color: isDarkMode
+                                    ? AppColorsDark.secondaryText
+                                    : AppColorsLight.secondaryText)),
                         const SizedBox(height: 8),
-                        _roleSelector(),
+                        _roleSelector(
+                            isDarkMode, textColor, secondaryTextColor),
                         const SizedBox(height: 16),
-                        const Text('Email',
-                            style: TextStyle(color: Colors.white70)),
+                        Text('Email',
+                            style: TextStyle(
+                                color: isDarkMode
+                                    ? AppColorsDark.secondaryText
+                                    : AppColorsLight.secondaryText)),
                         const SizedBox(height: 6),
                         CustomTextField(
                           controller: authViewModel.emailController,
@@ -122,8 +143,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        const Text('Password',
-                            style: TextStyle(color: Colors.white70)),
+                        Text('Password',
+                            style: TextStyle(
+                                color: isDarkMode
+                                    ? AppColorsDark.secondaryText
+                                    : AppColorsLight.secondaryText)),
                         const SizedBox(height: 6),
                         CustomTextField(
                           controller: authViewModel.passwordController,
@@ -157,26 +181,41 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColorsDark.accentBlue,
+                              backgroundColor: buttonColor,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),
                             ),
-                            onPressed: _submitLogin,
-                            child: const Text('Sign in',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold)),
+                            onPressed:
+                                state is AuthLoadingState ? null : _submitLogin,
+                            child: state is AuthLoadingState
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2.5,
+                                    ),
+                                  )
+                                : Text('Sign in',
+                                    style: TextStyle(
+                                        color: isDarkMode
+                                            ? Colors.black
+                                            : Colors.white,
+                                        fontWeight: FontWeight.bold)),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        const Center(
+                        Center(
                             child: Text('or continue with',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(
+                                    color: isDarkMode
+                                        ? AppColorsDark.secondaryText
+                                        : AppColorsLight.secondaryText))),
                         const SizedBox(height: 16),
                         _socialLoginButtons(),
                         const SizedBox(height: 24),
-                        _registerLink(),
+                        _registerLink(isDarkMode, textColor),
                       ],
                     ),
                   ),
@@ -190,30 +229,34 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // =================== Role Selector ===================
-  Widget _roleSelector() {
+  Widget _roleSelector(
+      bool isDarkMode, Color textColor, Color secondaryTextColor) {
     return Row(
       children: [
-        _roleRadio('student', 'Student'),
-        _roleRadio('instructor', 'Instructor'),
+        _roleRadio('student', 'Student', isDarkMode, secondaryTextColor),
+        _roleRadio('instructor', 'Instructor', isDarkMode, secondaryTextColor),
       ],
     );
   }
 
-  Widget _roleRadio(String value, String label) {
+  Widget _roleRadio(
+      String value, String label, bool isDarkMode, Color secondaryTextColor) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Radio<String>(
           value: value,
           groupValue: selectedRole,
-          activeColor: AppColorsDark.primaryText,
+          activeColor: isDarkMode
+              ? AppColorsDark.primaryText
+              : AppColorsLight.primaryText,
           onChanged: (v) {
             setState(() {
               selectedRole = v;
             });
           },
         ),
-        Text(label, style: const TextStyle(color: Colors.white70)),
+        Text(label, style: TextStyle(color: secondaryTextColor)),
         const SizedBox(width: 12),
       ],
     );
@@ -237,22 +280,21 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // =================== Register Link ===================
-  Widget _registerLink() {
+  Widget _registerLink(bool isDarkMode, Color textColor) {
     return Center(
       child: RichText(
         text: TextSpan(
           text: "Don't have an account yet? ",
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
           children: [
             WidgetSpan(
               child: GestureDetector(
                 onTap: () => Navigator.pushReplacementNamed(
                     context, RoleSelectionScreen.routeName),
-                child: const Text(
+                child: Text(
                   'Register for free',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColorsDark.primaryText),
+                  style:
+                      TextStyle(fontWeight: FontWeight.bold, color: textColor),
                 ),
               ),
             ),
@@ -407,12 +449,16 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text(
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final textColor =
+        isDarkMode ? AppColorsDark.primaryText : AppColorsLight.primaryText;
+
+    return Text(
       'Login',
       style: TextStyle(
         fontSize: 28,
         fontWeight: FontWeight.bold,
-        color: Colors.white,
+        color: textColor,
         fontFamily: 'Gilroy',
       ),
     );

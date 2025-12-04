@@ -28,6 +28,19 @@ class CommunityPostsCubit extends Cubit<CommunityPostsState> {
     );
   }
 
+  Future<void> fetchUserPosts(String userId) async {
+    emit(CommunityPostsLoading());
+    final result = await getAllPostsUseCase();
+    result.fold(
+      (failure) => emit(CommunityPostsError(failure.errorMessage)),
+      (posts) {
+        // Filter posts for specific user
+        final userPosts = posts.where((p) => p.author?.id == userId).toList();
+        emit(CommunityPostsLoaded(userPosts));
+      },
+    );
+  }
+
   Future<void> createPost({
     required String content,
     File? imageFile,

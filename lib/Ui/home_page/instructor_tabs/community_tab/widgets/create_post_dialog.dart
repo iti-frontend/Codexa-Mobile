@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
-import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 
 class CreatePostDialog extends StatefulWidget {
   const CreatePostDialog({Key? key}) : super(key: key);
@@ -172,8 +171,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide:  BorderSide(
-                              color: theme.progressIndicatorTheme.color ?? Colors.blueAccent,
+                            borderSide: BorderSide(
+                              color: theme.progressIndicatorTheme.color ??
+                                  Colors.blueAccent,
                               width: 2,
                             ),
                           ),
@@ -223,8 +223,9 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
                             : 'Change Image'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: theme.progressIndicatorTheme.color,
-                          side:
-                            BorderSide(color: theme.progressIndicatorTheme.color ?? Colors.blueAccent),
+                          side: BorderSide(
+                              color: theme.progressIndicatorTheme.color ??
+                                  Colors.blueAccent),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
