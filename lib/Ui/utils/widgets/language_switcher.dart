@@ -46,7 +46,7 @@ class LanguageSwitcherTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.language),
-      title: Text(S.of(context).language), // ✅ Use S.of(context)
+      title: Text(S.of(context).language),
       subtitle: Text(LocalizationService.isRTL() ? 'العربية' : 'English'),
       onTap: () {
         showDialog(
