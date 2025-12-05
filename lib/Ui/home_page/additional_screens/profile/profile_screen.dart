@@ -1,18 +1,16 @@
 import 'dart:io';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_cubit/profile_states.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
-import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
+import 'package:codexa_mobile/localization/localization_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
+import 'package:codexa_mobile/generated/l10n.dart';
 import 'profile_cubit/profile_cubit.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen<T> extends StatefulWidget {
   static const String routeName = "/profile";
@@ -37,21 +35,12 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   bool _isEditing = false;
   File? _selectedImage;
 
-  // Image picker fields
-  bool _isPickingImage = false;
-  bool _isUploadingImage = false;
-
   @override
   void initState() {
     super.initState();
     _initializeControllers();
     print('🎯 ProfileScreen initialized for ${widget.userType}');
     print('👤 User: ${widget.user}');
-
-    // Load user's community posts
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CommunityPostsCubit>().fetchPosts();
-    });
   }
 
   void _initializeControllers() {
@@ -71,11 +60,20 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
   String get _userName {
     if (widget.user is StudentEntity) {
-      return (widget.user as StudentEntity).name ?? 'Unknown Student';
+      return (widget.user as StudentEntity).name ?? S.of(context).student;
     } else if (widget.user is InstructorEntity) {
-      return (widget.user as InstructorEntity).name ?? 'Unknown Instructor';
+      return (widget.user as InstructorEntity).name ?? S.of(context).instructor;
     }
-    return 'Unknown User';
+    return S.of(context).profile;
+  }
+
+  String get _userEmail {
+    if (widget.user is StudentEntity) {
+      return (widget.user as StudentEntity).email ?? '';
+    } else if (widget.user is InstructorEntity) {
+      return (widget.user as InstructorEntity).email ?? '';
+    }
+    return '';
   }
 
   String get _userProfileImage {
@@ -120,112 +118,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
+        SnackBar(content: Text('${S.of(context).somethingWentWrong}: $e')),
       );
-    }
-  }
-
-  /// Upload profile image to server and return the public URL or path.
-  /// Returns null on failure.
-  Future<String?> _uploadProfileImage(File file) async {
-    setState(() {
-      _isUploadingImage = true;
-    });
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final apiManager = ApiManager(prefs: prefs);
-
-      // Try uploading with PUT (many APIs accept PUT for updating profile image)
-      final response = await apiManager.putMultipartData(
-        '/uploads/profile',
-        file: file,
-        fileFieldName: 'image',
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = response.data;
-        String? url;
-
-        // Try multiple common shapes returned by file upload endpoints
-        try {
-          if (data is Map) {
-            // 1) { data: { url: '...' } } or { data: { path: '...' } }
-            final d = data['data'];
-            if (d is Map) {
-              url = d['url'] ??
-                  d['path'] ??
-                  d['filePath'] ??
-                  d['profileImage'] ??
-                  d['location'];
-            }
-
-            // 2) top-level url/path
-            url ??= data['url'] ??
-                data['path'] ??
-                data['filePath'] ??
-                data['profileImage'] ??
-                data['location'];
-
-            // 3) files array: { files: [{ url: '...' }] } or { files: [{ path: '...' }] }
-            if (url == null &&
-                data['files'] is List &&
-                data['files'].isNotEmpty) {
-              final f0 = data['files'][0];
-              if (f0 is Map) {
-                url =
-                    f0['url'] ?? f0['path'] ?? f0['filePath'] ?? f0['location'];
-              } else if (f0 is String) {
-                url = f0;
-              }
-            }
-          } else if (data is List && data.isNotEmpty) {
-            // 4) response is a list: [{ path: '...'}]
-            final first = data[0];
-            if (first is Map) {
-              url = first['url'] ??
-                  first['path'] ??
-                  first['filePath'] ??
-                  first['location'];
-            } else if (first is String) {
-              url = first;
-            }
-          } else if (data is String) {
-            // 5) response is just a string path/url
-            url = data;
-          }
-        } catch (e) {
-          // parsing failed — fall through to null
-          print('⚠️ _uploadProfileImage: parsing response failed: $e');
-        }
-
-        // Final normalization: if we have a leading-slash path, prefix baseUrl
-        if (url != null) {
-          if (url.startsWith('/')) {
-            final base = ApiManager.baseUrl;
-            final normalizedBase =
-                base.endsWith('/') ? base.substring(0, base.length - 1) : base;
-            url = normalizedBase + url;
-          }
-          return url;
-        }
-
-        // If we couldn't parse a url, but response contains a readable body, show it briefly
-        _showErrorSnackBar('Image uploaded but response shape unexpected');
-        return null;
-      } else {
-        _showErrorSnackBar('Image upload failed (${response.statusCode})');
-        return null;
-      }
-    } catch (e) {
-      _showErrorSnackBar('Image upload failed: $e');
-      return null;
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isUploadingImage = false;
-        });
-      }
     }
   }
 
@@ -250,36 +144,18 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'Change Profile Picture',
+                  S.of(context).changeProfilePicture,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.iconTheme.color,
                   ),
                 ),
               ),
-              if (_isPickingImage)
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text('Loading...'),
-                    ],
-                  ),
-                )
-              else ...[
-                // _buildImageSourceOption(
-                //   icon: Icons.camera_alt,
-                //   title: 'Take Photo',
-                //   onTap: _takePhotoWithCamera,
-                // ),
-                _buildImageSourceOption(
-                  icon: Icons.photo_library,
-                  title: 'Choose from Gallery',
-                  onTap: _pickImageFromGallery,
-                ),
-              ],
+              _buildImageSourceOption(
+                icon: Icons.photo_library,
+                title: S.of(context).chooseFromGallery,
+                onTap: _pickImageFromGallery,
+              ),
               const SizedBox(height: 8),
               Container(
                 margin: const EdgeInsets.all(16),
@@ -294,7 +170,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                     side: BorderSide(color: theme.dividerColor),
                   ),
                   child: Text(
-                    'Cancel',
+                    S.of(context).cancel,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.iconTheme.color,
                     ),
@@ -350,60 +226,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     setState(() {
       _selectedImage = null;
     });
-    _showSuccessSnackBar('Image selection removed');
-  }
-
-  T _createUpdatedUser({String? uploadedImageUrl}) {
-    print('🔄 Creating updated user...');
-
-    if (widget.user is StudentEntity) {
-      final original = widget.user as StudentEntity;
-      final updatedStudent = StudentEntity(
-        id: original.id,
-        name: nameController.text.trim(),
-        email: emailController.text.trim(),
-        profileImage: uploadedImageUrl ??
-            (_selectedImage != null
-                ? _selectedImage!.path
-                : original.profileImage),
-        role: original.role,
-        isAdmin: original.isAdmin,
-        isActive: original.isActive,
-        emailVerified: original.emailVerified,
-        authProvider: original.authProvider,
-        token: original.token,
-      ) as T;
-      return updatedStudent;
-    } else if (widget.user is InstructorEntity) {
-      final original = widget.user as InstructorEntity;
-      final updatedInstructor = InstructorEntity(
-        id: original.id,
-        name: nameController.text.trim(),
-        email: emailController.text.trim(),
-        profileImage: uploadedImageUrl ??
-            (_selectedImage != null
-                ? _selectedImage!.path
-                : original.profileImage),
-        role: original.role,
-        isActive: original.isActive,
-        emailVerified: original.emailVerified,
-        authProvider: original.authProvider,
-        token: original.token,
-        isAdmin: original.isAdmin,
-      ) as T;
-      return updatedInstructor;
-    }
-    throw Exception('Unsupported user type');
-  }
-
-  void _updateAuthProvider(T updatedUser) {
-    print('🔄 Updating auth provider with new user data');
-    final authProvider = Provider.of<UserProvider>(context, listen: false);
-
-    // Use the new updateUser method
-    authProvider.updateUser(updatedUser);
-
-    print('✅ Updated user in auth provider: ${updatedUser.runtimeType}');
+    _showSuccessSnackBar(S.of(context).imageSelectionRemoved);
   }
 
   void _showSuccessSnackBar(String message) {
@@ -426,9 +249,59 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     );
   }
 
+  // Language switcher dialog
+  void _showLanguageDialog() {
+    final localizationService = Provider.of<LocalizationService>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(S.of(context).language),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Text('🇺🇸'),
+              title: const Text('English'),
+              onTap: () => _changeLanguage('en', localizationService),
+            ),
+            ListTile(
+              leading: const Text('🇸🇦'),
+              title: const Text('العربية'),
+              onTap: () => _changeLanguage('ar', localizationService),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _changeLanguage(String languageCode, LocalizationService localizationService) async {
+    await localizationService.changeLanguage(languageCode);
+    Navigator.pop(context); // Close language dialog
+
+    // Show success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(languageCode == 'en'
+            ? 'Language changed to English'
+            : 'تم تغيير اللغة إلى العربية'),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    // Navigate to home to apply changes
+    Navigator.pushNamedAndRemoveUntil(
+        context,
+        HomeScreen.routeName,
+            (route) => false
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localizationService = Provider.of<LocalizationService>(context, listen: false);
 
     print('🎯 Building ProfileScreen for ${widget.userType}');
 
@@ -446,8 +319,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile updated successfully'),
+            SnackBar(
+              content: Text(S.of(context).profileUpdated),
               backgroundColor: Colors.green,
             ),
           );
@@ -462,7 +335,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           print('❌ Profile error: ${state.failure.errorMessage}');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.failure.errorMessage),
+              content: Text(state.failure.errorMessage ?? S.of(context).somethingWentWrong),
               backgroundColor: Colors.red,
             ),
           );
@@ -475,11 +348,12 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
         return Scaffold(
           appBar: AppBar(
-            backgroundColor:
-                theme.appBarTheme.backgroundColor ?? theme.cardColor,
+            backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
             foregroundColor: theme.iconTheme.color,
             title: Text(
-              "${widget.userType} Profile",
+              widget.userType == 'Student'
+                  ? S.of(context).studentProfile
+                  : S.of(context).instructorProfile,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.iconTheme.color,
@@ -497,281 +371,178 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 IconButton(
                   icon: Icon(Icons.edit, color: theme.iconTheme.color),
                   onPressed: _startEditing,
-                  tooltip: 'Edit Profile',
+                  tooltip: S.of(context).editProfile,
                 ),
             ],
           ),
-          body: _isEditing
-              ? Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      // Profile image section
-                      _buildProfileImageSection(theme),
-                      const SizedBox(height: 32),
+          body: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // Profile image section
+                _buildProfileImageSection(theme),
+                const SizedBox(height: 32),
 
-                      // Form fields
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              // Selected image info
-                              if (_isEditing && _selectedImage != null) ...[
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: theme.progressIndicatorTheme.color
-                                        ?.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: theme.progressIndicatorTheme.color
-                                              ?.withOpacity(0.3) ??
-                                          Colors.blue,
-                                    ),
-                                  ),
-                                  child: Row(
+                // Form fields
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Selected image info
+                        if (_isEditing && _selectedImage != null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: theme.progressIndicatorTheme.color?.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: theme.progressIndicatorTheme.color?.withOpacity(0.3) ?? Colors.blue,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.check_circle,
+                                    color: theme.progressIndicatorTheme.color, size: 24),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
                                     children: [
-                                      Icon(Icons.check_circle,
-                                          color: theme
-                                              .progressIndicatorTheme.color,
-                                          size: 24),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'New image selected',
-                                              style: theme.textTheme.bodyMedium
-                                                  ?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                                color: theme
-                                                    .progressIndicatorTheme
-                                                    .color,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              _selectedImage!.path
-                                                  .split('/')
-                                                  .last,
-                                              style: theme.textTheme.bodySmall
-                                                  ?.copyWith(
-                                                color: theme.iconTheme.color
-                                                    ?.withOpacity(0.7),
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ],
+                                      Text(
+                                        S.of(context).newImageSelected,
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: theme.progressIndicatorTheme.color,
                                         ),
                                       ),
-                                      IconButton(
-                                        onPressed: _removeSelectedImage,
-                                        icon: Icon(Icons.delete_outline,
-                                            color: theme.iconTheme.color),
-                                        tooltip: 'Remove selected image',
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _selectedImage!.path
+                                            .split('/')
+                                            .last,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                          color: theme.iconTheme.color?.withOpacity(0.7),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
                                   ),
                                 ),
-                                const SizedBox(height: 20),
+                                IconButton(
+                                  onPressed: _removeSelectedImage,
+                                  icon: Icon(Icons.delete_outline,
+                                      color: theme.iconTheme.color),
+                                  tooltip: S.of(context).remove,
+                                ),
                               ],
-
-                              // Name field
-                              _buildModernTextField(
-                                theme: theme,
-                                controller: nameController,
-                                label: "Full Name",
-                                icon: Icons.person_outline,
-                                enabled: _isEditing,
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Email field
-                              _buildModernTextField(
-                                theme: theme,
-                                controller: emailController,
-                                label: "Email Address",
-                                icon: Icons.email_outlined,
-                                enabled: _isEditing,
-                                keyboardType: TextInputType.emailAddress,
-                              ),
-                              const SizedBox(height: 20),
-
-                              const SizedBox(height: 40),
-
-                              // Action buttons
-                              if (_isEditing) ...[
-                                state is ProfileLoading
-                                    ? _buildLoadingState(theme)
-                                    : _buildActionButtons(theme),
-                              ]
-                            ],
+                            ),
                           ),
+                          const SizedBox(height: 20),
+                        ],
+
+                        // Name field
+                        _buildModernTextField(
+                          theme: theme,
+                          controller: nameController,
+                          label: S.of(context).fullName,
+                          icon: Icons.person_outline,
+                          enabled: _isEditing,
                         ),
-                      ),
-                    ],
-                  ),
-                )
-              : SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            _buildProfileImageSection(theme),
-                            const SizedBox(height: 32),
-                            _buildModernTextField(
-                              theme: theme,
-                              controller: nameController,
-                              label: "Full Name",
-                              icon: Icons.person_outline,
-                              enabled: false,
-                            ),
-                            const SizedBox(height: 20),
-                            _buildModernTextField(
-                              theme: theme,
-                              controller: emailController,
-                              label: "Email Address",
-                              icon: Icons.email_outlined,
-                              enabled: false,
-                              keyboardType: TextInputType.emailAddress,
-                            ),
-                          ],
+                        const SizedBox(height: 20),
+
+                        // Email field
+                        _buildModernTextField(
+                          theme: theme,
+                          controller: emailController,
+                          label: S.of(context).email,
+                          icon: Icons.email_outlined,
+                          enabled: _isEditing,
+                          keyboardType: TextInputType.emailAddress,
                         ),
-                      ),
-                      const SizedBox(height: 32),
-                      // Community Activity Section
-                      _buildCommunityActivitySection(theme),
-                      const SizedBox(height: 32),
-                    ],
+                        const SizedBox(height: 20),
+
+                        // Language Settings
+                        if (!_isEditing) ...[
+                          const SizedBox(height: 30),
+                          Text(
+                            S.of(context).settings,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.iconTheme.color,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: theme.cardTheme.color,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.shadowColor.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: ListTile(
+                              leading: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: theme.progressIndicatorTheme.color?.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  Icons.language,
+                                  color: theme.progressIndicatorTheme.color,
+                                  size: 22,
+                                ),
+                              ),
+                              title: Text(
+                                S.of(context).language,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.iconTheme.color,
+                                ),
+                              ),
+                              subtitle: Text(
+                                localizationService.isRTL() ? 'العربية' : 'English',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.iconTheme.color?.withOpacity(0.6),
+                                ),
+                              ),
+                              trailing: Icon(
+                                Icons.arrow_forward_ios,
+                                size: 16,
+                                color: theme.iconTheme.color,
+                              ),
+                              onTap: _showLanguageDialog,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+
+                        const SizedBox(height: 40),
+
+                        // Action buttons
+                        if (_isEditing) ...[
+                          state is ProfileLoading
+                              ? _buildLoadingState(theme)
+                              : _buildActionButtons(theme),
+                        ]
+                      ],
+                    ),
                   ),
                 ),
+              ],
+            ),
+          ),
         );
       },
     );
-  }
-
-  /// Build Community Activity Section
-  Widget _buildCommunityActivitySection(ThemeData theme) {
-    final currentUserId = _getCurrentUserId();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Community Activity',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.textTheme.bodyLarge?.color,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Posts & engagement in the community',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
-                ),
-              ),
-            ],
-          ),
-        ),
-        BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
-          builder: (context, state) {
-            if (state is CommunityPostsLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is CommunityPostsLoaded) {
-              // Filter posts to show only current user's posts
-              final userPosts = state.posts
-                  .where((post) => post.author?.id == currentUserId)
-                  .toList();
-
-              if (userPosts.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: theme.cardTheme.color,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: theme.dividerColor),
-                    ),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.post_add,
-                            size: 48,
-                            color: theme.iconTheme.color?.withOpacity(0.3),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No community posts yet',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.textTheme.bodyMedium?.color
-                                  ?.withOpacity(0.6),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: userPosts.length,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                itemBuilder: (context, index) {
-                  final post = userPosts[index];
-                  return PostCard(post: post);
-                },
-              );
-            } else if (state is CommunityPostsError) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: theme.cardTheme.color,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: theme.dividerColor),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Error loading posts',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.red,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }
-
-            return const SizedBox.shrink();
-          },
-        ),
-      ],
-    );
-  }
-
-  String _getCurrentUserId() {
-    if (widget.user is StudentEntity) {
-      return (widget.user as StudentEntity).id ?? '';
-    } else if (widget.user is InstructorEntity) {
-      return (widget.user as InstructorEntity).id ?? '';
-    }
-    return '';
   }
 
   Widget _buildModernTextField({
@@ -786,9 +557,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: enabled
-            ? theme.cardTheme.color
-            : theme.cardTheme.color?.withOpacity(0.5),
+        color: enabled ? theme.cardTheme.color : theme.cardTheme.color?.withOpacity(0.5),
         boxShadow: [
           if (enabled)
             BoxShadow(
@@ -804,9 +573,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         keyboardType: keyboardType,
         onChanged: onChanged,
         style: theme.textTheme.bodyLarge?.copyWith(
-          color: enabled
-              ? theme.dividerTheme.color
-              : theme.iconTheme.color?.withOpacity(0.5),
+          color: enabled ? theme.dividerTheme.color : theme.iconTheme.color?.withOpacity(0.5),
         ),
         decoration: InputDecoration(
           labelText: label,
@@ -864,8 +631,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 shape: BoxShape.circle,
                 color: theme.colorScheme.surfaceVariant,
                 border: Border.all(
-                  color: theme.progressIndicatorTheme.color?.withOpacity(0.2) ??
-                      Colors.blue.withOpacity(0.2),
+                  color: theme.progressIndicatorTheme.color?.withOpacity(0.2) ?? Colors.blue.withOpacity(0.2),
                   width: 3,
                 ),
               ),
@@ -909,7 +675,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         ),
         const SizedBox(height: 16),
         Text(
-          _isEditing ? 'Profile Preview' : _userName,
+          _isEditing ? S.of(context).profilePreview : _userName,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             color: theme.iconTheme.color,
@@ -918,7 +684,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         if (_isEditing) ...[
           const SizedBox(height: 4),
           Text(
-            'Tap the camera icon to change photo',
+            S.of(context).tapToChangePhoto,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.iconTheme.color?.withOpacity(0.6),
             ),
@@ -965,7 +731,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             },
           ),
         );
-      } else if (imageUrl.startsWith('assets/')) {
+      } else if (imageUrl.startsWith('assets/') || imageUrl.startsWith('/')) {
         return ClipOval(
           child: Image.asset(
             imageUrl,
@@ -974,59 +740,6 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             height: double.infinity,
             errorBuilder: (context, error, stackTrace) {
               print('❌ Error loading asset image: $error');
-              return _buildDefaultProfileIcon(theme);
-            },
-          ),
-        );
-      } else if (imageUrl.startsWith('/')) {
-        // Decide if this is a local filepath or a server-relative path.
-        // Treat as local file ONLY for common mobile local prefixes to avoid attempting
-        // filesystem operations on server-relative paths like '/uploads/...'.
-        final lower = imageUrl.toLowerCase();
-        final looksLikeLocal = lower.startsWith('/storage') ||
-            lower.startsWith('/data') ||
-            lower.startsWith('file:');
-
-        if (looksLikeLocal) {
-          try {
-            final localFile = File(imageUrl);
-            if (localFile.existsSync()) {
-              return ClipOval(
-                child: Image.file(
-                  localFile,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                  errorBuilder: (context, error, stackTrace) {
-                    print('❌ Error loading file image: $error');
-                    return _buildDefaultProfileIcon(theme);
-                  },
-                ),
-              );
-            }
-          } catch (e) {
-            // ignore and treat as server-relative below
-            print('⚠️ Failed checking local file: $e');
-          }
-        }
-
-        // Treat as server-relative path
-        final base = ApiManager.baseUrl;
-        final normalizedBase =
-            base.endsWith('/') ? base.substring(0, base.length - 1) : base;
-        final fullUrl = '${normalizedBase}${imageUrl}';
-        return ClipOval(
-          child: Image.network(
-            fullUrl,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return const Center(child: CircularProgressIndicator());
-            },
-            errorBuilder: (context, error, stackTrace) {
-              print('❌ Error loading network image: $error');
               return _buildDefaultProfileIcon(theme);
             },
           ),
@@ -1062,7 +775,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
               ),
             ),
             child: Text(
-              "Cancel",
+              S.of(context).cancelEditing,
               style: theme.textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: theme.iconTheme.color,
@@ -1073,48 +786,33 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         const SizedBox(width: 16),
         Expanded(
           child: ElevatedButton(
-            onPressed: _isUploadingImage
-                ? null
-                : () async {
-                    // Validation
-                    if (nameController.text.isEmpty) {
-                      _showErrorSnackBar('Please enter your name');
-                      return;
-                    }
+            onPressed: () {
+              // Validation
+              if (nameController.text.isEmpty) {
+                _showErrorSnackBar(S.of(context).enterName);
+                return;
+              }
 
-                    if (emailController.text.isEmpty) {
-                      _showErrorSnackBar('Please enter your email');
-                      return;
-                    }
+              if (emailController.text.isEmpty) {
+                _showErrorSnackBar(S.of(context).enterEmail);
+                return;
+              }
 
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(emailController.text)) {
-                      print('❌ Validation failed: Invalid email format');
-                      _showErrorSnackBar('Please enter a valid email address');
-                      return;
-                    }
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(emailController.text)) {
+                print('❌ Validation failed: Invalid email format');
+                _showErrorSnackBar(S.of(context).validEmail);
+                return;
+              }
 
-                    try {
-                      String? uploadedUrl;
-                      if (_selectedImage != null) {
-                        // Upload selected image first
-                        uploadedUrl =
-                            await _uploadProfileImage(_selectedImage!);
-                        if (uploadedUrl == null) {
-                          // upload failed and snackbar already shown
-                          return;
-                        }
-                      }
-
-                      final updatedUser =
-                          _createUpdatedUser(uploadedImageUrl: uploadedUrl);
-                      final cubit = context.read<ProfileCubit<T>>();
-                      cubit.updateProfile(updatedUser);
-                      print('🚀 updateProfile method called successfully');
-                    } catch (e) {
-                      _showErrorSnackBar('Error: $e');
-                    }
-                  },
+              try {
+                final updatedUser = _createUpdatedUser();
+                final cubit = context.read<ProfileCubit<T>>();
+                cubit.updateProfile(updatedUser);
+                print('🚀 updateProfile method called successfully');
+              } catch (e, stackTrace){
+                _showErrorSnackBar('${S.of(context).error}: $e');
+              }
+            },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -1123,7 +821,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
               backgroundColor: theme.progressIndicatorTheme.color,
             ),
             child: Text(
-              "Save Changes",
+              S.of(context).saveChanges,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.iconTheme.color,
                 fontWeight: FontWeight.w600,
@@ -1143,13 +841,64 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Updating profile...',
+          S.of(context).updatingProfile,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.iconTheme.color?.withOpacity(0.6),
           ),
         ),
       ],
     );
+  }
+
+  T _createUpdatedUser() {
+    print('🔄 Creating updated user...');
+
+    if (widget.user is StudentEntity) {
+      final original = widget.user as StudentEntity;
+      final updatedStudent = StudentEntity(
+        id: original.id,
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        profileImage: _selectedImage != null
+            ? _selectedImage!.path
+            : original.profileImage,
+        role: original.role,
+        isAdmin: original.isAdmin,
+        isActive: original.isActive,
+        emailVerified: original.emailVerified,
+        authProvider: original.authProvider,
+        token: original.token,
+      ) as T;
+      return updatedStudent;
+    } else if (widget.user is InstructorEntity) {
+      final original = widget.user as InstructorEntity;
+      final updatedInstructor = InstructorEntity(
+        id: original.id,
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        profileImage: _selectedImage != null
+            ? _selectedImage!.path
+            : original.profileImage,
+        role: original.role,
+        isActive: original.isActive,
+        emailVerified: original.emailVerified,
+        authProvider: original.authProvider,
+        token: original.token,
+        isAdmin: original.isAdmin,
+      ) as T;
+      return updatedInstructor;
+    }
+    throw Exception('Unsupported user type');
+  }
+
+  void _updateAuthProvider(T updatedUser) {
+    print('🔄 Updating auth provider with new user data');
+    final authProvider = Provider.of<UserProvider>(context, listen: false);
+
+    // Use the new updateUser method
+    authProvider.updateUser(updatedUser);
+
+    print('✅ Updated user in auth provider: ${updatedUser.runtimeType}');
   }
 
   @override

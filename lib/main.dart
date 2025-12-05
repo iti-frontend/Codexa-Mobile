@@ -24,6 +24,9 @@ import 'Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_ins
 import 'Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'Ui/home_page/student_tabs/courses_tab/enroll_cubit/enroll_courses_cubit.dart';
 import 'Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:codexa_mobile/generated/l10n.dart';
+import 'package:codexa_mobile/localization//localization_service.dart';
 import 'Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/likes_cubit.dart';
 import 'Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/comment_cubit.dart';
 import 'Ui/utils/provider_ui/auth_provider.dart';
@@ -49,6 +52,12 @@ void main() async {
   final userProvider = UserProvider(prefs);
   await userProvider.loadUser();
 
+  // Create LocalizationService instance
+  final localizationService = LocalizationService();
+
+  // Initialize localization service
+  await localizationService.init();
+
   final initialRoute = userProvider.token == null
       ? SplashScreen.routeName
       : HomeScreen.routeName;
@@ -56,16 +65,19 @@ void main() async {
   runApp(MyApp(
     initialRoute: initialRoute,
     userProvider: userProvider,
+    localizationService: localizationService,
   ));
 }
 
 class MyApp extends StatelessWidget {
   final String initialRoute;
   final UserProvider userProvider;
+  final LocalizationService localizationService;
 
   const MyApp({
     required this.initialRoute,
     required this.userProvider,
+    required this.localizationService,
     Key? key,
   }) : super(key: key);
 
@@ -75,10 +87,12 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => userProvider),
+        ChangeNotifierProvider.value(value: localizationService),
       ],
       child: Builder(
         builder: (context) {
           final themeProvider = Provider.of<ThemeProvider>(context);
+          final localizationService = Provider.of<LocalizationService>(context);
 
           return MultiBlocProvider(
             providers: [
@@ -99,50 +113,100 @@ class MyApp extends StatelessWidget {
             ],
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
+              title: 'Codexa',
               initialRoute: initialRoute,
               theme: AppThemeData.lightTheme,
               darkTheme: AppThemeData.darkTheme,
               themeMode: themeProvider.currentTheme,
+              locale: localizationService.locale,
+              localizationsDelegates: const [
+                S.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: S.supportedLocales,
+              localeResolutionCallback: (locale, supportedLocales) {
+                for (var supportedLocale in supportedLocales) {
+                  if (supportedLocale.languageCode == locale?.languageCode) {
+                    return supportedLocale;
+                  }
+                }
+                return supportedLocales.first;
+              },
               routes: {
                 SplashScreen.routeName: (_) => SplashScreen(),
                 OnboardingScreen.routeName: (_) => OnboardingScreen(),
                 RoleSelectionScreen.routeName: (_) => RoleSelectionScreen(),
                 RegisterScreen.routeName: (_) => RegisterScreen(),
-                LoginScreen.routeName: (_) => LoginScreen(),
+                LoginScreen.routeName: (context) {
+                  // Wrap LoginScreen with all necessary providers
+                  return MultiProvider(
+                    providers: [
+                      // Get existing providers from the root context
+                      ChangeNotifierProvider.value(
+                        value: Provider.of<ThemeProvider>(context, listen: false),
+                      ),
+                      ChangeNotifierProvider.value(
+                        value: Provider.of<UserProvider>(context, listen: false),
+                      ),
+                      ChangeNotifierProvider.value(
+                        value: Provider.of<LocalizationService>(context, listen: false),
+                      ),
+                      // Create a new AuthViewModel for this screen
+                      BlocProvider<AuthViewModel>(
+                        create: (_) => sl<AuthViewModel>(),
+                      ),
+                    ],
+                    child: LoginScreen(),
+                  );
+                },
                 HomeScreen.routeName: (_) => HomeScreen(),
-                ProfileScreen.routeName: (_) {
-                  final userProvider =
-                      Provider.of<UserProvider>(context, listen: false);
+                ProfileScreen.routeName: (context) {
+                  // Get providers from the current context
+                  final userProvider = Provider.of<UserProvider>(context, listen: false);
+                  final localizationService = Provider.of<LocalizationService>(context, listen: false);
+                  final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
 
-                  if (userProvider.user != null) {
-                    final user = userProvider.user!;
-                    final userType = userProvider.role ?? 'User';
+                  return MultiProvider(
+                    providers: [
+                      ChangeNotifierProvider.value(value: userProvider),
+                      ChangeNotifierProvider.value(value: localizationService),
+                      ChangeNotifierProvider.value(value: themeProvider),
+                    ],
+                    child: Builder(
+                      builder: (innerContext) {
+                        final currentUserProvider = Provider.of<UserProvider>(innerContext, listen: false);
 
-                    if (userType.toLowerCase().contains('student') &&
-                        user is StudentEntity) {
-                      return BlocProvider<ProfileCubit<StudentEntity>>(
-                        create: (context) => sl<ProfileCubit<StudentEntity>>(),
-                        child: ProfileScreen<StudentEntity>(
-                          user: user,
-                          userType: 'Student',
-                        ),
-                      );
-                    } else if (userType.toLowerCase().contains('instructor') &&
-                        user is InstructorEntity) {
-                      return BlocProvider<ProfileCubit<InstructorEntity>>(
-                        create: (context) =>
-                            sl<ProfileCubit<InstructorEntity>>(),
-                        child: ProfileScreen<InstructorEntity>(
-                          user: user,
-                          userType: 'Instructor',
-                        ),
-                      );
-                    }
-                  }
+                        if (currentUserProvider.user != null) {
+                          final user = currentUserProvider.user!;
+                          final userType = currentUserProvider.role ?? S.of(innerContext).profile;
 
-                  return Scaffold(
-                    body: Center(
-                      child: Text('User data not available'),
+                          if (userType.toLowerCase().contains('student') && user is StudentEntity) {
+                            return BlocProvider<ProfileCubit<StudentEntity>>(
+                              create: (context) => sl<ProfileCubit<StudentEntity>>(),
+                              child: ProfileScreen<StudentEntity>(
+                                user: user,
+                                userType: 'Student',
+                              ),
+                            );
+                          } else if (userType.toLowerCase().contains('instructor') && user is InstructorEntity) {
+                            return BlocProvider<ProfileCubit<InstructorEntity>>(
+                              create: (context) => sl<ProfileCubit<InstructorEntity>>(),
+                              child: ProfileScreen<InstructorEntity>(
+                                user: user,
+                                userType: 'Instructor',
+                              ),
+                            );
+                          }
+                        }
+
+                        return Scaffold(
+                          body: Center(
+                            child: Text(S.of(innerContext).userDataNotAvailable),
+                          ),
+                        );
+                      },
                     ),
                   );
                 },

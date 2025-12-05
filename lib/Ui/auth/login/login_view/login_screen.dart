@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
+import 'package:codexa_mobile/generated/l10n.dart';
+import 'package:codexa_mobile/localization/localization_service.dart'; // Added import
 
 class LoginScreen extends StatefulWidget {
   static const String routeName = '/login';
@@ -25,8 +27,74 @@ class _LoginScreenState extends State<LoginScreen> {
   String? selectedRole;
   bool obscurePassword = true;
 
+  // Store translations locally to avoid calling S.of(context) in listeners
+  late String _loginSuccessText;
+  late String _loginFailedText;
+  late String _selectRoleText;
+  late String _selectRoleSocialText;
+  late String _googleLoginFailedText;
+  late String _githubLoginFailedText;
+
+  // Store S instance for translations
+  late S _translations;
+  late LocalizationService _localizationService;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with default English translations (will be updated in build)
+    _translations = S(const Locale('en'));
+    _localizationService = LocalizationService()..locale = const Locale('en');
+
+    // Initialize translations here - no context issues
+    _loginSuccessText = 'Login Successful';
+    _loginFailedText = 'Login Failed';
+    _selectRoleText = 'Please select a role';
+    _selectRoleSocialText = 'Please select a role before social login';
+    _googleLoginFailedText = 'Google login failed';
+    _githubLoginFailedText = 'GitHub login failed';
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Try to get LocalizationService from Provider, fallback to default
+    try {
+      _localizationService = Provider.of<LocalizationService>(context, listen: false);
+      _translations = S(_localizationService.locale);
+    } catch (e) {
+      // If Provider not available, keep default English
+      print('LocalizationService not found in context, using default English');
+    }
+
+    // Update stored text translations
+    _loginSuccessText = _translations.loginSuccess;
+    _loginFailedText = _translations.loginFailed;
+    _selectRoleText = _translations.selectRole;
+    _selectRoleSocialText = _translations.selectRoleSocial;
+    _googleLoginFailedText = _translations.googleLoginFailed;
+    _githubLoginFailedText = _translations.githubLoginFailed;
+  }
+
+
   @override
   Widget build(BuildContext context) {
+    try {
+      final localizationService = Provider.of<LocalizationService>(context, listen: false);
+      if (localizationService.locale != _localizationService.locale) {
+        _localizationService = localizationService;
+        _translations = S(localizationService.locale);
+    // Update stored text translations
+    _loginSuccessText = _translations.loginSuccess;
+    _loginFailedText = _translations.loginFailed;
+    _selectRoleText = _translations.selectRole;
+    _selectRoleSocialText = _translations.selectRoleSocial;
+    _googleLoginFailedText = _translations.googleLoginFailed;
+    _githubLoginFailedText = _translations.githubLoginFailed;
+      }
+    } catch (e) {
+      // Provider not available, use default
+    }
     return BlocConsumer<AuthViewModel, AuthStates>(
       listener: (context, state) async {
         if (state is StudentAuthSuccessState ||
@@ -63,15 +131,15 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.pushReplacementNamed(context, HomeScreen.routeName);
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Logged in successfully!'),
+            SnackBar(
+              content: Text(_loginSuccessText), // Use stored text
               backgroundColor: Colors.green,
             ),
           );
         } else if (state is AuthErrorState) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Login failed: ${state.failure.errorMessage}'),
+              content: Text('$_loginFailedText: ${state.failure.errorMessage}'), // Use stored text
               backgroundColor: Colors.red,
             ),
           );
@@ -87,12 +155,12 @@ class _LoginScreenState extends State<LoginScreen> {
             ? AppColorsDark.cardBackground
             : AppColorsLight.cardBackground;
         final textColor =
-            isDarkMode ? AppColorsDark.primaryText : AppColorsLight.primaryText;
+        isDarkMode ? AppColorsDark.primaryText : AppColorsLight.primaryText;
         final secondaryTextColor = isDarkMode
             ? AppColorsDark.secondaryText
             : AppColorsLight.secondaryText;
         final buttonColor =
-            isDarkMode ? AppColorsDark.accentGreen : AppColorsLight.accentBlue;
+        isDarkMode ? AppColorsDark.accentGreen : AppColorsLight.accentBlue;
 
         return Scaffold(
           backgroundColor: backgroundColor,
@@ -100,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Center(
               child: SingleChildScrollView(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 400),
                   padding: const EdgeInsets.all(28),
@@ -115,7 +183,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         const _Header(),
                         const SizedBox(height: 16),
-                        Text('I am a:',
+                        // SIMPLE FIX: Use _translations instance instead of S.of(context)
+                        Text(_translations.iAmA,
                             style: TextStyle(
                                 color: isDarkMode
                                     ? AppColorsDark.secondaryText
@@ -124,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         _roleSelector(
                             isDarkMode, textColor, secondaryTextColor),
                         const SizedBox(height: 16),
-                        Text('Email',
+                        Text(_translations.email,
                             style: TextStyle(
                                 color: isDarkMode
                                     ? AppColorsDark.secondaryText
@@ -132,18 +201,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 6),
                         CustomTextField(
                           controller: authViewModel.emailController,
-                          hintText: 'username@gmail.com',
+                          hintText: _translations.usernamePlaceholder,
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty)
-                              return 'Email cannot be empty';
+                              return _translations.emailCannotBeEmpty;
                             if (!value.contains('@'))
-                              return 'Enter a valid email';
+                              return _translations.enterValidEmail;
                             return null;
                           },
                         ),
                         const SizedBox(height: 16),
-                        Text('Password',
+                        Text(_translations.password,
                             style: TextStyle(
                                 color: isDarkMode
                                     ? AppColorsDark.secondaryText
@@ -151,14 +220,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 6),
                         CustomTextField(
                           controller: authViewModel.passwordController,
-                          hintText: 'Password',
+                          hintText: _translations.passwordPlaceholder,
                           obscureText: obscurePassword,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'Password cannot be empty';
+                              return _translations.passwordCannotBeEmpty;
                             }
                             if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
+                              return _translations.passwordMinLength;
                             }
                             return null;
                           },
@@ -187,27 +256,27 @@ class _LoginScreenState extends State<LoginScreen> {
                                   borderRadius: BorderRadius.circular(12)),
                             ),
                             onPressed:
-                                state is AuthLoadingState ? null : _submitLogin,
+                            state is AuthLoadingState ? null : _submitLogin,
                             child: state is AuthLoadingState
                                 ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2.5,
-                                    ),
-                                  )
-                                : Text('Sign in',
-                                    style: TextStyle(
-                                        color: isDarkMode
-                                            ? Colors.black
-                                            : Colors.white,
-                                        fontWeight: FontWeight.bold)),
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                                : Text(_translations.signIn,
+                                style: TextStyle(
+                                    color: isDarkMode
+                                        ? Colors.black
+                                        : Colors.white,
+                                    fontWeight: FontWeight.bold)),
                           ),
                         ),
                         const SizedBox(height: 20),
                         Center(
-                            child: Text('or continue with',
+                            child: Text(_translations.orContinueWith,
                                 style: TextStyle(
                                     color: isDarkMode
                                         ? AppColorsDark.secondaryText
@@ -233,8 +302,8 @@ class _LoginScreenState extends State<LoginScreen> {
       bool isDarkMode, Color textColor, Color secondaryTextColor) {
     return Row(
       children: [
-        _roleRadio('student', 'Student', isDarkMode, secondaryTextColor),
-        _roleRadio('instructor', 'Instructor', isDarkMode, secondaryTextColor),
+        _roleRadio('student', _translations.student, isDarkMode, secondaryTextColor),
+        _roleRadio('instructor', _translations.instructor, isDarkMode, secondaryTextColor),
       ],
     );
   }
@@ -284,7 +353,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Center(
       child: RichText(
         text: TextSpan(
-          text: "Don't have an account yet? ",
+          text: "${_translations.dontHaveAccount} ",
           style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
           children: [
             WidgetSpan(
@@ -292,9 +361,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 onTap: () => Navigator.pushReplacementNamed(
                     context, RoleSelectionScreen.routeName),
                 child: Text(
-                  'Register for free',
+                  _translations.registerForFree,
                   style:
-                      TextStyle(fontWeight: FontWeight.bold, color: textColor),
+                  TextStyle(fontWeight: FontWeight.bold, color: textColor),
                 ),
               ),
             ),
@@ -311,8 +380,8 @@ class _LoginScreenState extends State<LoginScreen> {
     // Ensure role selected before attempting login
     if (selectedRole == null || selectedRole!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a role (Student or Instructor)'),
+        SnackBar(
+          content: Text(_selectRoleText), // Use stored text
           backgroundColor: Colors.orange,
         ),
       );
@@ -334,8 +403,8 @@ class _LoginScreenState extends State<LoginScreen> {
     // Ensure role selected
     if (role == null || role.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a role before social login'),
+        SnackBar(
+          content: Text(_selectRoleSocialText), // Use stored text
           backgroundColor: Colors.orange,
         ),
       );
@@ -344,11 +413,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final GoogleSignInAccount? googleUser =
-          await GoogleSignIn(scopes: ['email']).signIn();
+      await GoogleSignIn(scopes: ['email']).signIn();
       if (googleUser == null) return;
 
       final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -356,12 +425,12 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
+      await FirebaseAuth.instance.signInWithCredential(credential);
 
       final firebaseIdToken = await userCredential.user?.getIdToken();
       if (firebaseIdToken == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to get Firebase ID Token')),
+          SnackBar(content: Text(_googleLoginFailedText)), // Use stored text
         );
         return;
       }
@@ -377,7 +446,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       debugPrint('Google sign-in error: $e');
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Google login failed: $e')));
+          .showSnackBar(SnackBar(content: Text('$_googleLoginFailedText: $e'))); // Use stored text
     }
   }
 
@@ -385,8 +454,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _githubSignIn(String? role) async {
     if (role == null || role.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a role before social login'),
+        SnackBar(
+          content: Text(_selectRoleSocialText), // Use stored text
           backgroundColor: Colors.orange,
         ),
       );
@@ -396,12 +465,12 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final githubProvider = GithubAuthProvider();
       final userCredential =
-          await FirebaseAuth.instance.signInWithProvider(githubProvider);
+      await FirebaseAuth.instance.signInWithProvider(githubProvider);
 
       final firebaseIdToken = await userCredential.user?.getIdToken();
       if (firebaseIdToken == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to get Firebase ID Token')),
+          SnackBar(content: Text(_githubLoginFailedText)), // Use stored text
         );
         return;
       }
@@ -416,7 +485,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       debugPrint('GitHub sign-in error: $e');
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('GitHub login failed: $e')));
+          .showSnackBar(SnackBar(content: Text('$_githubLoginFailedText: $e'))); // Use stored text
     }
   }
 
@@ -451,10 +520,21 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final textColor =
-        isDarkMode ? AppColorsDark.primaryText : AppColorsLight.primaryText;
+    isDarkMode ? AppColorsDark.primaryText : AppColorsLight.primaryText;
+
+    // SIMPLEST FIX: Just use try-catch
+    String loginText;
+
+    // First try to get from S.of(context)
+    try {
+      loginText = S.of(context).login;
+    } catch (e) {
+      // If that fails, use default English
+      loginText = 'Login';
+    }
 
     return Text(
-      'Login',
+      loginText,
       style: TextStyle(
         fontSize: 28,
         fontWeight: FontWeight.bold,

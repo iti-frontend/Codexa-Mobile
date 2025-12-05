@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../generated/l10n/app_localizations.dart';
+import '../../generated/l10n.dart'; // Changed from app_localizations.dart
 import '../../localization/localization_service.dart';
+import 'package:provider/provider.dart';
 
 extension LocalizationExtension on BuildContext {
-  AppLocalizations get loc => AppLocalizations.of(this)!;
+  S get loc => S.of(this);
 }
 
 class DirectionalWidget extends StatelessWidget {
@@ -13,8 +14,9 @@ class DirectionalWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizationService = Provider.of<LocalizationService>(context);
     return Directionality(
-      textDirection: LocalizationService.textDirection,
+      textDirection: localizationService.textDirection,
       child: child,
     );
   }
@@ -40,11 +42,12 @@ class LocalizedText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizationService = Provider.of<LocalizationService>(context);
     return Text(
       text ?? '',
       style: style,
       textAlign: textAlign ??
-          (LocalizationService.isRTL() ? TextAlign.right : TextAlign.left),
+          (localizationService.isRTL() ? TextAlign.right : TextAlign.left),
       maxLines: maxLines,
       overflow: overflow,
       softWrap: softWrap,
@@ -78,6 +81,7 @@ class LocalizedTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizationService = Provider.of<LocalizationService>(context);
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
@@ -86,14 +90,14 @@ class LocalizedTextField extends StatelessWidget {
       onChanged: onChanged,
       validator: validator,
       textDirection:
-          LocalizationService.isRTL() ? TextDirection.rtl : TextDirection.ltr,
-      textAlign: LocalizationService.isRTL() ? TextAlign.right : TextAlign.left,
+      localizationService.isRTL() ? TextDirection.rtl : TextDirection.ltr,
+      textAlign: localizationService.isRTL() ? TextAlign.right : TextAlign.left,
       decoration: InputDecoration(
         hintText: hintText,
         labelText: labelText,
         suffixIcon: suffixIcon,
         hintTextDirection:
-            LocalizationService.isRTL() ? TextDirection.rtl : TextDirection.ltr,
+        localizationService.isRTL() ? TextDirection.rtl : TextDirection.ltr,
         alignLabelWithHint: true,
       ),
     );

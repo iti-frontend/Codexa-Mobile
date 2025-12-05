@@ -18,6 +18,7 @@ import 'package:codexa_mobile/Ui/utils/widgets/custom_bottom_navbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import 'package:codexa_mobile/generated/l10n.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String routeName = "/home";
@@ -71,15 +72,15 @@ class _HomescreenState extends State<HomeScreen> {
     );
   }
 
-  String _getUserName(UserProvider userProvider) {
+  String _getUserName(BuildContext context, UserProvider userProvider) {
     if (userProvider.user is StudentEntity) {
       final student = userProvider.user as StudentEntity;
-      return student.name ?? 'Student';
+      return student.name ?? S.of(context).student;
     } else if (userProvider.user is InstructorEntity) {
       final instructor = userProvider.user as InstructorEntity;
-      return instructor.name ?? 'Instructor';
+      return instructor.name ?? S.of(context).instructor;
     }
-    return 'User';
+    return S.of(context).profile;
   }
 
   String _getUserProfileImage(UserProvider userProvider) {
@@ -147,7 +148,7 @@ class _HomescreenState extends State<HomeScreen> {
     ];
 
     final userProfileImage = _getUserProfileImage(userProvider);
-    final userName = _getUserName(userProvider);
+    final userName = _getUserName(context, userProvider); // Pass context here
 
     // Show create post button for instructor AND student on community tab
     VoidCallback? onCreatePostTap;
