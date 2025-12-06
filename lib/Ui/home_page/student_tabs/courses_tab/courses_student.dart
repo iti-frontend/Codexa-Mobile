@@ -44,29 +44,22 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
 
     final cubit = context.read<StudentCoursesCubit>();
 
-    // Only fetch if we don't have courses yet - preserves favourite state
-    if (cubit.allCourses.isEmpty) {
-      print('🔵 [COURSES_TAB] No cached courses, fetching from API...');
-      // Create dependencies manually to avoid registering them in DI if not needed globally
-      final apiManager = sl<ApiManager>();
-      final coursesRepo = CoursesRepoImpl(apiManager);
-      final getFavouritesUseCase = GetFavouritesUseCase(coursesRepo);
+    // Always fetch latest courses to ensure data freshness (e.g. after course deletion)
+    print('🔵 [COURSES_TAB] Fetching latest courses from API...');
+    final apiManager = sl<ApiManager>();
+    final coursesRepo = CoursesRepoImpl(apiManager);
+    final getFavouritesUseCase = GetFavouritesUseCase(coursesRepo);
 
-      cubit.fetchCoursesWithFavourites(getFavouritesUseCase.call);
-    } else {
-      print(
-          '🟢 [COURSES_TAB] Using cached courses (${cubit.allCourses.length} courses)');
-      print('🟢 [COURSES_TAB] Favourite states preserved!');
-    }
+    cubit.fetchCoursesWithFavourites(getFavouritesUseCase.call);
 
     // Listen to favourite toggle events from other tabs
     _favouriteSubscription = FavouriteToggleNotifier().stream.listen((event) {
       print(
           '🔵 [COURSES_TAB] Received toggle event: courseId=${event.courseId}, isFavourite=${event.isFavourite}');
       context.read<StudentCoursesCubit>().updateCourseFavourite(
-        event.courseId,
-        event.isFavourite,
-      );
+            event.courseId,
+            event.isFavourite,
+          );
     });
   }
 
@@ -148,7 +141,8 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
           padding: const EdgeInsets.all(20.0),
           child: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20.0),
                 BlocBuilder<StudentCoursesCubit, StudentCoursesState>(
@@ -159,11 +153,14 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                         return const SizedBox();
                       }
                       final enrolledCourses = state.courses.where((course) {
-                        return course.enrolledStudents?.contains(userId) ?? false;
+                        return course.enrolledStudents?.contains(userId) ??
+                            false;
                       }).toList();
                       if (enrolledCourses.isEmpty) {
                         return Column(
-                          crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                          crossAxisAlignment: isRTL
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
                           children: [
                             Container(
                               width: double.infinity,
@@ -174,7 +171,8 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                 ),
-                                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                                textAlign:
+                                    isRTL ? TextAlign.right : TextAlign.left,
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -191,7 +189,9 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                     color: theme.dividerTheme.color,
                                     fontSize: 14,
                                   ),
-                                  textAlign: isRTL ? TextAlign.right : TextAlign.center,
+                                  textAlign: isRTL
+                                      ? TextAlign.right
+                                      : TextAlign.center,
                                 ),
                               ),
                             ),
@@ -200,7 +200,9 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                         );
                       }
                       return Column(
-                        crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                        crossAxisAlignment: isRTL
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
                         children: [
                           Container(
                             width: double.infinity,
@@ -211,7 +213,8 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),
-                              textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                              textAlign:
+                                  isRTL ? TextAlign.right : TextAlign.left,
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -228,7 +231,8 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => CourseDetailsWrapper(course: course),
+                                        builder: (_) => CourseDetailsWrapper(
+                                            course: course),
                                       ),
                                     );
                                   },
@@ -252,18 +256,24 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                     child: Padding(
                                       padding: const EdgeInsets.all(16),
                                       child: Column(
-                                        crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                        crossAxisAlignment: isRTL
+                                            ? CrossAxisAlignment.end
+                                            : CrossAxisAlignment.start,
                                         children: [
                                           // Category badge
                                           if (course.category != null)
                                             Container(
-                                              padding: const EdgeInsets.symmetric(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
                                                 horizontal: 12,
                                                 vertical: 6,
                                               ),
                                               decoration: BoxDecoration(
-                                                color: theme.progressIndicatorTheme.color,
-                                                borderRadius: BorderRadius.circular(8),
+                                                color: theme
+                                                    .progressIndicatorTheme
+                                                    .color,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                               ),
                                               child: Text(
                                                 course.category!,
@@ -272,13 +282,16 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w600,
                                                 ),
-                                                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                                                textAlign: isRTL
+                                                    ? TextAlign.right
+                                                    : TextAlign.left,
                                               ),
                                             ),
                                           const SizedBox(height: 12),
                                           // Course title
                                           Text(
-                                            course.title ?? _translations.untitledCourse,
+                                            course.title ??
+                                                _translations.untitledCourse,
                                             style: TextStyle(
                                               color: theme.iconTheme.color,
                                               fontSize: 18,
@@ -286,63 +299,82 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                             ),
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
-                                            textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                                            textAlign: isRTL
+                                                ? TextAlign.right
+                                                : TextAlign.left,
                                           ),
                                           const SizedBox(height: 8),
                                           // Instructor name
                                           Row(
                                             children: isRTL
                                                 ? [
-                                              Expanded(
-                                                child: Text(
-                                                  course.instructor?.name ??
-                                                      _translations.unknownInstructor,
-                                                  style: TextStyle(
-                                                    color: theme.dividerTheme.color,
-                                                    fontSize: 14,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  textAlign: TextAlign.right,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Icon(
-                                                Icons.person_outline,
-                                                size: 16,
-                                                color: theme.dividerTheme.color,
-                                              ),
-                                            ]
+                                                    Expanded(
+                                                      child: Text(
+                                                        course.instructor
+                                                                ?.name ??
+                                                            _translations
+                                                                .unknownInstructor,
+                                                        style: TextStyle(
+                                                          color: theme
+                                                              .dividerTheme
+                                                              .color,
+                                                          fontSize: 14,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        textAlign:
+                                                            TextAlign.right,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Icon(
+                                                      Icons.person_outline,
+                                                      size: 16,
+                                                      color: theme
+                                                          .dividerTheme.color,
+                                                    ),
+                                                  ]
                                                 : [
-                                              Icon(
-                                                Icons.person_outline,
-                                                size: 16,
-                                                color: theme.dividerTheme.color,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Expanded(
-                                                child: Text(
-                                                  course.instructor?.name ??
-                                                      _translations.unknownInstructor,
-                                                  style: TextStyle(
-                                                    color: theme.dividerTheme.color,
-                                                    fontSize: 14,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  textAlign: TextAlign.left,
-                                                ),
-                                              ),
-                                            ],
+                                                    Icon(
+                                                      Icons.person_outline,
+                                                      size: 16,
+                                                      color: theme
+                                                          .dividerTheme.color,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Expanded(
+                                                      child: Text(
+                                                        course.instructor
+                                                                ?.name ??
+                                                            _translations
+                                                                .unknownInstructor,
+                                                        style: TextStyle(
+                                                          color: theme
+                                                              .dividerTheme
+                                                              .color,
+                                                          fontSize: 14,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        textAlign:
+                                                            TextAlign.left,
+                                                      ),
+                                                    ),
+                                                  ],
                                           ),
                                           const Spacer(),
                                           // View course button
                                           Container(
                                             width: double.infinity,
-                                            padding: const EdgeInsets.symmetric(vertical: 8),
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 8),
                                             decoration: BoxDecoration(
-                                              color: theme.progressIndicatorTheme.color,
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: theme
+                                                  .progressIndicatorTheme.color,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Center(
                                               child: Text(
@@ -397,9 +429,9 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                     final cubit = context.read<StudentCoursesCubit>();
                     cubit.filterByCategory(value);
                     final List<CourseEntity> courses =
-                    cubit.state is StudentCoursesLoaded
-                        ? (cubit.state as StudentCoursesLoaded).courses
-                        : [];
+                        cubit.state is StudentCoursesLoaded
+                            ? (cubit.state as StudentCoursesLoaded).courses
+                            : [];
                     filterCoursesByCategory(courses, value);
                   },
                   isRTL: isRTL,
@@ -428,7 +460,8 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                         return Center(
                           child: Text(
                             _translations.noCoursesFound,
-                            textAlign: isRTL ? TextAlign.right : TextAlign.center,
+                            textAlign:
+                                isRTL ? TextAlign.right : TextAlign.center,
                           ),
                         );
                       }
@@ -454,7 +487,7 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                                 context
                                     .read<StudentCoursesCubit>()
                                     .updateCourseFavourite(
-                                    state.courseId, state.isFavourite);
+                                        state.courseId, state.isFavourite);
                               } else if (state is ToggleFavouriteError &&
                                   state.courseId == course.id) {
                                 print(
@@ -477,7 +510,8 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                               child: DashboardCard(
                                 child: CourseProgressItem(
                                   instructorName: course.instructor!.name ?? "",
-                                  categoryTitle: course.category ?? _translations.noCategory,
+                                  categoryTitle: course.category ??
+                                      _translations.noCategory,
                                   hasCategory: true,
                                   title: course.title ?? _translations.untitled,
                                   isFavourite: course.isFavourite ?? false,

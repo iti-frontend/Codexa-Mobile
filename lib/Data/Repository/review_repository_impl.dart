@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
 import 'package:codexa_mobile/Data/constants/api_constants.dart';
 import 'package:codexa_mobile/Data/models/review_dto.dart';
@@ -39,15 +40,48 @@ class ReviewRepositoryImpl implements ReviewRepository {
       print('📥 [REVIEW_REPO] Response Status: ${response.statusCode}');
       print('📥 [REVIEW_REPO] Response Data: ${response.data}');
 
+      var data = response.data;
+      if (data is String) {
+        try {
+          data = jsonDecode(data);
+        } catch (_) {}
+      }
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // API returns the review object directly or wrapped
-        final reviewData = response.data['review'] ?? response.data;
-        final reviewDto = ReviewDto.fromJson(reviewData);
-        print('✅ [REVIEW_REPO] createOrUpdateReview SUCCESS');
-        return Right(reviewDto);
+        // Parse the Review
+        // Check if data is Map first
+        if (data is Map) {
+          final reviewData = data['review'] ?? data;
+          if (reviewData is Map<String, dynamic>) {
+            final reviewDto = ReviewDto.fromJson(reviewData);
+            print('✅ [REVIEW_REPO] createOrUpdateReview SUCCESS');
+            return Right(reviewDto);
+          } else if (reviewData is Map) {
+            // Handle dynamic map
+            final reviewDto =
+                ReviewDto.fromJson(Map<String, dynamic>.from(reviewData));
+            return Right(reviewDto);
+          }
+        }
+
+        return Left(Failures(
+            errorMessage:
+                'Unexpected success response format: ${data.runtimeType}'));
       } else {
-        final errorMsg =
-            response.data?['message']?.toString() ?? 'Failed to submit review';
+        String errorMsg = 'Failed to submit review';
+        if (data is Map) {
+          errorMsg = data['message']?.toString() ?? errorMsg;
+        } else if (data is List && data.isNotEmpty) {
+          // If list of errors, take first
+          if (data[0] is Map) {
+            errorMsg = data[0]['message']?.toString() ?? data[0].toString();
+          } else {
+            errorMsg = data.toString();
+          }
+        } else if (data is String) {
+          errorMsg = data;
+        }
+
         print('❌ [REVIEW_REPO] createOrUpdateReview FAILED: $errorMsg');
         return Left(Failures(errorMessage: errorMsg));
       }

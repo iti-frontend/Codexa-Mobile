@@ -30,7 +30,11 @@ class CoursesDto extends CourseEntity {
       category: json['category']?.toString(),
       level: json['level']?.toString(),
       instructor: json['instructor'] != null
-          ? InstructorDto.fromJson(json['instructor'])
+          ? (json['instructor'] is Map<String, dynamic>
+              ? InstructorDto.fromJson(json['instructor'])
+              : (json['instructor'] is String
+                  ? InstructorDto.fromJson({'_id': json['instructor']})
+                  : null))
           : null,
       enrolledStudents: (json['enrolledStudents'] as List<dynamic>?) ?? [],
       videos: (json['videos'] as List<dynamic>?) ?? [],

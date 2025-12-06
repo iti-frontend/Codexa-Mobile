@@ -1,8 +1,10 @@
 import 'package:codexa_mobile/Domain/entities/review_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/reviews_cubit/review_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/reviews_cubit/review_state.dart';
+import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 /// Reviews Section Widget for CourseDetailsScreen
@@ -542,13 +544,40 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                         ? CrossAxisAlignment.end
                         : CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        author?.name ?? 'Anonymous',
-                        style: widget.theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: widget.theme.iconTheme.color,
-                        ),
-                      ),
+                      Builder(builder: (context) {
+                        // Fallback logic for Current User
+                        String displayName = author?.name ?? 'Anonymous';
+                        if ((displayName == 'Anonymous' ||
+                                displayName.isEmpty) &&
+                            widget.currentUserId != null &&
+                            author?.id == widget.currentUserId) {
+                          // Try fetching from UserProvider
+                          try {
+                            final userProvider = Provider.of<UserProvider>(
+                                context,
+                                listen: false);
+                            final user = userProvider.user;
+                            if (user != null) {
+                              dynamic dUser = user;
+                              try {
+                                displayName = dUser.name ?? 'You';
+                              } catch (_) {
+                                try {
+                                  displayName = dUser['name'] ?? 'You';
+                                } catch (_) {}
+                              }
+                            }
+                          } catch (_) {}
+                        }
+
+                        return Text(
+                          displayName,
+                          style: widget.theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: widget.theme.iconTheme.color,
+                          ),
+                        );
+                      }),
                       const SizedBox(height: 2),
                       _buildStarRating(review.rating ?? 0),
                     ],
@@ -560,6 +589,16 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                     color: widget.theme.iconTheme.color?.withOpacity(0.6),
                   ),
                 ),
+                if (widget.currentUserId != null &&
+                    author?.id == widget.currentUserId) ...[
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline,
+                        color: Colors.red, size: 20),
+                    onPressed: () => _showDeleteConfirmation(review),
+                    tooltip: 'Delete Review',
+                  ),
+                ],
               ],
             ),
             // Review text
