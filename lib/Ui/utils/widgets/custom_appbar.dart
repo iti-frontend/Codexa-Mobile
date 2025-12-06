@@ -11,8 +11,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'dart:io';
 import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
-
 import 'package:provider/provider.dart';
+import 'package:animated_theme_switcher/animated_theme_switcher.dart'
+    as animated;
+import 'package:codexa_mobile/Ui/utils/theme/app_theme_data.dart';
 
 class CustomAppbar extends StatelessWidget {
   final String profileImage;
@@ -20,7 +22,7 @@ class CustomAppbar extends StatelessWidget {
   final VoidCallback? onProfileTap;
   final VoidCallback? onCreatePostTap;
   final bool showCart;
-  final dynamic translations; // Add translations attribute
+  final dynamic translations;
 
   const CustomAppbar({
     required this.profileImage,
@@ -126,7 +128,8 @@ class CustomAppbar extends StatelessWidget {
                     icon: Icons.add_circle_outline,
                     onTap: onCreatePostTap!,
                     theme: theme,
-                    tooltip: getTranslation('createPost', defaultValue: 'Create Post'),
+                    tooltip: getTranslation('createPost',
+                        defaultValue: 'Create Post'),
                   ),
 
                 const SizedBox(width: 8),
@@ -137,10 +140,35 @@ class CustomAppbar extends StatelessWidget {
                   icon: Icons.logout_rounded,
                   onTap: () {
                     final userProvider =
-                    Provider.of<UserProvider>(context, listen: false);
+                        Provider.of<UserProvider>(context, listen: false);
                     userProvider.logout();
-                    Navigator.pushReplacementNamed(
-                        context, LoginScreen.routeName);
+
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            LoginScreen(),
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                          var begin = 0.0;
+                          var end = 1.0;
+                          var curve = Curves.ease;
+
+                          // Implicitly using the tween logic without variable assignment to clean up
+                          var _ = Tween(begin: begin, end: end)
+                              .chain(CurveTween(curve: curve));
+
+                          return ScaleTransition(
+                            scale: animation,
+                            child: FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            ),
+                          );
+                        },
+                        transitionDuration: const Duration(milliseconds: 500),
+                      ),
+                    );
                   },
                   theme: theme,
                   tooltip: getTranslation('logout', defaultValue: 'Logout'),
@@ -333,10 +361,10 @@ class CustomAppbar extends StatelessWidget {
                 : AppColorsLight.cardBackground,
             child: profileImage.isEmpty
                 ? Icon(
-              Icons.person_rounded,
-              color: theme.iconTheme.color,
-              size: 18,
-            )
+                    Icons.person_rounded,
+                    color: theme.iconTheme.color,
+                    size: 18,
+                  )
                 : null,
           ),
         ),
@@ -344,16 +372,20 @@ class CustomAppbar extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchBox(BuildContext context, ThemeData theme, bool isDark, dynamic translations) {
+  Widget _buildSearchBox(BuildContext context, ThemeData theme, bool isDark,
+      dynamic translations) {
     // Get search hint translation
     String searchHint = 'Search for courses...';
     if (translations != null) {
       try {
         if (translations is Map<String, String>) {
-          searchHint = translations['searchHint'] ?? translations['search'] ?? searchHint;
+          searchHint = translations['searchHint'] ??
+              translations['search'] ??
+              searchHint;
         } else if (translations is dynamic) {
-          final searchTranslation = _tryGetProperty(translations, 'searchHint') ??
-              _tryGetProperty(translations, 'search');
+          final searchTranslation =
+              _tryGetProperty(translations, 'searchHint') ??
+                  _tryGetProperty(translations, 'search');
           if (searchTranslation != null) {
             searchHint = searchTranslation;
           }
@@ -474,7 +506,7 @@ class CustomAppbar extends StatelessWidget {
       // Treat as server-relative
       final base = ApiManager.baseUrl;
       final normalizedBase =
-      base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+          base.endsWith('/') ? base.substring(0, base.length - 1) : base;
       return NetworkImage('$normalizedBase$imageUrl');
     } else {
       return AssetImage('assets/$imageUrl');
@@ -509,7 +541,7 @@ class CustomAppbar extends StatelessWidget {
           case 'favorites':
             return obj.favorites;
           default:
-          // Try to access using noSuchMethod fallback
+            // Try to access using noSuchMethod fallback
             try {
               return obj[propertyName];
             } catch (_) {
@@ -568,24 +600,41 @@ class _AnimatedThemeToggleState extends State<_AnimatedThemeToggle>
     super.dispose();
   }
 
-  void _toggleTheme(ThemeProvider themeProvider) async {
-    // Start animation
+  void _toggleTheme(BuildContext context, ThemeProvider themeProvider) {
+    // Determine the next theme based on current brightness
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final nextTheme = isDark ? AppThemeData.lightTheme : AppThemeData.darkTheme;
+
+    // Calculate Center of the screen
+    final size = MediaQuery.of(context).size;
+    final centerOffset = Offset(size.width / 2, size.height / 2);
+
+    // Start icon animation
     _animationController.forward().then((_) {
       _animationController.reverse();
     });
 
-    // Toggle theme
-    await themeProvider.toggleTheme();
+    // Trigger the circular reveal animation from the package
+    animated.ThemeSwitcher.of(context).changeTheme(
+      theme: nextTheme,
+      isReversed: isDark,
+      offset: centerOffset, // Start from center of screen
+    );
+
+    // Update local provider for persistence and other app state
+    themeProvider.toggleTheme();
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+    // Listen false to prevent rebuilds from Provider. Rebuilds should come from Theme.of(context)
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    // Use ThemeSwitcher.of(context) which is now at the root of the app
     return GestureDetector(
-      onTap: () => _toggleTheme(themeProvider),
+      onTap: () => _toggleTheme(context, themeProvider),
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -595,7 +644,7 @@ class _AnimatedThemeToggleState extends State<_AnimatedThemeToggle>
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: themeProvider.isDarkMode
+              color: isDark
                   ? Colors.amber.withOpacity(0.2)
                   : AppColorsLight.accentBlue.withOpacity(0.2),
               blurRadius: 8,
@@ -622,13 +671,9 @@ class _AnimatedThemeToggleState extends State<_AnimatedThemeToggle>
                     );
                   },
                   child: Icon(
-                    themeProvider.isDarkMode
-                        ? Icons.wb_sunny_rounded
-                        : Icons.nightlight_round,
-                    key: ValueKey<bool>(themeProvider.isDarkMode),
-                    color: themeProvider.isDarkMode
-                        ? Colors.amber
-                        : AppColorsLight.accentBlue,
+                    isDark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+                    key: ValueKey<bool>(isDark),
+                    color: isDark ? Colors.amber : AppColorsLight.accentBlue,
                     size: 22,
                   ),
                 ),

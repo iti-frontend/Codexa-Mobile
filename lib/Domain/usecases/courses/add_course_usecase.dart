@@ -8,12 +8,7 @@ class AddCourseUseCase {
 
   AddCourseUseCase(this.repo);
 
-  Future<Either<Failures, void>> call(CourseEntity course) async {
-    try {
-      await repo.addCourse(course);
-      return const Right(null);
-    } catch (e) {
-      return Left(Failures(errorMessage: e.toString()));
-    }
+  Future<Either<Failures, CourseEntity>> call(CourseEntity course) {
+    return repo.addCourse(course);
   }
 }

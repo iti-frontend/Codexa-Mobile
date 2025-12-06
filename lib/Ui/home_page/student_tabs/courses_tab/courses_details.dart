@@ -11,6 +11,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:codexa_mobile/localization/localization_service.dart';
 import 'package:codexa_mobile/generated/l10n.dart' as generated;
+import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 
 class CourseDetailsWrapper extends StatelessWidget {
   final CourseEntity course;
@@ -19,11 +20,8 @@ class CourseDetailsWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Provide ReviewCubit for this screen
-    return BlocProvider(
-      create: (_) => sl<ReviewCubit>(),
-      child: CourseDetails(course: course),
-    );
+    // Removed shared ReviewCubit to allow separate instances for Course and Instructor
+    return CourseDetails(course: course);
   }
 }
 
@@ -113,6 +111,118 @@ class _CourseDetailsState extends State<CourseDetails> {
           elevation: 0,
           foregroundColor: theme.colorScheme.onBackground,
         ),
+        bottomNavigationBar: (isInstructor || _isEnrolled)
+            ? null
+            : Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.cardTheme.color,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  child: BlocConsumer<CartCubit, CartState>(
+                    listener: (context, state) {
+                      if (state is AddToCartSuccess) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(state.message),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } else if (state is AddToCartError) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(state.message),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      } else if (state is RemoveFromCartSuccess) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(state.message),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                      } else if (state is RemoveFromCartError) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(state.message),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      } else if (state is CartError) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(state.message),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    builder: (context, state) {
+                      final cubit = context.read<CartCubit>();
+                      final isInCart = cubit.currentCart?.items?.any(
+                              (item) => item.courseId == _currentCourse.id) ??
+                          false;
+
+                      if (state is CartLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      return ElevatedButton(
+                        onPressed: () {
+                          if (_currentCourse.id != null) {
+                            if (isInCart) {
+                              cubit.removeFromCart(_currentCourse.id!);
+                            } else {
+                              cubit.addToCart(_currentCourse.id!);
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isInCart
+                              ? Colors.red
+                              : (theme.brightness == Brightness.dark
+                                  ? AppColorsDark.accentGreen
+                                  : AppColorsLight.accentBlue),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              isInCart
+                                  ? Icons.remove_shopping_cart
+                                  : Icons.add_shopping_cart,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isInCart
+                                  ? _translations.removeFromCart
+                                  : _translations.addToCart,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -154,6 +264,8 @@ class _CourseDetailsState extends State<CourseDetails> {
                   valueColor: theme.iconTheme.color),
               const SizedBox(height: 25),
               const Divider(),
+
+              // Instructor Section
               if (_currentCourse.instructor != null)
                 Column(
                   crossAxisAlignment:
@@ -177,6 +289,38 @@ class _CourseDetailsState extends State<CourseDetails> {
                       style: theme.textTheme.bodySmall
                           ?.copyWith(color: theme.iconTheme.color),
                       textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                    ),
+                    const SizedBox(height: 10),
+                    // Instructor Reviews Expansion Tile
+                    Card(
+                      elevation: 0,
+                      color: theme.dividerTheme.color?.withOpacity(0.05),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(
+                            color: theme.dividerTheme.color!.withOpacity(0.2)),
+                      ),
+                      child: ExpansionTile(
+                        leading:
+                            Icon(Icons.star_rate_rounded, color: Colors.amber),
+                        title: Text("Instructor Reviews"),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: BlocProvider(
+                              create: (_) => sl<ReviewCubit>(),
+                              child: ReviewsSection(
+                                itemId: _currentCourse.instructor!.id ?? '',
+                                itemType: 'Instructor',
+                                isInstructor: isInstructor,
+                                currentUserId: _getUserId(userProvider.user),
+                                theme: theme,
+                                isRTL: isRTL,
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 25),
                     const Divider(),
@@ -235,119 +379,28 @@ class _CourseDetailsState extends State<CourseDetails> {
               const SizedBox(height: 10),
               _buildDetailItem(Icons.update, _translations.updatedAt,
                   formatDate(_currentCourse.updatedAt), theme, isRTL),
-              if (!isInstructor && !_isEnrolled) ...[
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: double.infinity,
-                  child: BlocConsumer<CartCubit, CartState>(
-                    listener: (context, state) {
-                      if (state is AddToCartSuccess) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: Colors.green,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      } else if (state is AddToCartError) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: Colors.red,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      } else if (state is RemoveFromCartSuccess) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: Colors.orange,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      } else if (state is RemoveFromCartError) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: Colors.red,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    },
-                    builder: (context, state) {
-                      final cubit = context.read<CartCubit>();
-                      final isInCart = cubit.currentCart?.items?.any(
-                              (item) => item.courseId == _currentCourse.id) ??
-                          false;
-                      final isLoading = state is CartLoading;
+              const SizedBox(height: 20),
 
-                      return ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isInCart
-                              ? Colors.red.shade400
-                              : theme.progressIndicatorTheme.color,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                        onPressed: isLoading
-                            ? null
-                            : () {
-                                if (isInCart) {
-                                  cubit.removeFromCart(_currentCourse.id!);
-                                } else {
-                                  cubit.addToCart(_currentCourse.id!);
-                                }
-                              },
-                        child: isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                    color: Colors.white, strokeWidth: 2),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    isInCart
-                                        ? Icons.remove_shopping_cart
-                                        : Icons.add_shopping_cart,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    isInCart
-                                        ? _translations.removeFromCart
-                                        : _translations.addToCart,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.3,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-
-              // Reviews Section
+              // Course Reviews Section
               const SizedBox(height: 30),
               const Divider(),
               const SizedBox(height: 20),
-              ReviewsSection(
-                itemId: _currentCourse.id ?? '',
-                itemType: 'Course',
-                isInstructor: isInstructor,
-                currentUserId: _getUserId(userProvider.user),
-                theme: theme,
-                isRTL: isRTL,
+              Text(
+                "Course Reviews",
+                style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold, color: theme.iconTheme.color),
+              ),
+              const SizedBox(height: 10),
+              BlocProvider(
+                create: (_) => sl<ReviewCubit>(),
+                child: ReviewsSection(
+                  itemId: _currentCourse.id ?? '',
+                  itemType: 'Course',
+                  isInstructor: isInstructor,
+                  currentUserId: _getUserId(userProvider.user),
+                  theme: theme,
+                  isRTL: isRTL,
+                ),
               ),
               const SizedBox(height: 40),
             ],

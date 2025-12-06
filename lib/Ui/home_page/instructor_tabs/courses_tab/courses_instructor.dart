@@ -110,7 +110,7 @@ class _CoursesInstructorView extends StatelessWidget {
                             SlidableAction(
                               onPressed: (context) {
                                 final cubit =
-                                context.read<InstructorCoursesCubit>();
+                                    context.read<InstructorCoursesCubit>();
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -143,7 +143,8 @@ class _CoursesInstructorView extends StatelessWidget {
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(translations.invalidCourseId),
+                                      content:
+                                          Text(translations.invalidCourseId),
                                     ),
                                   );
                                 }
@@ -164,7 +165,8 @@ class _CoursesInstructorView extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => CourseDetails(course: course),
+                                builder: (_) =>
+                                    CourseDetailsWrapper(course: course),
                               ),
                             );
                           },
@@ -182,7 +184,7 @@ class _CoursesInstructorView extends StatelessWidget {
                                   Flexible(
                                     child: Column(
                                       crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           course.title?.isNotEmpty == true

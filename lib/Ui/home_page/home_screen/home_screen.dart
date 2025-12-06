@@ -63,7 +63,8 @@ class _HomescreenState extends State<HomeScreen> {
       // Load translations with current locale using the generated S class
       _translations = generated.S(_localizationService.locale);
 
-      print('✅ HomeScreen initialized with locale: ${_localizationService.locale}');
+      print(
+          '✅ HomeScreen initialized with locale: ${_localizationService.locale}');
       print('📱 RTL: ${_localizationService.isRTL()}');
 
       // Listen to locale changes
@@ -78,7 +79,8 @@ class _HomescreenState extends State<HomeScreen> {
 
   void _onLocaleChanged() {
     if (mounted) {
-      print('🔄 Language changed in HomeScreen: ${_localizationService.locale}');
+      print(
+          '🔄 Language changed in HomeScreen: ${_localizationService.locale}');
       setState(() {
         _translations = generated.S(_localizationService.locale);
       });
@@ -252,9 +254,28 @@ class _HomescreenState extends State<HomeScreen> {
           Expanded(
             child: Stack(
               children: [
-                role?.toLowerCase() == "student"
-                    ? studentTabs[selectedIndex]
-                    : instructorTabs[selectedIndex],
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0.0, 0.05),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: KeyedSubtree(
+                    key: ValueKey<int>(selectedIndex),
+                    child: role?.toLowerCase() == "student"
+                        ? studentTabs[selectedIndex]
+                        : instructorTabs[selectedIndex],
+                  ),
+                ),
                 // Floating chat button positioned just above bottom navigation bar
                 Positioned(
                   // Position based on RTL

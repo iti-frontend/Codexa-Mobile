@@ -40,9 +40,12 @@ class InstructorCoursesCubit extends Cubit<InstructorCoursesState> {
     final result = await addCourseUseCase(course);
     result.fold(
       (failure) => emit(CourseOperationError(failure.errorMessage)),
-      (_) => emit(CourseOperationSuccess('Course added successfully')),
+      (newCourse) {
+        emit(CourseCreatedSuccess(newCourse));
+        // Also emit Generic Success message if needed, but the UI should listen to CourseCreatedSuccess
+        fetchCourses(); // Refresh list in background
+      },
     );
-    await fetchCourses();
   }
 
   Future<void> updateCourse(CourseEntity course) async {
@@ -78,6 +81,7 @@ class InstructorCoursesCubit extends Cubit<InstructorCoursesState> {
       (failure) => emit(CourseOperationError(failure.errorMessage)),
       (_) => emit(CourseOperationSuccess('Videos uploaded successfully')),
     );
+    await fetchCourses();
     return result;
   }
 }
