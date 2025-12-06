@@ -2,7 +2,10 @@ import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/video_player_course.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_state.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/reviews_cubit/review_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/widgets/reviews_section.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
+import 'package:codexa_mobile/core/di/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -16,7 +19,11 @@ class CourseDetailsWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CourseDetails(course: course);
+    // Provide ReviewCubit for this screen
+    return BlocProvider(
+      create: (_) => sl<ReviewCubit>(),
+      child: CourseDetails(course: course),
+    );
   }
 }
 
@@ -63,7 +70,7 @@ class _CourseDetailsState extends State<CourseDetails> {
 
     if (userId != null && _currentCourse.enrolledStudents != null) {
       setState(() =>
-      _isEnrolled = _currentCourse.enrolledStudents!.contains(userId));
+          _isEnrolled = _currentCourse.enrolledStudents!.contains(userId));
     }
   }
 
@@ -109,9 +116,11 @@ class _CourseDetailsState extends State<CourseDetails> {
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment:
+                isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
-              _sectionTitle(Icons.article_outlined, _translations.description, theme, isRTL),
+              _sectionTitle(Icons.article_outlined, _translations.description,
+                  theme, isRTL),
               const SizedBox(height: 10),
               Text(
                 _currentCourse.description?.isNotEmpty == true
@@ -130,17 +139,11 @@ class _CourseDetailsState extends State<CourseDetails> {
                   _translations.category,
                   _currentCourse.category ?? _translations.noCategory,
                   theme,
-                  isRTL
-              ),
+                  isRTL),
               const SizedBox(height: 20),
-              _buildDetailItem(
-                  Icons.attach_money_outlined,
-                  _translations.price,
-                  "\$${_currentCourse.price ?? 0}",
-                  theme,
-                  isRTL,
-                  valueColor: theme.progressIndicatorTheme.color
-              ),
+              _buildDetailItem(Icons.attach_money_outlined, _translations.price,
+                  "\$${_currentCourse.price ?? 0}", theme, isRTL,
+                  valueColor: theme.progressIndicatorTheme.color),
               const SizedBox(height: 20),
               _buildDetailItem(
                   Icons.stacked_bar_chart,
@@ -148,18 +151,20 @@ class _CourseDetailsState extends State<CourseDetails> {
                   _currentCourse.level ?? _translations.notAvailable,
                   theme,
                   isRTL,
-                  valueColor: theme.iconTheme.color
-              ),
+                  valueColor: theme.iconTheme.color),
               const SizedBox(height: 25),
               const Divider(),
               if (_currentCourse.instructor != null)
                 Column(
-                  crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                   children: [
-                    _sectionTitle(Icons.person_outline, _translations.instructor, theme, isRTL),
+                    _sectionTitle(Icons.person_outline,
+                        _translations.instructor, theme, isRTL),
                     const SizedBox(height: 10),
                     Text(
-                      _currentCourse.instructor!.name ?? _translations.notAvailable,
+                      _currentCourse.instructor!.name ??
+                          _translations.notAvailable,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: theme.iconTheme.color,
@@ -167,23 +172,29 @@ class _CourseDetailsState extends State<CourseDetails> {
                       textAlign: isRTL ? TextAlign.right : TextAlign.left,
                     ),
                     Text(
-                      _currentCourse.instructor!.email ?? _translations.notAvailable,
-                      style: theme.textTheme.bodySmall?.copyWith(color: theme.iconTheme.color),
+                      _currentCourse.instructor!.email ??
+                          _translations.notAvailable,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.iconTheme.color),
                       textAlign: isRTL ? TextAlign.right : TextAlign.left,
                     ),
                     const SizedBox(height: 25),
                     const Divider(),
                   ],
                 ),
-              _sectionTitle(Icons.play_circle_outline, _translations.videos, theme, isRTL),
+              _sectionTitle(Icons.play_circle_outline, _translations.videos,
+                  theme, isRTL),
               const SizedBox(height: 10),
-              if (_currentCourse.videos != null && _currentCourse.videos!.isNotEmpty)
+              if (_currentCourse.videos != null &&
+                  _currentCourse.videos!.isNotEmpty)
                 Column(
-                  crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                   children: _currentCourse.videos!.map((video) {
                     final v = video as Map<String, dynamic>;
                     final videoUrl = v['url'] ?? '';
-                    final videoTitle = v['title'] ?? _translations.untitledVideo;
+                    final videoTitle =
+                        v['title'] ?? _translations.untitledVideo;
 
                     return _buildVideoItem(
                       videoTitle: videoTitle,
@@ -200,7 +211,8 @@ class _CourseDetailsState extends State<CourseDetails> {
                     padding: const EdgeInsets.symmetric(vertical: 40),
                     child: Text(
                       _translations.noVideosAvailable,
-                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.iconTheme.color),
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(color: theme.iconTheme.color),
                       textAlign: isRTL ? TextAlign.right : TextAlign.center,
                     ),
                   ),
@@ -212,24 +224,17 @@ class _CourseDetailsState extends State<CourseDetails> {
                   _translations.enrolledStudents,
                   "${_currentCourse.enrolledStudents?.length ?? 0} ${_translations.students}",
                   theme,
-                  isRTL
-              ),
+                  isRTL),
               const SizedBox(height: 25),
               _buildDetailItem(
                   Icons.access_time_outlined,
                   _translations.createdAt,
                   formatDate(_currentCourse.createdAt),
                   theme,
-                  isRTL
-              ),
+                  isRTL),
               const SizedBox(height: 10),
-              _buildDetailItem(
-                  Icons.update,
-                  _translations.updatedAt,
-                  formatDate(_currentCourse.updatedAt),
-                  theme,
-                  isRTL
-              ),
+              _buildDetailItem(Icons.update, _translations.updatedAt,
+                  formatDate(_currentCourse.updatedAt), theme, isRTL),
               if (!isInstructor && !_isEnrolled) ...[
                 const SizedBox(height: 40),
                 SizedBox(
@@ -290,47 +295,61 @@ class _CourseDetailsState extends State<CourseDetails> {
                         onPressed: isLoading
                             ? null
                             : () {
-                          if (isInCart) {
-                            cubit.removeFromCart(_currentCourse.id!);
-                          } else {
-                            cubit.addToCart(_currentCourse.id!);
-                          }
-                        },
+                                if (isInCart) {
+                                  cubit.removeFromCart(_currentCourse.id!);
+                                } else {
+                                  cubit.addToCart(_currentCourse.id!);
+                                }
+                              },
                         child: isLoading
                             ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2),
-                        )
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2),
+                              )
                             : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              isInCart
-                                  ? Icons.remove_shopping_cart
-                                  : Icons.add_shopping_cart,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              isInCart
-                                  ? _translations.removeFromCart
-                                  : _translations.addToCart,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.3,
-                                color: Colors.white,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    isInCart
+                                        ? Icons.remove_shopping_cart
+                                        : Icons.add_shopping_cart,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    isInCart
+                                        ? _translations.removeFromCart
+                                        : _translations.addToCart,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.3,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
                       );
                     },
                   ),
                 ),
               ],
+
+              // Reviews Section
+              const SizedBox(height: 30),
+              const Divider(),
+              const SizedBox(height: 20),
+              ReviewsSection(
+                itemId: _currentCourse.id ?? '',
+                itemType: 'Course',
+                isInstructor: isInstructor,
+                currentUserId: _getUserId(userProvider.user),
+                theme: theme,
+                isRTL: isRTL,
+              ),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -347,7 +366,9 @@ class _CourseDetailsState extends State<CourseDetails> {
   }) {
     return Card(
       elevation: isLocked ? 0 : 2,
-      color: isLocked ? theme.dividerTheme.color?.withOpacity(0.1) : theme.cardTheme.color,
+      color: isLocked
+          ? theme.dividerTheme.color?.withOpacity(0.1)
+          : theme.cardTheme.color,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
@@ -371,102 +392,101 @@ class _CourseDetailsState extends State<CourseDetails> {
         ),
         subtitle: isLocked
             ? Text(
-          _translations.enrollToUnlock,
-          style: TextStyle(
-            fontStyle: FontStyle.italic,
-            color: theme.iconTheme.color?.withOpacity(0.6),
-          ),
-          textAlign: isRTL ? TextAlign.right : TextAlign.left,
-        )
+                _translations.enrollToUnlock,
+                style: TextStyle(
+                  fontStyle: FontStyle.italic,
+                  color: theme.iconTheme.color?.withOpacity(0.6),
+                ),
+                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+              )
             : null,
         trailing: isLocked
             ? Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: theme.progressIndicatorTheme.color?.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: theme.progressIndicatorTheme.color?.withOpacity(0.3) ?? Colors.blue,
-            ),
-          ),
-          child: Text(
-            _translations.locked,
-            style: TextStyle(
-              color: theme.progressIndicatorTheme.color,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        )
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: theme.progressIndicatorTheme.color?.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color:
+                        theme.progressIndicatorTheme.color?.withOpacity(0.3) ??
+                            Colors.blue,
+                  ),
+                ),
+                child: Text(
+                  _translations.locked,
+                  style: TextStyle(
+                    color: theme.progressIndicatorTheme.color,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
             : ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: theme.progressIndicatorTheme.color,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
-          ),
-          onPressed: () {
-            if (videoUrl.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(_translations.videoUrlEmpty)),
-              );
-              return;
-            }
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => VideoPlayerScreen(url: videoUrl),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.progressIndicatorTheme.color,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () {
+                  if (videoUrl.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(_translations.videoUrlEmpty)),
+                    );
+                    return;
+                  }
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => VideoPlayerScreen(url: videoUrl),
+                    ),
+                  );
+                },
+                child: Text(
+                  _translations.watch,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            );
-          },
-          child: Text(
-            _translations.watch,
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
       ),
     );
   }
 
-  Widget _sectionTitle(IconData icon, String title, ThemeData theme, bool isRTL) {
+  Widget _sectionTitle(
+      IconData icon, String title, ThemeData theme, bool isRTL) {
     return Row(
       children: isRTL
           ? [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: theme.iconTheme.color,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
-      ]
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.iconTheme.color,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
+            ]
           : [
-        Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: theme.iconTheme.color,
-          ),
-        ),
-      ],
+              Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.iconTheme.color,
+                ),
+              ),
+            ],
     );
   }
 
   Widget _buildDetailItem(
-      IconData icon,
-      String title,
-      String value,
-      ThemeData theme,
-      bool isRTL,
-      {Color? valueColor}
-      ) {
+      IconData icon, String title, String value, ThemeData theme, bool isRTL,
+      {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -474,63 +494,63 @@ class _CourseDetailsState extends State<CourseDetails> {
         textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
         children: isRTL
             ? [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: theme.iconTheme.color,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: theme.iconTheme.color,
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        value,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: valueColor ?? theme.iconTheme.color,
+                          height: 1.4,
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                    ],
                   ),
-                  textAlign: TextAlign.right,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: valueColor ?? theme.iconTheme.color,
-                    height: 1.4,
-                  ),
-                  textAlign: TextAlign.right,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
-        ]
+                const SizedBox(width: 10),
+                Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
+              ]
             : [
-          Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: theme.iconTheme.color,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: valueColor ?? theme.iconTheme.color,
-                    height: 1.4,
+                Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: theme.iconTheme.color,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        value,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: valueColor ?? theme.iconTheme.color,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
       ),
     );
   }

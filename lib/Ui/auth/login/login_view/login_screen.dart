@@ -12,7 +12,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import 'package:codexa_mobile/generated/l10n.dart';
-import 'package:codexa_mobile/localization/localization_service.dart'; // Added import
+import 'package:codexa_mobile/localization/localization_service.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class LoginScreen extends StatefulWidget {
   static const String routeName = '/login';
@@ -60,7 +61,8 @@ class _LoginScreenState extends State<LoginScreen> {
     super.didChangeDependencies();
     // Try to get LocalizationService from Provider, fallback to default
     try {
-      _localizationService = Provider.of<LocalizationService>(context, listen: false);
+      _localizationService =
+          Provider.of<LocalizationService>(context, listen: false);
       _translations = S(_localizationService.locale);
     } catch (e) {
       // If Provider not available, keep default English
@@ -76,21 +78,21 @@ class _LoginScreenState extends State<LoginScreen> {
     _githubLoginFailedText = _translations.githubLoginFailed;
   }
 
-
   @override
   Widget build(BuildContext context) {
     try {
-      final localizationService = Provider.of<LocalizationService>(context, listen: false);
+      final localizationService =
+          Provider.of<LocalizationService>(context, listen: false);
       if (localizationService.locale != _localizationService.locale) {
         _localizationService = localizationService;
         _translations = S(localizationService.locale);
-    // Update stored text translations
-    _loginSuccessText = _translations.loginSuccess;
-    _loginFailedText = _translations.loginFailed;
-    _selectRoleText = _translations.selectRole;
-    _selectRoleSocialText = _translations.selectRoleSocial;
-    _googleLoginFailedText = _translations.googleLoginFailed;
-    _githubLoginFailedText = _translations.githubLoginFailed;
+        // Update stored text translations
+        _loginSuccessText = _translations.loginSuccess;
+        _loginFailedText = _translations.loginFailed;
+        _selectRoleText = _translations.selectRole;
+        _selectRoleSocialText = _translations.selectRoleSocial;
+        _googleLoginFailedText = _translations.googleLoginFailed;
+        _githubLoginFailedText = _translations.githubLoginFailed;
       }
     } catch (e) {
       // Provider not available, use default
@@ -139,7 +141,8 @@ class _LoginScreenState extends State<LoginScreen> {
         } else if (state is AuthErrorState) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('$_loginFailedText: ${state.failure.errorMessage}'), // Use stored text
+              content: Text(
+                  '$_loginFailedText: ${state.failure.errorMessage}'), // Use stored text
               backgroundColor: Colors.red,
             ),
           );
@@ -155,12 +158,12 @@ class _LoginScreenState extends State<LoginScreen> {
             ? AppColorsDark.cardBackground
             : AppColorsLight.cardBackground;
         final textColor =
-        isDarkMode ? AppColorsDark.primaryText : AppColorsLight.primaryText;
+            isDarkMode ? AppColorsDark.primaryText : AppColorsLight.primaryText;
         final secondaryTextColor = isDarkMode
             ? AppColorsDark.secondaryText
             : AppColorsLight.secondaryText;
         final buttonColor =
-        isDarkMode ? AppColorsDark.accentGreen : AppColorsLight.accentBlue;
+            isDarkMode ? AppColorsDark.accentGreen : AppColorsLight.accentBlue;
 
         return Scaffold(
           backgroundColor: backgroundColor,
@@ -168,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Center(
               child: SingleChildScrollView(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 400),
                   padding: const EdgeInsets.all(28),
@@ -256,22 +259,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                   borderRadius: BorderRadius.circular(12)),
                             ),
                             onPressed:
-                            state is AuthLoadingState ? null : _submitLogin,
+                                state is AuthLoadingState ? null : _submitLogin,
                             child: state is AuthLoadingState
                                 ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.5,
-                              ),
-                            )
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2.5,
+                                    ),
+                                  )
                                 : Text(_translations.signIn,
-                                style: TextStyle(
-                                    color: isDarkMode
-                                        ? Colors.black
-                                        : Colors.white,
-                                    fontWeight: FontWeight.bold)),
+                                    style: TextStyle(
+                                        color: isDarkMode
+                                            ? Colors.black
+                                            : Colors.white,
+                                        fontWeight: FontWeight.bold)),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -285,7 +288,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         _socialLoginButtons(),
                         const SizedBox(height: 24),
                         _registerLink(isDarkMode, textColor),
-                      ],
+                      ].animate(interval: 50.ms).fade(duration: 400.ms).slideY(
+                          begin: 0.1, end: 0, curve: Curves.easeOutQuad),
                     ),
                   ),
                 ),
@@ -302,8 +306,10 @@ class _LoginScreenState extends State<LoginScreen> {
       bool isDarkMode, Color textColor, Color secondaryTextColor) {
     return Row(
       children: [
-        _roleRadio('student', _translations.student, isDarkMode, secondaryTextColor),
-        _roleRadio('instructor', _translations.instructor, isDarkMode, secondaryTextColor),
+        _roleRadio(
+            'student', _translations.student, isDarkMode, secondaryTextColor),
+        _roleRadio('instructor', _translations.instructor, isDarkMode,
+            secondaryTextColor),
       ],
     );
   }
@@ -334,15 +340,16 @@ class _LoginScreenState extends State<LoginScreen> {
   // =================== Social Login Buttons ===================
   Widget _socialLoginButtons() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        GestureDetector(
+        CustomSocialIcon(
+          assetPath: 'assets/images/google.png',
           onTap: () => _googleSignIn(selectedRole),
-          child: const CustomSocialIcon(assetPath: 'assets/images/google.png'),
         ),
-        GestureDetector(
+        const SizedBox(width: 24),
+        CustomSocialIcon(
+          assetPath: 'assets/images/github.png',
           onTap: () => _githubSignIn(selectedRole),
-          child: const CustomSocialIcon(assetPath: 'assets/images/github.png'),
         ),
       ],
     );
@@ -363,7 +370,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Text(
                   _translations.registerForFree,
                   style:
-                  TextStyle(fontWeight: FontWeight.bold, color: textColor),
+                      TextStyle(fontWeight: FontWeight.bold, color: textColor),
                 ),
               ),
             ),
@@ -413,11 +420,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final GoogleSignInAccount? googleUser =
-      await GoogleSignIn(scopes: ['email']).signIn();
+          await GoogleSignIn(scopes: ['email']).signIn();
       if (googleUser == null) return;
 
       final GoogleSignInAuthentication googleAuth =
-      await googleUser.authentication;
+          await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -425,7 +432,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final userCredential =
-      await FirebaseAuth.instance.signInWithCredential(credential);
+          await FirebaseAuth.instance.signInWithCredential(credential);
 
       final firebaseIdToken = await userCredential.user?.getIdToken();
       if (firebaseIdToken == null) {
@@ -445,8 +452,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       debugPrint('Google sign-in error: $e');
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('$_googleLoginFailedText: $e'))); // Use stored text
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('$_googleLoginFailedText: $e'))); // Use stored text
     }
   }
 
@@ -465,7 +472,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final githubProvider = GithubAuthProvider();
       final userCredential =
-      await FirebaseAuth.instance.signInWithProvider(githubProvider);
+          await FirebaseAuth.instance.signInWithProvider(githubProvider);
 
       final firebaseIdToken = await userCredential.user?.getIdToken();
       if (firebaseIdToken == null) {
@@ -484,8 +491,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       debugPrint('GitHub sign-in error: $e');
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('$_githubLoginFailedText: $e'))); // Use stored text
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('$_githubLoginFailedText: $e'))); // Use stored text
     }
   }
 
@@ -520,7 +527,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final textColor =
-    isDarkMode ? AppColorsDark.primaryText : AppColorsLight.primaryText;
+        isDarkMode ? AppColorsDark.primaryText : AppColorsLight.primaryText;
 
     // SIMPLEST FIX: Just use try-catch
     String loginText;
