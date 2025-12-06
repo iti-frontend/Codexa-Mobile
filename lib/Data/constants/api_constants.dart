@@ -113,4 +113,24 @@ class ApiConstants {
   static const String addToCart = '/cart';
   static const String getCart = '/cart';
   static String removeFromCart(String courseId) => '/cart/$courseId';
+
+  /// POST - Create or Update Review
+  static const String createOrUpdateReview = "/reviews";
+
+  /// DELETE - Delete Review
+  static String deleteReview(String id) => "/reviews/$id";
+
+  /// GET - List Reviews for Course/Instructor
+  static String listReviews(String itemType, String itemId) =>
+      "/reviews/$itemType/$itemId";
+
+  /// GET - Paginated Reviews
+  static String listReviewsPaged(
+      String itemType, String itemId, int page, int limit) {
+    return "/reviews/$itemType/$itemId?page=$page&limit=$limit";
+  }
+
+  /// GET - Average Rating for Course/Instructor
+  static String averageRating(String itemType, String itemId) =>
+      "/reviews/$itemType/$itemId/average";
 }

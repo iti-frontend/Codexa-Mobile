@@ -4,6 +4,7 @@ import 'package:codexa_mobile/Data/Repository/cart_repository_impl.dart';
 import 'package:codexa_mobile/Data/Repository/courses_repository.dart';
 import 'package:codexa_mobile/Data/Repository/coumminty_repo_impl.dart';
 import 'package:codexa_mobile/Data/Repository/profile_repo_impl.dart';
+import 'package:codexa_mobile/Data/Repository/review_repository_impl.dart';
 import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
 import 'package:codexa_mobile/Data/services/likes_persistence_service.dart';
 import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
@@ -14,6 +15,7 @@ import 'package:codexa_mobile/Domain/repo/cart_repository.dart';
 import 'package:codexa_mobile/Domain/repo/community_repo.dart';
 import 'package:codexa_mobile/Domain/repo/get_courses_repo.dart';
 import 'package:codexa_mobile/Domain/repo/profile_repo.dart';
+import 'package:codexa_mobile/Domain/repo/review_repository.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/login_instructor_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/login_student_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/register_instructor_usecase.dart';
@@ -36,6 +38,10 @@ import 'package:codexa_mobile/Domain/usecases/courses/update_course_usecase.dart
 import 'package:codexa_mobile/Domain/usecases/courses/update_course_videos_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/profile/update_student_profile_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/profile/update_instructor_profile_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/reviews/create_or_update_review_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/reviews/delete_review_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/reviews/get_average_rating_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/reviews/get_reviews_usecase.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_viewModel/LoginBloc.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_viewModel/register_bloc.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_cubit.dart';
@@ -46,6 +52,7 @@ import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/communi
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/enroll_cubit/enroll_courses_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/reviews_cubit/review_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_cubit/profile_cubit.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:get_it/get_it.dart';
@@ -138,6 +145,11 @@ void _registerRepositories() {
   sl.registerLazySingleton<CartRepository>(
     () => CartRepositoryImpl(sl<ApiManager>()),
   );
+
+  // Review Repository
+  sl.registerLazySingleton<ReviewRepository>(
+    () => ReviewRepositoryImpl(sl<ApiManager>()),
+  );
 }
 
 // =============================================================================
@@ -150,6 +162,7 @@ void _registerUseCases() {
   _registerCommunityUseCases();
   _registerProfileUseCases();
   _registerCartUseCases();
+  _registerReviewUseCases();
 }
 
 void _registerAuthUseCases() {
@@ -199,6 +212,16 @@ void _registerCartUseCases() {
   sl.registerLazySingleton(() => AddToCartUseCase(sl<CartRepository>()));
   sl.registerLazySingleton(() => GetCartUseCase(sl<CartRepository>()));
   sl.registerLazySingleton(() => RemoveFromCartUseCase(sl<CartRepository>()));
+}
+
+void _registerReviewUseCases() {
+  // Review use cases
+  sl.registerLazySingleton(
+      () => CreateOrUpdateReviewUseCase(sl<ReviewRepository>()));
+  sl.registerLazySingleton(() => DeleteReviewUseCase(sl<ReviewRepository>()));
+  sl.registerLazySingleton(() => GetReviewsUseCase(sl<ReviewRepository>()));
+  sl.registerLazySingleton(
+      () => GetAverageRatingUseCase(sl<ReviewRepository>()));
 }
 
 // =============================================================================
@@ -298,6 +321,16 @@ void _registerCubits() {
       addToCartUseCase: sl<AddToCartUseCase>(),
       getCartUseCase: sl<GetCartUseCase>(),
       removeFromCartUseCase: sl<RemoveFromCartUseCase>(),
+    ),
+  );
+
+  // Review Cubit
+  sl.registerFactory(
+    () => ReviewCubit(
+      createOrUpdateReviewUseCase: sl<CreateOrUpdateReviewUseCase>(),
+      deleteReviewUseCase: sl<DeleteReviewUseCase>(),
+      getReviewsUseCase: sl<GetReviewsUseCase>(),
+      getAverageRatingUseCase: sl<GetAverageRatingUseCase>(),
     ),
   );
 }

@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import 'package:codexa_mobile/Domain/entities/community_entity.dart';
+import 'package:codexa_mobile/Domain/entities/student_entity.dart';
+import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/comment_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/likes_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
@@ -70,10 +72,10 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       final currentUser = _mapUserJsonToEntity(userJson);
 
       await context.read<CommentCubit>().addComment(
-        widget.post.id!,
-        text,
-        currentUser,
-      );
+            widget.post.id!,
+            text,
+            currentUser,
+          );
     } catch (_) {
       setState(() => _isAddingComment = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -117,11 +119,28 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
     }
   }
 
+  /// Get the current logged-in user's ID safely.
+  /// Handles StudentEntity, InstructorEntity, and Map types.
   String? _getCurrentUserIdSafe(BuildContext context) {
     try {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
-      final u = userProvider.user;
-      if (u is Map) return (u['_id'] ?? u['id'])?.toString();
+      final user = userProvider.user;
+
+      // Extract user ID from different user types
+      if (user is StudentEntity) {
+        return user.id;
+      } else if (user is InstructorEntity) {
+        return user.id;
+      } else if (user is Map<String, dynamic>) {
+        return (user['_id'] ?? user['id'])?.toString();
+      } else if (user != null) {
+        // Try dynamic access as fallback
+        try {
+          return (user as dynamic).id?.toString();
+        } catch (_) {
+          return null;
+        }
+      }
       return null;
     } catch (_) {
       return null;
@@ -183,15 +202,14 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                                 CircleAvatar(
                                   radius: 24,
                                   backgroundColor:
-                                  theme.dividerColor.withOpacity(0.1),
-                                  backgroundImage:
-                                  post.author?.profileImage != null
-                                      ? NetworkImage(
-                                      post.author!.profileImage!)
+                                      theme.dividerColor.withOpacity(0.1),
+                                  backgroundImage: post.author?.profileImage !=
+                                          null
+                                      ? NetworkImage(post.author!.profileImage!)
                                       : null,
                                   child: post.author?.profileImage == null
                                       ? Icon(Icons.person_outline,
-                                      color: theme.dividerTheme.color)
+                                          color: theme.dividerTheme.color)
                                       : null,
                                 ),
                               if (!isRTL) const SizedBox(width: 12),
@@ -202,7 +220,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                                       : CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      post.author?.name ?? _translations.unknown,
+                                      post.author?.name ??
+                                          _translations.unknown,
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         color: theme.iconTheme.color,
@@ -213,8 +232,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                                     Text(
                                       _formatTime(post.createdAt),
                                       style: TextStyle(
-                                        color:
-                                        theme.dividerTheme.color?.withOpacity(0.7),
+                                        color: theme.dividerTheme.color
+                                            ?.withOpacity(0.7),
                                         fontSize: 11,
                                       ),
                                     ),
@@ -226,15 +245,14 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                                 CircleAvatar(
                                   radius: 24,
                                   backgroundColor:
-                                  theme.dividerColor.withOpacity(0.1),
-                                  backgroundImage:
-                                  post.author?.profileImage != null
-                                      ? NetworkImage(
-                                      post.author!.profileImage!)
+                                      theme.dividerColor.withOpacity(0.1),
+                                  backgroundImage: post.author?.profileImage !=
+                                          null
+                                      ? NetworkImage(post.author!.profileImage!)
                                       : null,
                                   child: post.author?.profileImage == null
                                       ? Icon(Icons.person_outline,
-                                      color: theme.dividerTheme.color)
+                                          color: theme.dividerTheme.color)
                                       : null,
                                 ),
                             ],
@@ -251,7 +269,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                                 height: 1.5,
                                 color: theme.iconTheme.color,
                               ),
-                              textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                              textAlign:
+                                  isRTL ? TextAlign.right : TextAlign.left,
                             ),
 
                           const SizedBox(height: 12),
@@ -262,7 +281,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                               borderRadius: BorderRadius.circular(12),
                               child: ConstrainedBox(
                                 constraints:
-                                BoxConstraints(maxHeight: maxImageHeight),
+                                    BoxConstraints(maxHeight: maxImageHeight),
                                 child: Image.network(
                                   post.image!,
                                   fit: BoxFit.cover,
@@ -294,11 +313,12 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                                 _ReactionButton(
                                   icon: Icons.thumb_up_alt_rounded,
                                   active: post.likes?.any((l) =>
-                                  l.user ==
-                                      _getCurrentUserIdSafe(context)) ??
+                                          l.user ==
+                                          _getCurrentUserIdSafe(context)) ??
                                       false,
                                   label: "${post.likes?.length ?? 0}",
-                                  colorActive: theme.progressIndicatorTheme.color,
+                                  colorActive:
+                                      theme.progressIndicatorTheme.color,
                                   colorInactive: theme.dividerTheme.color,
                                   textColor: theme.iconTheme.color,
                                   onTap: () {
@@ -331,7 +351,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                                 fontSize: 15,
                                 color: theme.iconTheme.color,
                               ),
-                              textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                              textAlign:
+                                  isRTL ? TextAlign.right : TextAlign.left,
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -362,7 +383,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                               .updatePost(widget.post);
                         } else if (state is CommentDeleted) {
                           setState(() {
-                            _comments.removeWhere((c) => c.id == state.commentId);
+                            _comments
+                                .removeWhere((c) => c.id == state.commentId);
                           });
                         }
                       },
@@ -378,7 +400,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                                     color: theme.dividerTheme.color,
                                   ),
                                   textAlign:
-                                  isRTL ? TextAlign.right : TextAlign.left,
+                                      isRTL ? TextAlign.right : TextAlign.left,
                                 ),
                               ),
                             ),
@@ -387,10 +409,16 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
 
                         return SliverList(
                           delegate: SliverChildBuilderDelegate(
-                                (context, i) {
+                            (context, i) {
                               final c = _comments[i];
-                              final isMine =
-                                  c.user?.id == _getCurrentUserIdSafe(context);
+                              final currentUserId =
+                                  _getCurrentUserIdSafe(context);
+                              final commentUserId = c.user?.id;
+                              final isMine = commentUserId == currentUserId;
+
+                              // Debug: print IDs to verify comparison
+                              print(
+                                  '🔍 [COMMENT] Comment by: ${c.user?.name}, commentUserId: $commentUserId, currentUserId: $currentUserId, isMine: $isMine');
 
                               return Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -400,215 +428,235 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                                     color: theme.cardTheme.color,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: theme.dividerColor.withOpacity(0.1),
+                                      color:
+                                          theme.dividerColor.withOpacity(0.1),
                                     ),
                                   ),
                                   padding: const EdgeInsets.all(12),
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: isRTL
                                         ? [
-                                      // RTL layout: Content first
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                if (isMine)
-                                                  GestureDetector(
-                                                    onTap: () {
-                                                      if (c.id != null) {
-                                                        context
-                                                            .read<
-                                                            CommentCubit>()
-                                                            .deleteComment(
-                                                          widget
-                                                              .post.id!,
-                                                          c.id!,
-                                                        );
-                                                      }
-                                                    },
-                                                    child: Container(
-                                                      padding:
-                                                      const EdgeInsets.all(
-                                                          4),
-                                                      decoration:
-                                                      BoxDecoration(
-                                                        color: Colors.red
-                                                            .withOpacity(
-                                                            0.1),
-                                                        borderRadius:
-                                                        BorderRadius
-                                                            .circular(
-                                                            6),
+                                            // RTL layout: Content first
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      if (isMine)
+                                                        GestureDetector(
+                                                          onTap: () {
+                                                            if (c.id != null) {
+                                                              context
+                                                                  .read<
+                                                                      CommentCubit>()
+                                                                  .deleteComment(
+                                                                    widget.post
+                                                                        .id!,
+                                                                    c.id!,
+                                                                  );
+                                                            }
+                                                          },
+                                                          child: Container(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(4),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: Colors.red
+                                                                  .withOpacity(
+                                                                      0.1),
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          6),
+                                                            ),
+                                                            child: Icon(
+                                                              Icons
+                                                                  .delete_outline,
+                                                              size: 16,
+                                                              color: Colors.red,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      const Spacer(),
+                                                      Text(
+                                                        _formatTime(
+                                                            c.createdAt),
+                                                        style: TextStyle(
+                                                          color: theme
+                                                              .dividerTheme
+                                                              .color
+                                                              ?.withOpacity(
+                                                                  0.7),
+                                                          fontSize: 11,
+                                                        ),
                                                       ),
-                                                      child: Icon(
-                                                        Icons.delete_outline,
-                                                        size: 16,
-                                                        color: Colors.red,
+                                                      const SizedBox(width: 8),
+                                                      Text(
+                                                        c.user?.name ??
+                                                            _translations
+                                                                .unknown,
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: theme
+                                                              .iconTheme.color,
+                                                          fontSize: 13,
+                                                        ),
                                                       ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    c.text ?? '',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      height: 1.4,
+                                                      color:
+                                                          theme.iconTheme.color,
                                                     ),
+                                                    textAlign: TextAlign.right,
                                                   ),
-                                                const Spacer(),
-                                                Text(
-                                                  _formatTime(c.createdAt),
-                                                  style: TextStyle(
-                                                    color: theme
-                                                        .dividerTheme.color
-                                                        ?.withOpacity(0.7),
-                                                    fontSize: 11,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  c.user?.name ??
-                                                      _translations.unknown,
-                                                  style: TextStyle(
-                                                    fontWeight:
-                                                    FontWeight.bold,
-                                                    color:
-                                                    theme.iconTheme.color,
-                                                    fontSize: 13,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              c.text ?? '',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                height: 1.4,
-                                                color: theme.iconTheme.color,
+                                                ],
                                               ),
-                                              textAlign: TextAlign.right,
                                             ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      CircleAvatar(
-                                        radius: 16,
-                                        backgroundColor: theme.dividerColor
-                                            .withOpacity(0.1),
-                                        backgroundImage:
-                                        c.user?.profileImage != null
-                                            ? NetworkImage(
-                                            c.user!.profileImage!)
-                                            : null,
-                                        child: c.user?.profileImage == null
-                                            ? Icon(
-                                          Icons.person_outline,
-                                          size: 16,
-                                          color:
-                                          theme.dividerTheme.color,
-                                        )
-                                            : null,
-                                      ),
-                                    ]
+                                            const SizedBox(width: 10),
+                                            CircleAvatar(
+                                              radius: 16,
+                                              backgroundColor: theme
+                                                  .dividerColor
+                                                  .withOpacity(0.1),
+                                              backgroundImage:
+                                                  c.user?.profileImage != null
+                                                      ? NetworkImage(
+                                                          c.user!.profileImage!)
+                                                      : null,
+                                              child:
+                                                  c.user?.profileImage == null
+                                                      ? Icon(
+                                                          Icons.person_outline,
+                                                          size: 16,
+                                                          color: theme
+                                                              .dividerTheme
+                                                              .color,
+                                                        )
+                                                      : null,
+                                            ),
+                                          ]
                                         : [
-                                      // LTR layout: Avatar first
-                                      CircleAvatar(
-                                        radius: 16,
-                                        backgroundColor: theme.dividerColor
-                                            .withOpacity(0.1),
-                                        backgroundImage:
-                                        c.user?.profileImage != null
-                                            ? NetworkImage(
-                                            c.user!.profileImage!)
-                                            : null,
-                                        child: c.user?.profileImage == null
-                                            ? Icon(
-                                          Icons.person_outline,
-                                          size: 16,
-                                          color:
-                                          theme.dividerTheme.color,
-                                        )
-                                            : null,
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  c.user?.name ??
-                                                      _translations.unknown,
-                                                  style: TextStyle(
-                                                    fontWeight:
-                                                    FontWeight.bold,
-                                                    color:
-                                                    theme.iconTheme.color,
-                                                    fontSize: 13,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  _formatTime(c.createdAt),
-                                                  style: TextStyle(
-                                                    color: theme
-                                                        .dividerTheme.color
-                                                        ?.withOpacity(0.7),
-                                                    fontSize: 11,
-                                                  ),
-                                                ),
-                                                const Spacer(),
-                                                if (isMine)
-                                                  GestureDetector(
-                                                    onTap: () {
-                                                      if (c.id != null) {
-                                                        context
-                                                            .read<
-                                                            CommentCubit>()
-                                                            .deleteComment(
-                                                          widget
-                                                              .post.id!,
-                                                          c.id!,
-                                                        );
-                                                      }
-                                                    },
-                                                    child: Container(
-                                                      padding:
-                                                      const EdgeInsets.all(
-                                                          4),
-                                                      decoration:
-                                                      BoxDecoration(
-                                                        color: Colors.red
-                                                            .withOpacity(
-                                                            0.1),
-                                                        borderRadius:
-                                                        BorderRadius
-                                                            .circular(
-                                                            6),
-                                                      ),
-                                                      child: Icon(
-                                                        Icons.delete_outline,
-                                                        size: 16,
-                                                        color: Colors.red,
-                                                      ),
-                                                    ),
-                                                  )
-                                              ],
+                                            // LTR layout: Avatar first
+                                            CircleAvatar(
+                                              radius: 16,
+                                              backgroundColor: theme
+                                                  .dividerColor
+                                                  .withOpacity(0.1),
+                                              backgroundImage:
+                                                  c.user?.profileImage != null
+                                                      ? NetworkImage(
+                                                          c.user!.profileImage!)
+                                                      : null,
+                                              child:
+                                                  c.user?.profileImage == null
+                                                      ? Icon(
+                                                          Icons.person_outline,
+                                                          size: 16,
+                                                          color: theme
+                                                              .dividerTheme
+                                                              .color,
+                                                        )
+                                                      : null,
                                             ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              c.text ?? '',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                height: 1.4,
-                                                color: theme.iconTheme.color,
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        c.user?.name ??
+                                                            _translations
+                                                                .unknown,
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: theme
+                                                              .iconTheme.color,
+                                                          fontSize: 13,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      Text(
+                                                        _formatTime(
+                                                            c.createdAt),
+                                                        style: TextStyle(
+                                                          color: theme
+                                                              .dividerTheme
+                                                              .color
+                                                              ?.withOpacity(
+                                                                  0.7),
+                                                          fontSize: 11,
+                                                        ),
+                                                      ),
+                                                      const Spacer(),
+                                                      if (isMine)
+                                                        GestureDetector(
+                                                          onTap: () {
+                                                            if (c.id != null) {
+                                                              context
+                                                                  .read<
+                                                                      CommentCubit>()
+                                                                  .deleteComment(
+                                                                    widget.post
+                                                                        .id!,
+                                                                    c.id!,
+                                                                  );
+                                                            }
+                                                          },
+                                                          child: Container(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(4),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: Colors.red
+                                                                  .withOpacity(
+                                                                      0.1),
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          6),
+                                                            ),
+                                                            child: Icon(
+                                                              Icons
+                                                                  .delete_outline,
+                                                              size: 16,
+                                                              color: Colors.red,
+                                                            ),
+                                                          ),
+                                                        )
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    c.text ?? '',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      height: 1.4,
+                                                      color:
+                                                          theme.iconTheme.color,
+                                                    ),
+                                                    textAlign: TextAlign.left,
+                                                  ),
+                                                ],
                                               ),
-                                              textAlign: TextAlign.left,
                                             ),
                                           ],
-                                        ),
-                                      ),
-                                    ],
                                   ),
                                 ),
                               );
@@ -643,147 +691,145 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                 child: Row(
                   children: isRTL
                       ? [
-                    // RTL layout: Send button first
-                    GestureDetector(
-                      onTap: _isAddingComment ? null : _addComment,
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: theme.progressIndicatorTheme.color,
-                          shape: BoxShape.circle,
-                        ),
-                        child: _isAddingComment
-                            ? SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                            : Icon(
-                          Icons.send_rounded,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: _commentController,
-                        maxLines: null,
-                        style: TextStyle(
-                          color: theme.iconTheme.color,
-                          fontSize: 14,
-                        ),
-                        textDirection:
-                        isRTL ? TextDirection.rtl : TextDirection.ltr,
-                        textAlign: isRTL ? TextAlign.right : TextAlign.left,
-                        decoration: InputDecoration(
-                          hintText: _translations.writeAComment,
-                          hintStyle: TextStyle(
-                            color: theme.dividerTheme.color
-                                ?.withOpacity(0.6),
-                            fontSize: 14,
-                          ),
-                          filled: true,
-                          fillColor:
-                          theme.dividerColor.withOpacity(0.05),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide(
-                              color: theme.dividerColor.withOpacity(0.2),
+                          // RTL layout: Send button first
+                          GestureDetector(
+                            onTap: _isAddingComment ? null : _addComment,
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: theme.progressIndicatorTheme.color,
+                                shape: BoxShape.circle,
+                              ),
+                              child: _isAddingComment
+                                  ? SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.send_rounded,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
                             ),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide(
-                              color:
-                              theme.progressIndicatorTheme.color ??
-                                  Colors.blue,
-                              width: 2,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _commentController,
+                              maxLines: null,
+                              style: TextStyle(
+                                color: theme.iconTheme.color,
+                                fontSize: 14,
+                              ),
+                              textDirection:
+                                  isRTL ? TextDirection.rtl : TextDirection.ltr,
+                              textAlign:
+                                  isRTL ? TextAlign.right : TextAlign.left,
+                              decoration: InputDecoration(
+                                hintText: _translations.writeAComment,
+                                hintStyle: TextStyle(
+                                  color: theme.dividerTheme.color
+                                      ?.withOpacity(0.6),
+                                  fontSize: 14,
+                                ),
+                                filled: true,
+                                fillColor: theme.dividerColor.withOpacity(0.05),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: theme.dividerColor.withOpacity(0.2),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: theme.progressIndicatorTheme.color ??
+                                        Colors.blue,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    _userAvatar(isRTL: isRTL),
-                  ]
+                          const SizedBox(width: 10),
+                          _userAvatar(isRTL: isRTL),
+                        ]
                       : [
-                    // LTR layout: Avatar first
-                    _userAvatar(isRTL: isRTL),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: _commentController,
-                        maxLines: null,
-                        style: TextStyle(
-                          color: theme.iconTheme.color,
-                          fontSize: 14,
-                        ),
-                        textDirection:
-                        isRTL ? TextDirection.rtl : TextDirection.ltr,
-                        textAlign: isRTL ? TextAlign.right : TextAlign.left,
-                        decoration: InputDecoration(
-                          hintText: _translations.writeAComment,
-                          hintStyle: TextStyle(
-                            color: theme.dividerTheme.color
-                                ?.withOpacity(0.6),
-                            fontSize: 14,
-                          ),
-                          filled: true,
-                          fillColor:
-                          theme.dividerColor.withOpacity(0.05),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide(
-                              color: theme.dividerColor.withOpacity(0.2),
+                          // LTR layout: Avatar first
+                          _userAvatar(isRTL: isRTL),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _commentController,
+                              maxLines: null,
+                              style: TextStyle(
+                                color: theme.iconTheme.color,
+                                fontSize: 14,
+                              ),
+                              textDirection:
+                                  isRTL ? TextDirection.rtl : TextDirection.ltr,
+                              textAlign:
+                                  isRTL ? TextAlign.right : TextAlign.left,
+                              decoration: InputDecoration(
+                                hintText: _translations.writeAComment,
+                                hintStyle: TextStyle(
+                                  color: theme.dividerTheme.color
+                                      ?.withOpacity(0.6),
+                                  fontSize: 14,
+                                ),
+                                filled: true,
+                                fillColor: theme.dividerColor.withOpacity(0.05),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: theme.dividerColor.withOpacity(0.2),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: theme.progressIndicatorTheme.color ??
+                                        Colors.blue,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide(
-                              color:
-                              theme.progressIndicatorTheme.color ??
-                                  Colors.blue,
-                              width: 2,
+                          const SizedBox(width: 10),
+                          GestureDetector(
+                            onTap: _isAddingComment ? null : _addComment,
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: theme.progressIndicatorTheme.color,
+                                shape: BoxShape.circle,
+                              ),
+                              child: _isAddingComment
+                                  ? SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.send_rounded,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    GestureDetector(
-                      onTap: _isAddingComment ? null : _addComment,
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: theme.progressIndicatorTheme.color,
-                          shape: BoxShape.circle,
-                        ),
-                        child: _isAddingComment
-                            ? SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                            : Icon(
-                          Icons.send_rounded,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
+                        ],
                 ),
               ),
             ),
@@ -793,30 +839,49 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
     );
   }
 
+  /// Build the current user's avatar for the comment input field.
+  /// Handles StudentEntity, InstructorEntity, and Map types.
   Widget _userAvatar({bool isRTL = false}) {
-    try {
-      final u = Provider.of<UserProvider>(context, listen: false).user;
-      final img = (u is Map) ? u["profileImage"] as String? : null;
+    final theme = Theme.of(context);
+    String? profileImageUrl;
 
-      return CircleAvatar(
-        radius: 22,
-        backgroundImage: img != null ? NetworkImage(img) : null,
-        child: img == null
-            ? Icon(
-          Icons.person_outline,
-          color: Theme.of(context).dividerTheme.color,
-        )
-            : null,
-      );
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final user = userProvider.user;
+
+      // Extract profileImage from different user types
+      if (user is StudentEntity) {
+        profileImageUrl = user.profileImage;
+      } else if (user is InstructorEntity) {
+        profileImageUrl = user.profileImage;
+      } else if (user is Map<String, dynamic>) {
+        profileImageUrl = user['profileImage'] as String?;
+      } else if (user != null) {
+        // Try dynamic access as fallback
+        try {
+          profileImageUrl = (user as dynamic).profileImage?.toString();
+        } catch (_) {
+          profileImageUrl = null;
+        }
+      }
     } catch (_) {
-      return CircleAvatar(
-        radius: 22,
-        child: Icon(
-          Icons.person_outline,
-          color: Theme.of(context).dividerTheme.color,
-        ),
-      );
+      profileImageUrl = null;
     }
+
+    // Build avatar with user's profile image or fallback icon
+    return CircleAvatar(
+      radius: 22,
+      backgroundColor: theme.dividerColor.withOpacity(0.1),
+      backgroundImage: (profileImageUrl != null && profileImageUrl.isNotEmpty)
+          ? NetworkImage(profileImageUrl)
+          : null,
+      child: (profileImageUrl == null || profileImageUrl.isEmpty)
+          ? Icon(
+              Icons.person_outline,
+              color: theme.dividerTheme.color,
+            )
+          : null,
+    );
   }
 }
 
@@ -855,31 +920,31 @@ class _ReactionButton extends StatelessWidget {
       child: Row(
         children: isRTL
             ? [
-          if (label != null) ...[
-            Text(
-              label!,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: textColor ?? theme.iconTheme.color,
-              ),
-            ),
-            const SizedBox(width: 5),
-          ],
-          Icon(icon, size: 19, color: iconColor),
-        ]
+                if (label != null) ...[
+                  Text(
+                    label!,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: textColor ?? theme.iconTheme.color,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                ],
+                Icon(icon, size: 19, color: iconColor),
+              ]
             : [
-          Icon(icon, size: 19, color: iconColor),
-          if (label != null) ...[
-            const SizedBox(width: 5),
-            Text(
-              label!,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: textColor ?? theme.iconTheme.color,
-              ),
-            )
-          ]
-        ],
+                Icon(icon, size: 19, color: iconColor),
+                if (label != null) ...[
+                  const SizedBox(width: 5),
+                  Text(
+                    label!,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: textColor ?? theme.iconTheme.color,
+                    ),
+                  )
+                ]
+              ],
       ),
     );
   }

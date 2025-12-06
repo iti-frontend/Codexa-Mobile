@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -273,17 +274,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SizedBox(height: 16),
 
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            GestureDetector(
+                            CustomSocialIcon(
+                              assetPath: 'assets/images/google.png',
                               onTap: () => _googleSignIn(role),
-                              child: const CustomSocialIcon(
-                                  assetPath: 'assets/images/google.png'),
                             ),
-                            GestureDetector(
+                            const SizedBox(width: 24),
+                            CustomSocialIcon(
+                              assetPath: 'assets/images/github.png',
                               onTap: () => _githubSignIn(role),
-                              child: const CustomSocialIcon(
-                                  assetPath: 'assets/images/github.png'),
                             ),
                           ],
                         ),
@@ -318,7 +318,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                         ),
-                      ],
+                      ].animate(interval: 50.ms).fade(duration: 400.ms).slideY(
+                          begin: 0.1, end: 0, curve: Curves.easeOutQuad),
                     ),
                   ),
                 ),
