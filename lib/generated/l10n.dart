@@ -81,6 +81,12 @@ class S {
   String get privacy => _translate('privacy');
   String get notifications => _translate('notifications');
 
+  //Tabs
+  String get home => _translate('home');
+  String get courses => _translate('courses');
+  String get community => _translate('community');
+  String get favorites => _translate('favorites');
+
   // Login Screen
   String get login => _translate('login');
   String get signIn => _translate('signIn');
@@ -140,6 +146,129 @@ class S {
   // Errors
   String get somethingWentWrong => _translate('somethingWentWrong');
   String get userDataNotAvailable => _translate('userDataNotAvailable');
+
+  //app bar
+  String get searchHint => _translate('searchHint');
+  String get createPost => _translate('createPost');
+
+  //home_tab
+  String get dashboard => _translate('dashboard');
+  String get activeCourses => _translate('activeCourses');
+  String get allStudents => _translate('allStudents');
+  String get myCourses => _translate('myCourses');
+  String get noCoursesCreated => _translate('noCoursesCreated');
+  String get createNewCourse => _translate('createNewCourse');
+  String get recentActivity => _translate('recentActivity');
+  String get noRecentEnrollments => _translate('noRecentEnrollments');
+  String get recently => _translate('recently');
+  String get enrolledIn => _translate('enrolledIn');
+  String get communityActivity => _translate('communityActivity');
+  String get noCommunityActivity => _translate('noCommunityActivity');
+  String get failedToLoadActivity => _translate('failedToLoadActivity');
+  String get posted => _translate('posted');
+  String get commentedOn => _translate('commentedOn');
+  String get course => _translate('course');
+  String get unknownUser => _translate('unknownUser');
+  String get noContent => _translate('noContent');
+  String get courseProgress => _translate('courseProgress');
+  String get noCoursesEnrolledYet => _translate('noCoursesEnrolledYet');
+  String get unknownInstructor => _translate('unknownInstructor');
+  String get untitledCourse => _translate('untitledCourse');
+  String get noCommunityActivityYet => _translate('noCommunityActivityYet');
+  String get skillDevelopment => _translate('skillDevelopment');
+  String get enrollInCoursesToDevelopSkills => _translate('enrollInCoursesToDevelopSkills');
+  String get learners => _translate('learners');
+  String get companies => _translate('companies');
+  String get recommendedForYou => _translate('recommendedForYou');
+  String get noCoursesFound => _translate('noCoursesFound');
+  String get unknownCourse => _translate('unknownCourse');
+  String get noDescriptionAvailable => _translate('noDescriptionAvailable');
+  String get viewCourse => _translate('viewCourse');
+  String get liked => _translate('liked');
+  String get retry => _translate('retry');
+  String get noPostsYet => _translate('noPostsYet');
+  String get beFirstToShare => _translate('beFirstToShare');
+  String get noPostsAvailable => _translate('noPostsAvailable');
+  String get noCoursesYet => _translate('noCoursesYet');
+  String get invalidCourseId => _translate('invalidCourseId');
+  String get untitled => _translate('untitled');
+  String get noCategory => _translate('noCategory');
+  String get createCourse => _translate('createCourse');
+  String get editCourse => _translate('editCourse');
+  String get title => _translate('title');
+  String get enterTitle => _translate('enterTitle');
+  String get category => _translate('category');
+  String get description => _translate('description');
+  String get priceDollar => _translate('priceDollar');
+  String get enterPrice => _translate('enterPrice');
+  String get enterValidNumber => _translate('enterValidNumber');
+  String get videos => _translate('videos');
+  String get selectVideos => _translate('selectVideos');
+  String get updateCourse => _translate('updateCourse');
+  String get continueLearning => _translate('continueLearning');
+  String get courseDetails => _translate('courseDetails');
+  String get notAvailable => _translate('notAvailable');
+  String get noVideosAvailable => _translate('noVideosAvailable');
+  String get untitledVideo => _translate('untitledVideo');
+  String get enrollToUnlock => _translate('enrollToUnlock');
+  String get locked => _translate('locked');
+  String get watch => _translate('watch');
+  String get videoUrlEmpty => _translate('videoUrlEmpty');
+  String get removeFromCart => _translate('removeFromCart');
+  String get addToCart => _translate('addToCart');
+  String get students => _translate('student(s)');
+  String get enrolledStudents => _translate('enrolledStudents');
+  String get price => _translate('price');
+  String get level => _translate('level');
+  String get updatedAt => _translate('updatedAt');
+
+  // Post Details Screen (Community/Post Details)
+  String get post => _translate('post');
+  String get unknown => _translate('unknown');
+  String get comments => _translate('comments');
+  String get beFirstToComment => _translate('beFirstToComment');
+  String get writeAComment => _translate('writeAComment');
+  String get errorAddingComment => _translate('errorAddingComment');
+  String get commentAdded => _translate('commentAdded');
+  String get commentDeleted => _translate('commentDeleted');
+  String get deleteComment => _translate('deleteComment');
+  String get confirmDeleteComment => _translate('confirmDeleteComment');
+  String get like => _translate('like');
+  String get unlike => _translate('unlike');
+  String get share => _translate('share');
+  String get report => _translate('report');
+  String get postDetails => _translate('postDetails');
+  String get author => _translate('author');
+  String get createdAt => _translate('createdAt');
+  String get replies => _translate('replies');
+  String get reply => _translate('reply');
+  String get seeMoreComments => _translate('seeMoreComments');
+  String get loadingComments => _translate('loadingComments');
+  String get noMoreComments => _translate('noMoreComments');
+
+  //favorites
+  String get noFavouritesYet => _translate('noFavouritesYet');
+  String get addCoursesToFavourites => _translate('addCoursesToFavourites');
+  String get free => _translate('free');
+  String get today => _translate('today');
+  String get yesterday => _translate('yesterday');
+  String get daysAgo => _translate('daysAgo');
+  String get weeksAgo => _translate('weeksAgo');
+  String get monthsAgo => _translate('monthsAgo');
+  String get yearsAgo => _translate('yearsAgo');
+
+  //shopping cart
+  String get shoppingCart => _translate('shoppingCart');
+  String get cartEmpty => _translate('cartEmpty');
+  String get addCoursesToStart => _translate('addCoursesToStart');
+  String get total => _translate('total');
+  String get paymentFeatureComingSoon => _translate('paymentFeatureComingSoon');
+  String get proceedToPayment => _translate('proceedToPayment');
+
+  //search
+  String get tryDifferentKeywords => _translate('tryDifferentKeywords');
+  String get searchForCourses => _translate('searchForCourses');
+
 
   String _translate(String key) {
     switch (locale.languageCode) {
@@ -251,6 +380,139 @@ class S {
     // Errors
     'somethingWentWrong': 'Something went wrong',
     'userDataNotAvailable': 'User data not available',
+
+    //Tabs
+    'home': 'Home',
+    'courses': 'Courses',
+    'community': 'Community',
+    'favorites': 'Favorites',
+
+    //app bar
+    'searchHint': 'Search for courses...',
+    'createPost': 'Create Post',
+
+    //home tab
+    'dashboard': 'Dashboard',
+    'activeCourses': 'Active Courses',
+    'allStudents': 'All Students',
+    'myCourses': 'My Courses',
+    'noCoursesCreated': 'No courses created yet.',
+    'createNewCourse': 'Create new Course',
+    'recentActivity': 'Recent Activity',
+    'noRecentEnrollments': 'No recent enrollments.',
+    'recently': 'Recently',
+    'enrolledIn': 'enrolled in',
+    'communityActivity': 'Community Activity',
+    'noCommunityActivity': 'No community activity yet.',
+    'failedToLoadActivity': 'Failed to load activity',
+    'posted': 'posted',
+    'commentedOn': 'commented on',
+    'course': 'Course',
+    'unknownUser': 'Unknown User',
+    'noContent': 'No content',
+    'courseProgress': 'Course Progress',
+    'noCoursesEnrolledYet': 'No courses enrolled yet.',
+    'unknownInstructor': 'Unknown Instructor',
+    'untitledCourse': 'Untitled Course',
+    'noCommunityActivityYet': 'No community activity yet.',
+    'skillDevelopment': 'Skill Development',
+    'enrollInCoursesToDevelopSkills': 'Enroll in courses to develop skills.',
+    'learners': 'Learners',
+    'companies': 'Companies',
+    'recommendedForYou': 'Recommended for You',
+    'noCoursesFound': 'No courses found',
+    'unknownCourse': 'Unknown Course',
+    'noDescriptionAvailable': 'No description available.',
+    'viewCourse': 'View Course',
+    'liked': 'liked',
+
+    //community
+    'retry': 'Retry',
+    'noPostsYet': 'No posts yet',
+    'beFirstToShare': 'Be the first to share something!',
+    'noPostsAvailable': 'No posts available',
+
+    //courses
+    'noCoursesYet': 'No courses yet',
+    'invalidCourseId': 'Error: Invalid course ID',
+    'untitled': 'Untitled',
+    'noCategory': 'No category',
+    'createCourse': 'Create Course',
+    'editCourse': 'Edit Course',
+    'title': 'Title',
+    'enterTitle': 'Enter title',
+    'category': 'Category',
+    'description': 'Description',
+    'priceDollar': 'Price (\$)',
+    'enterPrice': 'Enter price',
+    'enterValidNumber': 'Enter valid number',
+    'videos': 'Videos',
+    'selectVideos': 'Select Videos',
+    'updateCourse': 'Update Course',
+    'continueLearning': 'Continue Learning',
+    'courseDetails': 'Course Details',
+    'notAvailable': 'N/A',
+    'noVideosAvailable': 'No videos available yet.',
+    'untitledVideo': 'Untitled Video',
+    'enrollToUnlock': 'Enroll to unlock',
+    'locked': 'Locked',
+    'watch': 'Watch',
+    'videoUrlEmpty': 'Video URL is empty',
+    'removeFromCart': 'Remove from Cart',
+    'addToCart': 'Add to Cart',
+    'student(s)': 'student(s)',
+    'enrolledStudents': 'Enrolled Students',
+    'price': 'Price',
+    'level': 'Level',
+    'updatedAt': 'Updated At',
+
+    // Post Details Screen (Community/Post Details)
+    'post': 'Post',
+    'unknown': 'Unknown',
+    'comments': 'Comments',
+    'beFirstToComment': 'Be first to comment',
+    'writeAComment': 'Write a comment...',
+    'errorAddingComment': 'Error adding comment',
+    'commentAdded': 'Comment added successfully',
+    'commentDeleted': 'Comment deleted successfully',
+    'deleteComment': 'Delete Comment',
+    'confirmDeleteComment': 'Are you sure you want to delete this comment?',
+    'like': 'Like',
+    'unlike': 'Unlike',
+    'share': 'Share',
+    'report': 'Report',
+    'postDetails': 'Post Details',
+    'author': 'Author',
+    'createdAt': 'Created at',
+    'replies': 'Replies',
+    'reply': 'Reply',
+    'seeMoreComments': 'See more comments',
+    'loadingComments': 'Loading comments...',
+    'noMoreComments': 'No more comments',
+
+    //favorites
+    'noFavouritesYet': 'No favourites yet',
+    'addCoursesToFavourites': 'Add courses to your favourites',
+    'free': 'Free',
+    'today': 'Today',
+    'yesterday': 'Yesterday',
+    'daysAgo': 'days ago',
+    'weeksAgo': 'weeks ago',
+    'monthsAgo': 'months ago',
+    'yearsAgo': 'years ago',
+
+    //shopping cart
+    'shoppingCart': 'Shopping Cart',
+    'cartEmpty': 'Your cart is empty',
+    'addCoursesToStart': 'Add courses to get started',
+    'total': 'Total',
+    'paymentFeatureComingSoon': 'Payment feature coming soon!',
+    'proceedToPayment': 'Proceed to Payment',
+
+    //search
+    'tryDifferentKeywords': 'Try different keywords or check back later',
+    'searchForCourses': 'Search for courses',
+
   };
 
   static final Map<String, String> _arabicTranslations = {
@@ -354,6 +616,139 @@ class S {
     // Errors
     'somethingWentWrong': 'حدث خطأ ما',
     'userDataNotAvailable': 'بيانات المستخدم غير متاحة',
+
+    //Tabs
+    'home': 'الرئيسية',
+    'courses': 'الدورات',
+    'community': 'المجتمع',
+    'favorites': 'المفضلة',
+
+    //app bar
+    'searchHint': 'ابحث عن الدورات...',
+    'createPost': 'إنشاء منشور',
+
+    //home tab
+    'dashboard': 'لوحة التحكم',
+    'activeCourses': 'الدورات النشطة',
+    'allStudents': 'جميع الطلاب',
+    'myCourses': 'دوراتي',
+    'noCoursesCreated': 'لا توجد دورات مضافة بعد.',
+    'createNewCourse': 'إنشاء دورة جديدة',
+    'recentActivity': 'النشاط الأخير',
+    'noRecentEnrollments': 'لا توجد تسجيلات حديثة.',
+    'recently': 'مؤخراً',
+    'enrolledIn': 'سجل في',
+    'communityActivity': 'نشاط المجتمع',
+    'noCommunityActivity': 'لا يوجد نشاط مجتمعي بعد.',
+    'failedToLoadActivity': 'فشل تحميل النشاط',
+    'posted': 'نشر',
+    'commentedOn': 'علق على',
+    'course': 'دورة',
+    'unknownUser': 'مستخدم غير معروف',
+    'noContent': 'لا يوجد محتوى',
+    'courseProgress': 'تقدم الدورة',
+    'noCoursesEnrolledYet': 'لا توجد دورات مسجلة بعد.',
+    'unknownInstructor': 'مدرس غير معروف',
+    'untitledCourse': 'دورة بدون عنوان',
+    'noCommunityActivityYet': 'لا يوجد نشاط مجتمعي بعد.',
+    'skillDevelopment': 'تطوير المهارات',
+    'enrollInCoursesToDevelopSkills': 'سجل في الدورات لتطوير المهارات.',
+    'learners': 'المتعلمين',
+    'companies': 'الشركات',
+    'recommendedForYou': 'موصى به لك',
+    'noCoursesFound': 'لا توجد دورات',
+    'unknownCourse': 'دورة غير معروفة',
+    'noDescriptionAvailable': 'لا يوجد وصف متاح.',
+    'viewCourse': 'عرض الدورة',
+    'liked': 'أعجب',
+
+    //community
+    'retry': 'إعادة المحاولة',
+    'noPostsYet': 'لا توجد مشاركات بعد',
+    'beFirstToShare': 'كن أول من يشارك شيئاً!',
+    'noPostsAvailable': 'لا توجد مشاركات متاحة',
+
+    //courses
+    'noCoursesYet': 'لا توجد دورات بعد',
+    'invalidCourseId': 'خطأ: معرف الدورة غير صالح',
+    'untitled': 'بدون عنوان',
+    'noCategory': 'لا يوجد تصنيف',
+    'createCourse': 'إنشاء دورة',
+    'editCourse': 'تعديل الدورة',
+    'title': 'العنوان',
+    'enterTitle': 'أدخل العنوان',
+    'category': 'التصنيف',
+    'description': 'الوصف',
+    'priceDollar': 'السعر (\$)',
+    'enterPrice': 'أدخل السعر',
+    'enterValidNumber': 'أدخل رقم صحيح',
+    'videos': 'الفيديوهات',
+    'selectVideos': 'اختيار الفيديوهات',
+    'updateCourse': 'تحديث الدورة',
+    'continueLearning': 'مواصلة التعلم',
+    'courseDetails': 'تفاصيل الدورة',
+    'notAvailable': 'غير متوفر',
+    'noVideosAvailable': 'لا توجد فيديوهات متاحة بعد.',
+    'untitledVideo': 'فيديو بدون عنوان',
+    'enrollToUnlock': 'سجل لإلغاء القفل',
+    'locked': 'مقفل',
+    'watch': 'شاهد',
+    'videoUrlEmpty': 'رابط الفيديو فارغ',
+    'removeFromCart': 'إزالة من السلة',
+    'addToCart': 'أضف إلى السلة',
+    'student(s)': 'طالب/طالبين',
+    'enrolledStudents': 'الطلاب المسجلون',
+    'price': 'السعر',
+    'level': 'المستوى',
+    'updatedAt': 'تم التحديث في',
+
+    // Post Details Screen (Community/Post Details)
+    'post': 'منشور',
+    'unknown': 'غير معروف',
+    'comments': 'التعليقات',
+    'beFirstToComment': 'كن أول من يعلق',
+    'writeAComment': 'اكتب تعليقاً...',
+    'errorAddingComment': 'حدث خطأ في إضافة التعليق',
+    'commentAdded': 'تمت إضافة التعليق بنجاح',
+    'commentDeleted': 'تم حذف التعليق بنجاح',
+    'deleteComment': 'حذف التعليق',
+    'confirmDeleteComment': 'هل أنت متأكد من حذف هذا التعليق؟',
+    'like': 'إعجاب',
+    'unlike': 'إلغاء الإعجاب',
+    'share': 'مشاركة',
+    'report': 'تقرير',
+    'postDetails': 'تفاصيل المنشور',
+    'author': 'المؤلف',
+    'createdAt': 'تم الإنشاء في',
+    'replies': 'الردود',
+    'reply': 'رد',
+    'seeMoreComments': 'رؤية المزيد من التعليقات',
+    'loadingComments': 'جاري تحميل التعليقات...',
+    'noMoreComments': 'لا يوجد المزيد من التعليقات',
+
+    //favorites
+    'noFavouritesYet': 'لا توجد مفضلات بعد',
+    'addCoursesToFavourites': 'أضف دورات إلى مفضلتك',
+    'free': 'مجاني',
+    'today': 'اليوم',
+    'yesterday': 'أمس',
+    'daysAgo': 'أيام مضت',
+    'weeksAgo': 'أسابيع مضت',
+    'monthsAgo': 'شهور مضت',
+    'yearsAgo': 'سنوات مضت',
+
+    //shopping cart
+    'shoppingCart': 'عربة التسوق',
+    'cartEmpty': 'عربة التسوق فارغة',
+    'addCoursesToStart': 'أضف دورات للبدء',
+    'total': 'المجموع',
+    'paymentFeatureComingSoon': 'ميزة الدفع قريباً!',
+    'proceedToPayment': 'تابع للدفع',
+
+    //search
+    'tryDifferentKeywords': 'جرب كلمات مفتاحية مختلفة أو تحقق لاحقاً',
+    'searchForCourses': 'ابحث عن الدورات',
+
   };
 }
 

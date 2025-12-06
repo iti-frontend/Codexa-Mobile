@@ -20,6 +20,7 @@ class CustomAppbar extends StatelessWidget {
   final VoidCallback? onProfileTap;
   final VoidCallback? onCreatePostTap;
   final bool showCart;
+  final dynamic translations; // Add translations attribute
 
   const CustomAppbar({
     required this.profileImage,
@@ -27,6 +28,7 @@ class CustomAppbar extends StatelessWidget {
     this.onProfileTap,
     this.onCreatePostTap,
     this.showCart = true,
+    required this.translations, // Make it required
     super.key,
   });
 
@@ -34,6 +36,33 @@ class CustomAppbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    // Helper function to get translation
+    String getTranslation(String key, {String defaultValue = ''}) {
+      if (translations == null) return defaultValue;
+
+      try {
+        // If translations is a Map
+        if (translations is Map<String, String>) {
+          return (translations as Map<String, String>)[key] ?? defaultValue;
+        }
+        // If translations is dynamic and has getters
+        else if (translations is dynamic) {
+          // Try common translation keys
+          switch (key) {
+            case 'searchHint':
+              return _tryGetProperty(translations, 'search') ?? defaultValue;
+            case 'logout':
+              return _tryGetProperty(translations, 'logout') ?? defaultValue;
+            default:
+              return _tryGetProperty(translations, key) ?? defaultValue;
+          }
+        }
+      } catch (e) {
+        print('Error getting translation for $key: $e');
+      }
+      return defaultValue;
+    }
 
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
@@ -97,6 +126,7 @@ class CustomAppbar extends StatelessWidget {
                     icon: Icons.add_circle_outline,
                     onTap: onCreatePostTap!,
                     theme: theme,
+                    tooltip: getTranslation('createPost', defaultValue: 'Create Post'),
                   ),
 
                 const SizedBox(width: 8),
@@ -107,12 +137,13 @@ class CustomAppbar extends StatelessWidget {
                   icon: Icons.logout_rounded,
                   onTap: () {
                     final userProvider =
-                        Provider.of<UserProvider>(context, listen: false);
+                    Provider.of<UserProvider>(context, listen: false);
                     userProvider.logout();
                     Navigator.pushReplacementNamed(
                         context, LoginScreen.routeName);
                   },
                   theme: theme,
+                  tooltip: getTranslation('logout', defaultValue: 'Logout'),
                 ),
               ],
             ),
@@ -120,7 +151,7 @@ class CustomAppbar extends StatelessWidget {
             const SizedBox(height: 8),
 
             // Second Row: Search Box (Full Width)
-            _buildSearchBox(context, theme, isDark),
+            _buildSearchBox(context, theme, isDark, translations),
           ],
         ),
       ),
@@ -227,32 +258,36 @@ class CustomAppbar extends StatelessWidget {
     required IconData icon,
     required VoidCallback onTap,
     required ThemeData theme,
+    String tooltip = '',
   }) {
     final isDark = theme.brightness == Brightness.dark;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColorsDark.cardBackground.withOpacity(0.5)
-              : AppColorsLight.cardBackground,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withOpacity(0.2)
-                  : Colors.grey.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Icon(
-          icon,
-          color: theme.iconTheme.color,
-          size: 20,
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColorsDark.cardBackground.withOpacity(0.5)
+                : AppColorsLight.cardBackground,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withOpacity(0.2)
+                    : Colors.grey.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            color: theme.iconTheme.color,
+            size: 20,
+          ),
         ),
       ),
     );
@@ -298,10 +333,10 @@ class CustomAppbar extends StatelessWidget {
                 : AppColorsLight.cardBackground,
             child: profileImage.isEmpty
                 ? Icon(
-                    Icons.person_rounded,
-                    color: theme.iconTheme.color,
-                    size: 18,
-                  )
+              Icons.person_rounded,
+              color: theme.iconTheme.color,
+              size: 18,
+            )
                 : null,
           ),
         ),
@@ -309,7 +344,25 @@ class CustomAppbar extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchBox(BuildContext context, ThemeData theme, bool isDark) {
+  Widget _buildSearchBox(BuildContext context, ThemeData theme, bool isDark, dynamic translations) {
+    // Get search hint translation
+    String searchHint = 'Search for courses...';
+    if (translations != null) {
+      try {
+        if (translations is Map<String, String>) {
+          searchHint = translations['searchHint'] ?? translations['search'] ?? searchHint;
+        } else if (translations is dynamic) {
+          final searchTranslation = _tryGetProperty(translations, 'searchHint') ??
+              _tryGetProperty(translations, 'search');
+          if (searchTranslation != null) {
+            searchHint = searchTranslation;
+          }
+        }
+      } catch (e) {
+        print('Error getting search translation: $e');
+      }
+    }
+
     return GestureDetector(
       onTap: () {
         final cubit = context.read<StudentCoursesCubit>();
@@ -363,7 +416,7 @@ class CustomAppbar extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                "Search for courses...",
+                searchHint,
                 style: TextStyle(
                   color: isDark
                       ? AppColorsDark.secondaryText
@@ -421,10 +474,51 @@ class CustomAppbar extends StatelessWidget {
       // Treat as server-relative
       final base = ApiManager.baseUrl;
       final normalizedBase =
-          base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+      base.endsWith('/') ? base.substring(0, base.length - 1) : base;
       return NetworkImage('$normalizedBase$imageUrl');
     } else {
       return AssetImage('assets/$imageUrl');
+    }
+  }
+
+  // Helper to dynamically access properties
+  dynamic _tryGetProperty(dynamic obj, String propertyName) {
+    if (obj == null) return null;
+
+    try {
+      // If the object is a Map
+      if (obj is Map) {
+        return obj[propertyName];
+      }
+      // Try to access as a property using dynamic access
+      else {
+        switch (propertyName) {
+          case 'search':
+          case 'searchHint':
+            return obj.searchHint ?? obj.search;
+          case 'logout':
+            return obj.logout;
+          case 'createPost':
+            return obj.createPost ?? obj.create;
+          case 'home':
+            return obj.home;
+          case 'courses':
+            return obj.courses;
+          case 'community':
+            return obj.community;
+          case 'favorites':
+            return obj.favorites;
+          default:
+          // Try to access using noSuchMethod fallback
+            try {
+              return obj[propertyName];
+            } catch (_) {
+              return null;
+            }
+        }
+      }
+    } catch (e) {
+      return null;
     }
   }
 }

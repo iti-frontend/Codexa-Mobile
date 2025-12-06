@@ -35,11 +35,14 @@ import 'Ui/home_page/additional_screens/profile/profile_screen.dart';
 import 'Ui/home_page/additional_screens/profile/profile_cubit/profile_cubit.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_cubit.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await dotenv.load(fileName: ".env");
+
+  timeago.setLocaleMessages('ar', timeago.ArMessages());
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -163,17 +166,20 @@ class MyApp extends StatelessWidget {
                 },
                 HomeScreen.routeName: (_) => HomeScreen(),
                 ProfileScreen.routeName: (context) {
-                  // Get providers from the current context
-                  final userProvider = Provider.of<UserProvider>(context, listen: false);
-                  final localizationService = Provider.of<LocalizationService>(context, listen: false);
-                  final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
 
                   return MultiProvider(
-                    providers: [
-                      ChangeNotifierProvider.value(value: userProvider),
-                      ChangeNotifierProvider.value(value: localizationService),
-                      ChangeNotifierProvider.value(value: themeProvider),
-                    ],
+                  providers: [
+                  // Get providers from parent context
+                  ChangeNotifierProvider.value(
+                  value: Provider.of<UserProvider>(context, listen: false),
+                  ),
+                  ChangeNotifierProvider.value(
+                  value: Provider.of<LocalizationService>(context, listen: false),
+                  ),
+                  ChangeNotifierProvider.value(
+                  value: Provider.of<ThemeProvider>(context, listen: false),
+                  ),
+                  ],
                     child: Builder(
                       builder: (innerContext) {
                         final currentUserProvider = Provider.of<UserProvider>(innerContext, listen: false);

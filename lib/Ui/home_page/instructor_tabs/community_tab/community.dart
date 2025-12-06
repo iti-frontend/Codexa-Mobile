@@ -7,6 +7,8 @@ import 'package:codexa_mobile/Domain/entities/community_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/post_details_screen.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
+import 'package:codexa_mobile/localization/localization_service.dart';
+import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
 class CommunityInstructorTab extends StatefulWidget {
   const CommunityInstructorTab({super.key});
@@ -16,12 +18,31 @@ class CommunityInstructorTab extends StatefulWidget {
 }
 
 class _CommunityInstructorTabState extends State<CommunityInstructorTab> {
+  late LocalizationService _localizationService;
+  late generated.S _translations;
+
   @override
   void initState() {
     super.initState();
+    _initializeLocalization();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CommunityPostsCubit>().fetchPosts();
     });
+  }
+
+  void _initializeLocalization() {
+    _localizationService = LocalizationService();
+    _translations = generated.S(_localizationService.locale);
+    _localizationService.addListener(_onLocaleChanged);
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) {
+      setState(() {
+        _translations = generated.S(_localizationService.locale);
+      });
+    }
   }
 
   @override
@@ -53,7 +74,7 @@ class _CommunityInstructorTabState extends State<CommunityInstructorTab> {
                       onPressed: () =>
                           context.read<CommunityPostsCubit>().fetchPosts(),
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
+                      label: Text(_translations.retry),
                     ),
                   ],
                 ),
@@ -72,7 +93,7 @@ class _CommunityInstructorTabState extends State<CommunityInstructorTab> {
                           size: 80, color: Colors.grey.shade300),
                       const SizedBox(height: 16),
                       Text(
-                        'No posts yet',
+                        _translations.noPostsYet,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -81,7 +102,7 @@ class _CommunityInstructorTabState extends State<CommunityInstructorTab> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Be the first to share something!',
+                        _translations.beFirstToShare,
                         style: TextStyle(color: Colors.grey.shade500),
                       ),
                     ],
@@ -100,20 +121,20 @@ class _CommunityInstructorTabState extends State<CommunityInstructorTab> {
                         constraints: const BoxConstraints(maxWidth: 1000),
                         child: isWide
                             ? Wrap(
-                                spacing: 16,
-                                runSpacing: 16,
-                                children: posts.map((post) {
-                                  return SizedBox(
-                                    width: 480,
-                                    child: _buildPostCard(context, post),
-                                  );
-                                }).toList(),
-                              )
+                          spacing: 16,
+                          runSpacing: 16,
+                          children: posts.map((post) {
+                            return SizedBox(
+                              width: 480,
+                              child: _buildPostCard(context, post),
+                            );
+                          }).toList(),
+                        )
                             : Column(
-                                children: posts.map((post) {
-                                  return _buildPostCard(context, post);
-                                }).toList(),
-                              ),
+                          children: posts.map((post) {
+                            return _buildPostCard(context, post);
+                          }).toList(),
+                        ),
                       ),
                     ),
                   );
@@ -121,7 +142,7 @@ class _CommunityInstructorTabState extends State<CommunityInstructorTab> {
               );
             }
 
-            return const Center(child: Text("No posts available"));
+            return Center(child: Text(_translations.noPostsAvailable));
           },
         ),
       ],
@@ -151,5 +172,11 @@ class _CommunityInstructorTabState extends State<CommunityInstructorTab> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _localizationService.removeListener(_onLocaleChanged);
+    super.dispose();
   }
 }

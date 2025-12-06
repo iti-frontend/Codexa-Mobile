@@ -4,12 +4,14 @@ class DashboardCard extends StatelessWidget {
   final String? title;
   final Widget child;
   final bool haveBanner;
+  final bool isRTL; // Add RTL parameter
 
   const DashboardCard({
     super.key,
     this.title,
     required this.child,
     this.haveBanner = true,
+    this.isRTL = false, // Default to LTR
   });
 
   @override
@@ -20,12 +22,13 @@ class DashboardCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             if (haveBanner && title != null) ...[
               Text(
                 title!,
                 style: TextStyle(color: theme.dividerTheme.color),
+                textAlign: isRTL ? TextAlign.right : TextAlign.left,
               ),
               const SizedBox(height: 12),
             ],
@@ -47,6 +50,7 @@ class CourseProgressItem extends StatelessWidget {
   final bool isFavourite;
   final bool showFavouriteButton;
   final VoidCallback? onFavouriteTap;
+  final bool isRTL; // Add RTL parameter
 
   const CourseProgressItem({
     super.key,
@@ -59,6 +63,7 @@ class CourseProgressItem extends StatelessWidget {
     this.isFavourite = false,
     this.showFavouriteButton = false,
     this.onFavouriteTap,
+    this.isRTL = false, // Default to LTR
   });
 
   @override
@@ -68,12 +73,13 @@ class CourseProgressItem extends StatelessWidget {
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
+      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
       children: [
         Container(
           width: 55,
           height: 55,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardTheme.color ?? Colors.white,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -85,37 +91,43 @@ class CourseProgressItem extends StatelessWidget {
         const SizedBox(width: 14),
         Expanded(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
-              if (hasCategory)
+              if (hasCategory && categoryTitle != null && categoryTitle!.isNotEmpty)
                 Text(
-                  categoryTitle ?? '',
+                  categoryTitle!,
                   style: TextStyle(
                     color: theme.progressIndicatorTheme.color,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
+                  textAlign: isRTL ? TextAlign.right : TextAlign.left,
                 ),
               if (hasCategory) const SizedBox(height: 4),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
                 children: [
                   Expanded(
                     child: Text(
                       title,
                       style: TextStyle(
-                        color: theme.dividerTheme.color,
+                        color: theme.iconTheme.color ?? theme.dividerTheme.color,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                       overflow: TextOverflow.ellipsis,
+                      textAlign: isRTL ? TextAlign.right : TextAlign.left,
                     ),
                   ),
                   if (showFavouriteButton)
                     InkWell(
                       onTap: onFavouriteTap,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
+                        padding: EdgeInsets.only(
+                          left: isRTL ? 0 : 8.0,
+                          right: isRTL ? 8.0 : 0,
+                        ),
                         child: Icon(
                           isFavourite ? Icons.favorite : Icons.favorite_border,
                           color: isFavourite
@@ -129,16 +141,17 @@ class CourseProgressItem extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Instructor: $instructorName',
+                'Instructor: $instructorName', // You might want to translate this
                 style: TextStyle(
                   color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
                   fontSize: 13,
                 ),
+                textAlign: isRTL ? TextAlign.right : TextAlign.left,
               ),
               if (showProgress) const SizedBox(height: 8),
               if (showProgress)
                 Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                   children: [
                     LinearProgressIndicator(
                       value: progress,
@@ -157,6 +170,7 @@ class CourseProgressItem extends StatelessWidget {
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
+                      textAlign: isRTL ? TextAlign.right : TextAlign.left,
                     ),
                   ],
                 ),
@@ -174,6 +188,7 @@ class CommunityItem extends StatelessWidget {
   final String message;
   final String time;
   final String? profileImage;
+  final bool isRTL; // Add RTL parameter
 
   const CommunityItem({
     super.key,
@@ -182,6 +197,7 @@ class CommunityItem extends StatelessWidget {
     required this.message,
     required this.time,
     this.profileImage,
+    this.isRTL = false, // Default to LTR
   });
 
   @override
@@ -201,6 +217,7 @@ class CommunityItem extends StatelessWidget {
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
+      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
       children: [
         CircleAvatar(
           radius: 18,
@@ -212,11 +229,11 @@ class CommunityItem extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               RichText(
                 text: TextSpan(
-                  style: TextStyle(color: theme.dividerTheme.color),
+                  style: TextStyle(color: theme.iconTheme.color ?? theme.dividerTheme.color),
                   children: [
                     TextSpan(
                       text: "$name ",
@@ -225,6 +242,7 @@ class CommunityItem extends StatelessWidget {
                     TextSpan(text: action),
                   ],
                 ),
+                textAlign: isRTL ? TextAlign.right : TextAlign.left,
               ),
               const SizedBox(height: 4),
               Text(
@@ -232,6 +250,7 @@ class CommunityItem extends StatelessWidget {
                 style: TextStyle(color: theme.dividerTheme.color),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+                textAlign: isRTL ? TextAlign.right : TextAlign.left,
               ),
               const SizedBox(height: 4),
               Text(
@@ -240,6 +259,7 @@ class CommunityItem extends StatelessWidget {
                   color: theme.dividerTheme.color?.withOpacity(0.7),
                   fontSize: 12,
                 ),
+                textAlign: isRTL ? TextAlign.right : TextAlign.left,
               ),
             ],
           ),
@@ -253,12 +273,14 @@ class SkillCard extends StatelessWidget {
   final String title;
   final String level;
   final double progress;
+  final bool isRTL; // Add RTL parameter
 
   const SkillCard({
     super.key,
     required this.title,
     required this.level,
     required this.progress,
+    this.isRTL = false, // Default to LTR
   });
 
   @override
@@ -269,16 +291,18 @@ class SkillCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(5),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style: TextStyle(color: theme.dividerTheme.color),
+              style: TextStyle(color: theme.iconTheme.color ?? theme.dividerTheme.color),
+              textAlign: isRTL ? TextAlign.right : TextAlign.left,
             ),
             const SizedBox(height: 6),
             Text(
               level,
               style: TextStyle(color: theme.dividerTheme.color),
+              textAlign: isRTL ? TextAlign.right : TextAlign.left,
             ),
             const SizedBox(height: 8),
             LinearProgressIndicator(
@@ -297,11 +321,13 @@ class SkillCard extends StatelessWidget {
 class StatBox extends StatelessWidget {
   final String title;
   final String subtitle;
+  final bool isRTL; // Add RTL parameter
 
   const StatBox({
     super.key,
     required this.title,
     required this.subtitle,
+    this.isRTL = false, // Default to LTR
   });
 
   @override
@@ -317,13 +343,15 @@ class StatBox extends StatelessWidget {
               Text(
                 title,
                 style: TextStyle(
-                  color: theme.bottomNavigationBarTheme.selectedItemColor,
+                  color: theme.iconTheme.color ?? theme.bottomNavigationBarTheme.selectedItemColor,
                 ),
+                textAlign: isRTL ? TextAlign.right : TextAlign.center,
               ),
               const SizedBox(height: 4),
               Text(
                 subtitle,
                 style: TextStyle(color: theme.dividerTheme.color),
+                textAlign: isRTL ? TextAlign.right : TextAlign.center,
               ),
             ],
           ),

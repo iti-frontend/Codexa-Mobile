@@ -6,18 +6,56 @@ import 'package:codexa_mobile/Ui/utils/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:codexa_mobile/localization/localization_service.dart';
+import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
-class CoursesInstructorTab extends StatelessWidget {
+class CoursesInstructorTab extends StatefulWidget {
   const CoursesInstructorTab({super.key});
 
   @override
+  State<CoursesInstructorTab> createState() => _CoursesInstructorTabState();
+}
+
+class _CoursesInstructorTabState extends State<CoursesInstructorTab> {
+  late LocalizationService _localizationService;
+  late generated.S _translations;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeLocalization();
+  }
+
+  void _initializeLocalization() {
+    _localizationService = LocalizationService();
+    _translations = generated.S(_localizationService.locale);
+    _localizationService.addListener(_onLocaleChanged);
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) {
+      setState(() {
+        _translations = generated.S(_localizationService.locale);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const _CoursesInstructorView();
+    return _CoursesInstructorView(translations: _translations);
+  }
+
+  @override
+  void dispose() {
+    _localizationService.removeListener(_onLocaleChanged);
+    super.dispose();
   }
 }
 
 class _CoursesInstructorView extends StatelessWidget {
-  const _CoursesInstructorView();
+  final generated.S translations;
+
+  const _CoursesInstructorView({required this.translations});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +64,7 @@ class _CoursesInstructorView extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(20.0),
           child: CustomButton(
-            text: "Create new Course",
+            text: translations.createNewCourse,
             onPressed: () {
               final cubit = context.read<InstructorCoursesCubit>();
               Navigator.push(
@@ -51,13 +89,13 @@ class _CoursesInstructorView extends StatelessWidget {
                 } else if (state is InstructorCoursesError) {
                   return Center(
                     child: Text(
-                      'Error: ${state.message}',
+                      '${translations.error}: ${state.message}',
                       style: const TextStyle(color: Colors.red),
                     ),
                   );
                 } else if (state is InstructorCoursesLoaded) {
                   if (state.courses.isEmpty) {
-                    return const Center(child: Text('No courses yet'));
+                    return Center(child: Text(translations.noCoursesYet));
                   }
                   return ListView.separated(
                     itemCount: state.courses.length,
@@ -72,7 +110,7 @@ class _CoursesInstructorView extends StatelessWidget {
                             SlidableAction(
                               onPressed: (context) {
                                 final cubit =
-                                    context.read<InstructorCoursesCubit>();
+                                context.read<InstructorCoursesCubit>();
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -89,7 +127,7 @@ class _CoursesInstructorView extends StatelessWidget {
                               backgroundColor: Colors.blue,
                               foregroundColor: Colors.white,
                               icon: Icons.edit,
-                              label: 'Edit',
+                              label: translations.edit,
                               borderRadius: const BorderRadius.only(
                                 bottomLeft: Radius.circular(12),
                                 topLeft: Radius.circular(12),
@@ -104,16 +142,16 @@ class _CoursesInstructorView extends StatelessWidget {
                                       .deleteCourse(id);
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content:
-                                            Text('Error: Invalid course ID')),
+                                    SnackBar(
+                                      content: Text(translations.invalidCourseId),
+                                    ),
                                   );
                                 }
                               },
                               backgroundColor: Colors.red,
                               foregroundColor: Colors.white,
                               icon: Icons.delete,
-                              label: 'Delete',
+                              label: translations.delete,
                               borderRadius: const BorderRadius.only(
                                 bottomRight: Radius.circular(12),
                                 topRight: Radius.circular(12),
@@ -144,12 +182,12 @@ class _CoursesInstructorView extends StatelessWidget {
                                   Flexible(
                                     child: Column(
                                       crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           course.title?.isNotEmpty == true
                                               ? course.title!
-                                              : 'Untitled',
+                                              : translations.untitled,
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 16,
@@ -159,7 +197,7 @@ class _CoursesInstructorView extends StatelessWidget {
                                         Text(
                                           course.category?.isNotEmpty == true
                                               ? course.category!
-                                              : 'No category',
+                                              : translations.noCategory,
                                           style: const TextStyle(
                                               color: Colors.grey),
                                         ),

@@ -18,7 +18,8 @@ import 'package:codexa_mobile/Ui/utils/widgets/custom_bottom_navbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
-import 'package:codexa_mobile/generated/l10n.dart';
+import 'package:codexa_mobile/generated/l10n.dart' as generated;
+import 'package:codexa_mobile/localization/localization_service.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String routeName = "/home";
@@ -32,10 +33,15 @@ class _HomescreenState extends State<HomeScreen> {
   bool _isUserLoaded = false;
   bool _isChatVisible = true;
 
+  // Use the LocalizationService singleton directly
+  late LocalizationService _localizationService;
+  late generated.S _translations;
+
   @override
   void initState() {
     super.initState();
     _loadUser();
+    _initializeLocalization();
   }
 
   Future<void> _loadUser() async {
@@ -44,6 +50,39 @@ class _HomescreenState extends State<HomeScreen> {
     setState(() {
       _isUserLoaded = true;
     });
+  }
+
+  Future<void> _initializeLocalization() async {
+    try {
+      // Get the LocalizationService singleton instance
+      _localizationService = LocalizationService();
+
+      // Check if LocalizationService is initialized, if not initialize it
+      await _localizationService.init();
+
+      // Load translations with current locale using the generated S class
+      _translations = generated.S(_localizationService.locale);
+
+      print('✅ HomeScreen initialized with locale: ${_localizationService.locale}');
+      print('📱 RTL: ${_localizationService.isRTL()}');
+
+      // Listen to locale changes
+      _localizationService.addListener(_onLocaleChanged);
+    } catch (e) {
+      print('❌ Error initializing localization: $e');
+      // Fallback to English
+      _localizationService = LocalizationService();
+      _translations = generated.S(const Locale('en'));
+    }
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) {
+      print('🔄 Language changed in HomeScreen: ${_localizationService.locale}');
+      setState(() {
+        _translations = generated.S(_localizationService.locale);
+      });
+    }
   }
 
   void _navigateToProfileScreen(BuildContext context) {
@@ -72,15 +111,16 @@ class _HomescreenState extends State<HomeScreen> {
     );
   }
 
-  String _getUserName(BuildContext context, UserProvider userProvider) {
+  String _getUserName(UserProvider userProvider) {
+    // Use _translations which updates when locale changes
     if (userProvider.user is StudentEntity) {
       final student = userProvider.user as StudentEntity;
-      return student.name ?? S.of(context).student;
+      return student.name ?? _translations.student;
     } else if (userProvider.user is InstructorEntity) {
       final instructor = userProvider.user as InstructorEntity;
-      return instructor.name ?? S.of(context).instructor;
+      return instructor.name ?? _translations.instructor;
     }
-    return S.of(context).profile;
+    return _translations.profile;
   }
 
   String _getUserProfileImage(UserProvider userProvider) {
@@ -94,7 +134,7 @@ class _HomescreenState extends State<HomeScreen> {
     return ''; // Fallback to empty string, avatar will show default icon
   }
 
-  Widget _buildFloatingChatButton(ThemeData theme) {
+  Widget _buildFloatingChatButton(ThemeData theme, bool isRTL) {
     return AnimatedOpacity(
       opacity: _isChatVisible ? 1.0 : 0.0,
       duration: const Duration(milliseconds: 300),
@@ -133,6 +173,9 @@ class _HomescreenState extends State<HomeScreen> {
     final userProvider = context.watch<UserProvider>();
     final role = userProvider.role;
     final theme = Theme.of(context);
+    final isRTL = _localizationService.isRTL();
+
+    print('🏠 Building HomeScreen with locale: ${_localizationService.locale}');
 
     List<Widget> studentTabs = [
       HomeStudentTab(),
@@ -148,7 +191,7 @@ class _HomescreenState extends State<HomeScreen> {
     ];
 
     final userProfileImage = _getUserProfileImage(userProvider);
-    final userName = _getUserName(context, userProvider); // Pass context here
+    final userName = _getUserName(userProvider);
 
     // Show create post button for instructor AND student on community tab
     VoidCallback? onCreatePostTap;
@@ -157,10 +200,41 @@ class _HomescreenState extends State<HomeScreen> {
       onCreatePostTap = _showCreatePostDialog;
     }
 
+    // Wrap the entire Scaffold with Directionality for RTL support
+    return Directionality(
+      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+      child: _buildScaffold(
+        context: context,
+        role: role,
+        theme: theme,
+        studentTabs: studentTabs,
+        instructorTabs: instructorTabs,
+        userProfileImage: userProfileImage,
+        userName: userName,
+        onCreatePostTap: onCreatePostTap,
+        isRTL: isRTL,
+        translations: _translations,
+      ),
+    );
+  }
+
+  Widget _buildScaffold({
+    required BuildContext context,
+    required String? role,
+    required ThemeData theme,
+    required List<Widget> studentTabs,
+    required List<Widget> instructorTabs,
+    required String userProfileImage,
+    required String userName,
+    required VoidCallback? onCreatePostTap,
+    required bool isRTL,
+    required generated.S translations,
+  }) {
     final scaffold = Scaffold(
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: selectedIndex,
         onItemTapped: (index) => setState(() => selectedIndex = index),
+        translations: translations,
       ),
       drawer: const Drawer(
         child: CartScreen(),
@@ -173,6 +247,7 @@ class _HomescreenState extends State<HomeScreen> {
             onProfileTap: () => _navigateToProfileScreen(context),
             onCreatePostTap: onCreatePostTap,
             showCart: role?.toLowerCase() == "student",
+            translations: translations,
           ),
           Expanded(
             child: Stack(
@@ -182,9 +257,11 @@ class _HomescreenState extends State<HomeScreen> {
                     : instructorTabs[selectedIndex],
                 // Floating chat button positioned just above bottom navigation bar
                 Positioned(
-                  right: 20,
+                  // Position based on RTL
+                  right: isRTL ? null : 20,
+                  left: isRTL ? 20 : null,
                   bottom: MediaQuery.of(context).padding.bottom,
-                  child: _buildFloatingChatButton(theme),
+                  child: _buildFloatingChatButton(theme, isRTL),
                 ),
               ],
             ),
@@ -212,5 +289,12 @@ class _HomescreenState extends State<HomeScreen> {
     }
 
     return scaffold;
+  }
+
+  @override
+  void dispose() {
+    // Remove listener when widget is disposed
+    _localizationService.removeListener(_onLocaleChanged);
+    super.dispose();
   }
 }

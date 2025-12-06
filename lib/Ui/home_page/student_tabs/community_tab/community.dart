@@ -7,6 +7,9 @@ import 'package:codexa_mobile/Domain/entities/community_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/post_details_screen.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
+import 'package:codexa_mobile/localization/localization_service.dart';
+import 'package:codexa_mobile/generated/l10n.dart' as generated;
+import 'package:provider/provider.dart';
 
 class CommunityStudentTab extends StatefulWidget {
   const CommunityStudentTab({super.key});
@@ -16,108 +19,176 @@ class CommunityStudentTab extends StatefulWidget {
 }
 
 class _CommunityStudentTabState extends State<CommunityStudentTab> {
+  late LocalizationService _localizationService;
+  late generated.S _translations;
+
   @override
   void initState() {
     super.initState();
+    _initializeLocalization();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CommunityPostsCubit>().fetchPosts();
     });
   }
 
+  void _initializeLocalization() {
+    _localizationService = LocalizationService();
+    _translations = generated.S(_localizationService.locale);
+    _localizationService.addListener(_onLocaleChanged);
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) {
+      setState(() {
+        _translations = generated.S(_localizationService.locale);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _localizationService.removeListener(_onLocaleChanged);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
-      buildWhen: (prev, curr) => prev != curr,
-      builder: (context, state) {
-        if (state is CommunityPostsLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    final isRTL = _localizationService.isRTL();
 
-        if (state is CommunityPostsError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
-                const SizedBox(height: 16),
-                Text(
-                  state.message,
-                  style: TextStyle(color: Colors.grey.shade600),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () =>
-                      context.read<CommunityPostsCubit>().fetchPosts(),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
-                ),
-              ],
-            ),
-          );
-        }
+    return Directionality(
+      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+      child: BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
+        buildWhen: (prev, curr) => prev != curr,
+        builder: (context, state) {
+          if (state is CommunityPostsLoading) {
+            return Center(
+              child: CircularProgressIndicator(
+                color: Theme.of(context).progressIndicatorTheme.color,
+              ),
+            );
+          }
 
-        if (state is CommunityPostsLoaded) {
-          final posts = state.posts;
-
-          if (posts.isEmpty) {
+          if (state is CommunityPostsError) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.post_add, size: 80, color: Colors.grey.shade300),
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                   const SizedBox(height: 16),
                   Text(
-                    'No posts yet',
+                    state.message,
                     style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade600,
+                      color: Theme.of(context).colorScheme.error,
                     ),
+                    textAlign: isRTL ? TextAlign.right : TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Be the first to share something!',
-                    style: TextStyle(color: Colors.grey.shade500),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () =>
+                        context.read<CommunityPostsCubit>().fetchPosts(),
+                    icon: Icon(
+                      Icons.refresh,
+                      color: Theme.of(context).iconTheme.color,
+                    ),
+                    label: Text(
+                      _translations.retry,
+                      style: TextStyle(
+                        color: Theme.of(context).iconTheme.color,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                      Theme.of(context).progressIndicatorTheme.color,
+                    ),
                   ),
                 ],
               ),
             );
           }
 
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 700;
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1000),
-                    child: isWide
-                        ? Wrap(
-                            spacing: 16,
-                            runSpacing: 16,
-                            children: posts.map((post) {
-                              return SizedBox(
-                                width: 480,
-                                child: _buildPostCard(context, post),
-                              );
-                            }).toList(),
-                          )
-                        : Column(
-                            children: posts.map((post) {
-                              return _buildPostCard(context, post);
-                            }).toList(),
-                          ),
-                  ),
+          if (state is CommunityPostsLoaded) {
+            final posts = state.posts;
+
+            if (posts.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.post_add,
+                      size: 80,
+                      color: Theme.of(context).dividerColor,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _translations.noPostsYet,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).dividerColor,
+                      ),
+                      textAlign: isRTL ? TextAlign.right : TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _translations.beFirstToShare,
+                      style: TextStyle(
+                        color: Theme.of(context).dividerColor.withOpacity(0.7),
+                      ),
+                      textAlign: isRTL ? TextAlign.right : TextAlign.center,
+                    ),
+                  ],
                 ),
               );
-            },
-          );
-        }
+            }
 
-        return const Center(child: Text("No posts available"));
-      },
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 700;
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1000),
+                      child: isWide
+                          ? Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: posts.map((post) {
+                          return SizedBox(
+                            width: 480,
+                            child: _buildPostCard(context, post),
+                          );
+                        }).toList(),
+                      )
+                          : Column(
+                        children: posts.map((post) {
+                          return _buildPostCard(context, post);
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          }
+
+          return Center(
+            child: Text(
+              _translations.noPostsAvailable,
+              style: TextStyle(
+                color: Theme.of(context).dividerColor,
+              ),
+              textAlign: isRTL ? TextAlign.right : TextAlign.center,
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -128,17 +199,21 @@ class _CommunityStudentTabState extends State<CommunityStudentTab> {
         final commentCubit = context.read<CommentCubit>();
         final likeCubit = context.read<LikeCubit>();
         final postsCubit = context.read<CommunityPostsCubit>();
+        final isRTL = _localizationService.isRTL();
 
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => MultiBlocProvider(
-              providers: [
-                BlocProvider.value(value: commentCubit),
-                BlocProvider.value(value: likeCubit),
-                BlocProvider.value(value: postsCubit),
-              ],
-              child: PostDetailsScreen(post: post),
+            builder: (_) => Directionality(
+              textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+              child: MultiBlocProvider(
+                providers: [
+                  BlocProvider.value(value: commentCubit),
+                  BlocProvider.value(value: likeCubit),
+                  BlocProvider.value(value: postsCubit),
+                ],
+                child: PostDetailsScreen(post: post),
+              ),
             ),
           ),
         );

@@ -4,70 +4,68 @@ import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
-class CustomBottomNavBar extends StatefulWidget {
+class CustomBottomNavBar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
+  final generated.S translations; // Accept S instance
 
   const CustomBottomNavBar({
     super.key,
     required this.selectedIndex,
     required this.onItemTapped,
+    required this.translations,
   });
-
-  @override
-  State<CustomBottomNavBar> createState() => _CustomBottomNavBarState();
-}
-
-class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
-  // Student tabs (4 items)
-  final List<Map<String, dynamic>> studentItems = const [
-    {
-      "icon": CupertinoIcons.home,
-      "activeIcon": CupertinoIcons.house_fill,
-      "label": "Home",
-    },
-    {
-      "icon": CupertinoIcons.book,
-      "activeIcon": CupertinoIcons.book_fill,
-      "label": "Courses",
-    },
-    {
-      "icon": CupertinoIcons.person_2,
-      "activeIcon": CupertinoIcons.person_2_fill,
-      "label": "Community",
-    },
-    {
-      "icon": CupertinoIcons.square_favorites_alt,
-      "activeIcon": CupertinoIcons.square_favorites_alt_fill,
-      "label": "Favorites",
-    },
-  ];
-
-  // Instructor tabs (3 items - no Favorites)
-  final List<Map<String, dynamic>> instructorItems = const [
-    {
-      "icon": CupertinoIcons.home,
-      "activeIcon": CupertinoIcons.house_fill,
-      "label": "Home",
-    },
-    {
-      "icon": CupertinoIcons.book,
-      "activeIcon": CupertinoIcons.book_fill,
-      "label": "Courses",
-    },
-    {
-      "icon": CupertinoIcons.person_2,
-      "activeIcon": CupertinoIcons.person_2_fill,
-      "label": "Community",
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    // Student tabs (4 items) - using translations directly
+    final List<Map<String, dynamic>> studentItems = [
+      {
+        "icon": CupertinoIcons.home,
+        "activeIcon": CupertinoIcons.house_fill,
+        "label": translations.home, // Direct access
+      },
+      {
+        "icon": CupertinoIcons.book,
+        "activeIcon": CupertinoIcons.book_fill,
+        "label": translations.courses, // Direct access
+      },
+      {
+        "icon": CupertinoIcons.person_2,
+        "activeIcon": CupertinoIcons.person_2_fill,
+        "label": translations.community, // Direct access
+      },
+      {
+        "icon": CupertinoIcons.square_favorites_alt,
+        "activeIcon": CupertinoIcons.square_favorites_alt_fill,
+        "label": translations.favorites, // Direct access
+      },
+    ];
+
+    // Instructor tabs (3 items - no Favorites)
+    final List<Map<String, dynamic>> instructorItems = [
+      {
+        "icon": CupertinoIcons.home,
+        "activeIcon": CupertinoIcons.house_fill,
+        "label": translations.home,
+      },
+      {
+        "icon": CupertinoIcons.book,
+        "activeIcon": CupertinoIcons.book_fill,
+        "label": translations.courses,
+      },
+      {
+        "icon": CupertinoIcons.person_2,
+        "activeIcon": CupertinoIcons.person_2_fill,
+        "label": translations.community,
+      },
+    ];
 
     // Choose items based on role
     final isInstructor = userProvider.role?.toLowerCase() == 'instructor';
@@ -77,32 +75,31 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
       margin: const EdgeInsets.all(10),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
       decoration: BoxDecoration(
-        color:
-            theme.bottomNavigationBarTheme.backgroundColor ?? theme.cardColor,
+        color: theme.bottomNavigationBarTheme.backgroundColor ?? theme.cardColor,
         border: Border(
           top: BorderSide(
-            width: 0.1, // thin line
+            width: 0.1,
             color: themeProvider.currentTheme == ThemeMode.light
-                ? AppColorsLight.secondaryText // Light Mode
-                : AppColorsDark.secondaryText, // Dark Mode
+                ? AppColorsLight.secondaryText
+                : AppColorsDark.secondaryText,
           ),
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(items.length, (index) {
-          final isActive = widget.selectedIndex == index;
+          final isActive = selectedIndex == index;
           final iconData =
-              isActive ? items[index]['activeIcon'] : items[index]['icon'];
+          isActive ? items[index]['activeIcon'] : items[index]['icon'];
 
           final color = isActive
               ? themeProvider.currentTheme == ThemeMode.light
-                  ? AppColorsLight.accentBlue // Light Mode
-                  : AppColorsDark.accentGreen
+              ? AppColorsLight.accentBlue
+              : AppColorsDark.accentGreen
               : theme.iconTheme.color;
 
           return GestureDetector(
-            onTap: () => widget.onItemTapped(index),
+            onTap: () => onItemTapped(index),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

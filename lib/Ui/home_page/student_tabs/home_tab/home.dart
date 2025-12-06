@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:codexa_mobile/localization/localization_service.dart';
+import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
 class ActivityItemModel {
   final String userName;
@@ -28,8 +30,36 @@ class ActivityItemModel {
   });
 }
 
-class HomeStudentTab extends StatelessWidget {
+class HomeStudentTab extends StatefulWidget {
   const HomeStudentTab({super.key});
+
+  @override
+  State<HomeStudentTab> createState() => _HomeStudentTabState();
+}
+
+class _HomeStudentTabState extends State<HomeStudentTab> {
+  late LocalizationService _localizationService;
+  late generated.S _translations;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeLocalization();
+  }
+
+  void _initializeLocalization() {
+    _localizationService = LocalizationService();
+    _translations = generated.S(_localizationService.locale);
+    _localizationService.addListener(_onLocaleChanged);
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) {
+      setState(() {
+        _translations = generated.S(_localizationService.locale);
+      });
+    }
+  }
 
   String? _getUserId(dynamic user) {
     if (user == null) return null;
@@ -53,14 +83,14 @@ class HomeStudentTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Dashboard",
+            _translations.dashboard,
             style: TextStyle(color: theme.iconTheme.color),
           ),
           const SizedBox(height: 16),
 
           // ================== Course Progress Section ==================
           DashboardCard(
-            title: "Course Progress",
+            title: _translations.courseProgress,
             child: BlocBuilder<StudentCoursesCubit, StudentCoursesState>(
               builder: (context, state) {
                 if (state is StudentCoursesLoading) {
@@ -77,7 +107,7 @@ class HomeStudentTab extends StatelessWidget {
                   if (enrolledCourses.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Text("No courses enrolled yet.",
+                      child: Text(_translations.noCoursesEnrolledYet,
                           style: TextStyle(color: theme.iconTheme.color)),
                     );
                   }
@@ -91,8 +121,8 @@ class HomeStudentTab extends StatelessWidget {
                         children: [
                           CourseProgressItem(
                             instructorName:
-                                course.instructor?.name ?? "Unknown Instructor",
-                            title: course.title ?? "Untitled Course",
+                            course.instructor?.name ?? _translations.unknownInstructor,
+                            title: course.title ?? _translations.untitledCourse,
                             progress: _calculateProgress(course),
                           ),
                           const SizedBox(height: 12),
@@ -108,7 +138,7 @@ class HomeStudentTab extends StatelessWidget {
 
           // ================== Community Activity Section ==================
           DashboardCard(
-            title: "Community Activity",
+            title: _translations.communityActivity,
             child: BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
               builder: (context, state) {
                 if (state is CommunityPostsLoading) {
@@ -119,7 +149,7 @@ class HomeStudentTab extends StatelessWidget {
                   if (allActivities.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Text("No community activity yet.",
+                      child: Text(_translations.noCommunityActivityYet,
                           style: TextStyle(color: theme.iconTheme.color)),
                     );
                   }
@@ -134,9 +164,9 @@ class HomeStudentTab extends StatelessWidget {
                           CommunityItem(
                             name: activity.userName,
                             profileImage: activity.profileImage,
-                            action: activity.action,
+                            action: _getTranslatedAction(activity.action),
                             message: activity.message,
-                            time: timeago.format(activity.timestamp),
+                            time: _formatTimeAgo(activity.timestamp),
                           ),
                           const SizedBox(height: 10),
                         ],
@@ -144,7 +174,7 @@ class HomeStudentTab extends StatelessWidget {
                     }).toList(),
                   );
                 } else if (state is CommunityPostsError) {
-                  return Text("Failed to load activity");
+                  return Text(_translations.failedToLoadActivity);
                 }
                 return const SizedBox();
               },
@@ -153,7 +183,7 @@ class HomeStudentTab extends StatelessWidget {
 
           // ================== Skill Development Section ==================
           DashboardCard(
-            title: "Skill Development",
+            title: _translations.skillDevelopment,
             child: BlocBuilder<StudentCoursesCubit, StudentCoursesState>(
               builder: (context, state) {
                 if (state is StudentCoursesLoaded) {
@@ -173,7 +203,7 @@ class HomeStudentTab extends StatelessWidget {
                       .toList();
 
                   if (categories.isEmpty) {
-                    return Text("Enroll in courses to develop skills.",
+                    return Text(_translations.enrollInCoursesToDevelopSkills,
                         style: TextStyle(color: theme.iconTheme.color));
                   }
 
@@ -190,7 +220,7 @@ class HomeStudentTab extends StatelessWidget {
                       return SkillCard(
                         title: title!,
                         level: level ??
-                            "", // Dynamic level could be added if available
+                            "",
                         progress: progress,
                       );
                     }).toList(),
@@ -205,13 +235,10 @@ class HomeStudentTab extends StatelessWidget {
           BlocBuilder<StudentCoursesCubit, StudentCoursesState>(
             builder: (context, state) {
               int courseCount = 0;
-              int learnersCount = 0; // Placeholder or sum of enrolled
+              int learnersCount = 0;
 
               if (state is StudentCoursesLoaded) {
                 courseCount = state.courses.length;
-                // Sum enrolled students if available, else mock or 0
-                // learnersCount = state.courses.fold(0, (sum, c) => sum + (c.enrolledStudents?.length ?? 0));
-                // Keeping it static/mock for now as per plan if data missing
                 learnersCount = 1000 + (courseCount * 50);
               }
 
@@ -220,17 +247,17 @@ class HomeStudentTab extends StatelessWidget {
                 children: [
                   StatBox(
                     title: "${learnersCount}+",
-                    subtitle: "Learners",
+                    subtitle: _translations.learners,
                   ),
                   const SizedBox(width: 10),
                   StatBox(
                     title: "$courseCount",
-                    subtitle: "Courses",
+                    subtitle: _translations.courses,
                   ),
                   const SizedBox(width: 10),
-                  const StatBox(
+                  StatBox(
                     title: "10K+",
-                    subtitle: "Companies",
+                    subtitle: _translations.companies,
                   ),
                 ],
               );
@@ -241,7 +268,7 @@ class HomeStudentTab extends StatelessWidget {
 
           // ================== Recommended Section ==================
           DashboardCard(
-            title: "Recommended for You",
+            title: _translations.recommendedForYou,
             child: BlocBuilder<StudentCoursesCubit, StudentCoursesState>(
               builder: (context, state) {
                 if (state is StudentCoursesLoading) {
@@ -249,7 +276,7 @@ class HomeStudentTab extends StatelessWidget {
                 } else if (state is StudentCoursesError) {
                   return Center(
                     child: Text(
-                      'Error: ${state.message}',
+                      '${_translations.error}: ${state.message}',
                       style: const TextStyle(color: Colors.red),
                     ),
                   );
@@ -257,7 +284,7 @@ class HomeStudentTab extends StatelessWidget {
                   final courses = state.courses;
 
                   if (courses.isEmpty) {
-                    return const Center(child: Text('No courses found'));
+                    return Center(child: Text(_translations.noCoursesFound));
                   }
                   final randomCourse = (courses..shuffle()).first;
                   return Row(
@@ -268,7 +295,7 @@ class HomeStudentTab extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              randomCourse.title ?? "Unknown Course",
+                              randomCourse.title ?? _translations.unknownCourse,
                               style: TextStyle(
                                 color: theme.iconTheme.color,
                                 fontWeight: FontWeight.bold,
@@ -277,7 +304,7 @@ class HomeStudentTab extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               randomCourse.description ??
-                                  "No description available.",
+                                  _translations.noDescriptionAvailable,
                               style: TextStyle(color: theme.iconTheme.color),
                             ),
                             const SizedBox(height: 8),
@@ -290,7 +317,7 @@ class HomeStudentTab extends StatelessWidget {
                                           course: randomCourse),
                                     ));
                               },
-                              child: const Text("View Course"),
+                              child: Text(_translations.viewCourse),
                             ),
                           ],
                         ),
@@ -313,13 +340,13 @@ class HomeStudentTab extends StatelessWidget {
     for (var post in posts) {
       final postTime =
           DateTime.tryParse(post.createdAt ?? "") ?? DateTime.now();
-      final authorName = post.author?.name ?? "Unknown User";
+      final authorName = post.author?.name ?? _translations.unknownUser;
 
       // 1. Add Post Activity
       activities.add(ActivityItemModel(
         userName: authorName,
         action: "posted",
-        message: post.content ?? "No content",
+        message: post.content ?? _translations.noContent,
         timestamp: postTime,
         profileImage: post.author?.profileImage ?? "",
       ));
@@ -330,39 +357,12 @@ class HomeStudentTab extends StatelessWidget {
           final commentTime =
               DateTime.tryParse(comment.createdAt ?? "") ?? postTime;
           activities.add(ActivityItemModel(
-            userName: comment.user?.name ?? "Unknown User",
-            action: "commented on $authorName's post",
+            userName: comment.user?.name ?? _translations.unknownUser,
+            action: "commented on ${authorName}'s post",
             message: comment.text ?? "",
             timestamp: commentTime,
             profileImage: comment.user?.profileImage ?? "",
           ));
-        }
-      }
-
-      // 3. Add Like Activities
-      // Note: LikesEntity does not have a timestamp, so we use post.updatedAt or post.createdAt as a proxy.
-      // This is an approximation.
-      if (post.likes != null) {
-        final likeTime = DateTime.tryParse(post.updatedAt ?? "") ?? postTime;
-        for (var like in post.likes!) {
-          // We don't have the user's name in LikesEntity, only ID?
-          // Let's check LikesEntity definition again. It has 'user' (String ID?) and 'userType'.
-          // If 'user' is just an ID, we can't show the name easily without a lookup.
-          // Wait, LikesEntity definition: final String? user;
-          // Usually this is an ID. If so, I can't show the name.
-          // I will skip likes if I can't get the name, to avoid "null liked...".
-          // Actually, let's look at the DTO/Entity again.
-          // LikesEntity: user, userType, id.
-          // If 'user' is an ID, I'm stuck.
-          // I will skip likes for now to avoid broken UI, as I cannot resolve ID to Name here efficiently.
-          // Re-reading the prompt: "Likes from anyone".
-          // If I can't get the name, I can't display it properly.
-          // I will skip adding likes to the activity feed to ensure quality.
-          // Wait, I can check if 'user' looks like an ID (alphanumeric long string) or a name.
-          // But safe bet is to skip.
-          // However, I must try to fulfill the request.
-          // I'll add a TODO or just skip.
-          // Let's stick to Posts and Comments which have full user details.
         }
       }
     }
@@ -374,14 +374,40 @@ class HomeStudentTab extends StatelessWidget {
   }
 
   double _calculateProgress(CourseEntity course) {
-    // If progress is available in entity, use it.
-    // Otherwise return a default or random value for demo if not implemented in backend
-    // Assuming progress is a list of completed items or similar
     if (course.progress != null && course.progress is List) {
-      // Example logic: progress length / total videos length
-      // This depends on actual data structure
       return 0.0;
     }
-    return 0.0; // Default to 0 if no data
+    return 0.0;
+  }
+
+  // Format time ago with localization
+  String _formatTimeAgo(DateTime dateTime) {
+    final localeCode = _localizationService.locale.languageCode;
+
+    if (localeCode == 'ar') {
+      timeago.setLocaleMessages('ar', timeago.ArMessages());
+    }
+
+    return timeago.format(dateTime, locale: localeCode);
+  }
+
+  // Translate action text
+  String _getTranslatedAction(String action) {
+    if (action.contains("posted")) {
+      return _translations.posted;
+    } else if (action.contains("commented")) {
+      return _translations.commentedOn;
+    } else if (action.contains("enrolled")) {
+      return _translations.enrolledIn;
+    } else if (action.contains("liked")) {
+      return _translations.liked;
+    }
+    return action;
+  }
+
+  @override
+  void dispose() {
+    _localizationService.removeListener(_onLocaleChanged);
+    super.dispose();
   }
 }

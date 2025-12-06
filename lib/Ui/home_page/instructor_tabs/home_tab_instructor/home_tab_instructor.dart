@@ -13,6 +13,8 @@ import 'package:codexa_mobile/Ui/utils/widgets/recent_activity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:codexa_mobile/localization/localization_service.dart';
+import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
 // Model for community activity (post or comment)
 class ActivityItemModel {
@@ -46,8 +48,36 @@ class EnrollmentActivityModel {
   });
 }
 
-class HomeTabInstructor extends StatelessWidget {
+class HomeTabInstructor extends StatefulWidget {
   const HomeTabInstructor({super.key});
+
+  @override
+  State<HomeTabInstructor> createState() => _HomeTabInstructorState();
+}
+
+class _HomeTabInstructorState extends State<HomeTabInstructor> {
+  late LocalizationService _localizationService;
+  late generated.S _translations;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeLocalization();
+  }
+
+  void _initializeLocalization() {
+    _localizationService = LocalizationService();
+    _translations = generated.S(_localizationService.locale);
+    _localizationService.addListener(_onLocaleChanged);
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) {
+      setState(() {
+        _translations = generated.S(_localizationService.locale);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +93,7 @@ class HomeTabInstructor extends StatelessWidget {
         if (coursesState is InstructorCoursesError) {
           return Center(
             child: Text(
-              'Error: ${coursesState.message}',
+              '${_translations.error}: ${coursesState.message}',
               style: const TextStyle(color: Colors.red),
             ),
           );
@@ -74,7 +104,7 @@ class HomeTabInstructor extends StatelessWidget {
           final activeCoursesCount = courses.length;
           final totalStudents = courses.fold<int>(
             0,
-            (prev, course) => prev + (course.enrolledStudents?.length ?? 0),
+                (prev, course) => prev + (course.enrolledStudents?.length ?? 0),
           );
           final lastTwoCourses = courses.length >= 2
               ? courses.sublist(courses.length - 2)
@@ -91,7 +121,7 @@ class HomeTabInstructor extends StatelessWidget {
                 children: [
                   // Dashboard stats
                   Text(
-                    "Dashboard",
+                    _translations.dashboard,
                     style: TextStyle(
                       color: theme.iconTheme.color,
                       fontSize: 18,
@@ -104,10 +134,11 @@ class HomeTabInstructor extends StatelessWidget {
                     children: [
                       StatBox(
                           title: "$activeCoursesCount",
-                          subtitle: "Active Course"),
+                          subtitle: _translations.activeCourses),
                       const SizedBox(width: 10),
                       StatBox(
-                          title: "$totalStudents", subtitle: "All Students"),
+                          title: "$totalStudents",
+                          subtitle: _translations.allStudents),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -116,7 +147,7 @@ class HomeTabInstructor extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "My Courses",
+                        _translations.myCourses,
                         style: TextStyle(
                             color: theme.iconTheme.color, fontSize: 16),
                       ),
@@ -128,21 +159,21 @@ class HomeTabInstructor extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       child: Text(
-                        "No courses created yet.",
+                        _translations.noCoursesCreated,
                         style: TextStyle(color: theme.iconTheme.color),
                       ),
                     ),
                   ...lastTwoCourses.map((course) => Padding(
-                        padding: const EdgeInsets.only(bottom: 5),
-                        child: CourseProgressCard(
-                          title: course.title ?? '',
-                          students: course.enrolledStudents?.length ?? 0,
-                          progress: 0.0,
-                        ),
-                      )),
+                    padding: const EdgeInsets.only(bottom: 5),
+                    child: CourseProgressCard(
+                      title: course.title ?? '',
+                      students: course.enrolledStudents?.length ?? 0,
+                      progress: 0.0,
+                    ),
+                  )),
                   const SizedBox(height: 5),
                   CustomButton(
-                    text: "Create new Course",
+                    text: _translations.createNewCourse,
                     onPressed: () {
                       final cubit = context.read<InstructorCoursesCubit>();
                       Navigator.push(
@@ -159,71 +190,71 @@ class HomeTabInstructor extends StatelessWidget {
                   const SizedBox(height: 25),
                   // Recent Activity (Enrollments)
                   DashboardCard(
-                    title: "Recent Activity",
+                    title: _translations.recentActivity,
                     child: recentEnrollments.isEmpty
                         ? Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              "No recent enrollments.",
-                              style: TextStyle(color: theme.iconTheme.color),
-                            ),
-                          )
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        _translations.noRecentEnrollments,
+                        style: TextStyle(color: theme.iconTheme.color),
+                      ),
+                    )
                         : Column(
-                            children: recentEnrollments.map((activity) {
-                              // Determine time display - show "Recently" if timestamp is missing
-                              final timeDisplay = activity.enrolledAt != null
-                                  ? timeago.format(activity.enrolledAt!)
-                                  : "Recently";
+                      children: recentEnrollments.map((activity) {
+                        // Determine time display - show "Recently" if timestamp is missing
+                        final timeDisplay = activity.enrolledAt != null
+                            ? _formatTimeAgo(activity.enrolledAt!)
+                            : _translations.recently;
 
-                              return Column(
-                                children: [
-                                  RecentActivityItem(
-                                    action: "enrolled in",
-                                    avatarImg: activity.studentImage,
-                                    name: activity.studentName,
-                                    subject: activity.courseTitle,
-                                    timeAgo: timeDisplay,
-                                  ),
-                                  const SizedBox(height: 20),
-                                ],
-                              );
-                            }).toList(),
-                          ),
+                        return Column(
+                          children: [
+                            RecentActivityItem(
+                              action: _translations.enrolledIn,
+                              avatarImg: activity.studentImage,
+                              name: activity.studentName,
+                              subject: activity.courseTitle,
+                              timeAgo: timeDisplay,
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        );
+                      }).toList(),
+                    ),
                   ),
                   const SizedBox(height: 10),
                   // Community Activity (global feed)
                   DashboardCard(
-                    title: "Community Activity",
+                    title: _translations.communityActivity,
                     child:
-                        BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
+                    BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
                       builder: (context, state) {
                         if (state is CommunityPostsLoading) {
                           return const Center(
                               child: CircularProgressIndicator());
                         } else if (state is CommunityPostsLoaded) {
                           final allActivities =
-                              _aggregateActivities(state.posts);
+                          _aggregateActivities(state.posts);
                           if (allActivities.isEmpty) {
                             return Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Text(
-                                "No community activity yet.",
+                                _translations.noCommunityActivity,
                                 style: TextStyle(color: theme.iconTheme.color),
                               ),
                             );
                           }
                           final displayActivities =
-                              allActivities.take(5).toList();
+                          allActivities.take(5).toList();
                           return Column(
                             children: displayActivities.map((activity) {
                               return Column(
                                 children: [
                                   CommunityItem(
                                     name: activity.userName,
-                                    action: activity.action,
+                                    action: _getActionTranslation(activity.action),
                                     message: activity.message,
-                                    time: timeago.format(activity.timestamp),
-                                    profileImage: activity.profileImage ?? "",
+                                    time: _formatTimeAgo(activity.timestamp),
+                                    profileImage: activity.profileImage,
                                   ),
                                   const SizedBox(height: 10),
                                 ],
@@ -231,7 +262,7 @@ class HomeTabInstructor extends StatelessWidget {
                             }).toList(),
                           );
                         } else if (state is CommunityPostsError) {
-                          return const Text("Failed to load activity");
+                          return Text(_translations.failedToLoadActivity);
                         }
                         return const SizedBox();
                       },
@@ -246,6 +277,31 @@ class HomeTabInstructor extends StatelessWidget {
         return const SizedBox.shrink();
       },
     );
+  }
+
+  // Format time ago with localization support
+  String _formatTimeAgo(DateTime dateTime) {
+    // Initialize timeago with locale
+    final localeCode = _localizationService.locale.languageCode;
+
+    // Set locale for timeago
+    if (localeCode == 'ar') {
+      timeago.setLocaleMessages('ar', timeago.ArMessages());
+    }
+
+    return timeago.format(dateTime, locale: localeCode);
+  }
+
+  // Helper to get translated action text
+  String _getActionTranslation(String action) {
+    if (action.contains("posted")) {
+      return _translations.posted;
+    } else if (action.contains("commented")) {
+      return _translations.commentedOn;
+    } else if (action.contains("enrolled")) {
+      return _translations.enrolledIn;
+    }
+    return action;
   }
 
   // Helper to extract recent enrollments from courses list
@@ -301,7 +357,7 @@ class HomeTabInstructor extends StatelessWidget {
           enrollments.add(EnrollmentActivityModel(
             studentName: student.name!,
             studentImage: student.profileImage,
-            courseTitle: course.title ?? "Course",
+            courseTitle: course.title ?? _translations.course,
             enrolledAt: enrolledAt, // Can be null, will show "Recently"
           ));
         }
@@ -325,12 +381,12 @@ class HomeTabInstructor extends StatelessWidget {
     for (var post in posts) {
       final postTime =
           DateTime.tryParse(post.createdAt ?? "") ?? DateTime.now();
-      final authorName = post.author?.name ?? "Unknown User";
+      final authorName = post.author?.name ?? _translations.unknownUser;
       // Post activity
       activities.add(ActivityItemModel(
         userName: authorName,
         action: "posted",
-        message: post.content ?? "No content",
+        message: post.content ?? _translations.noContent,
         timestamp: postTime,
         profileImage: post.author?.profileImage ?? "",
       ));
@@ -340,8 +396,8 @@ class HomeTabInstructor extends StatelessWidget {
           final commentTime =
               DateTime.tryParse(comment.createdAt ?? "") ?? postTime;
           activities.add(ActivityItemModel(
-            userName: comment.user?.name ?? "Unknown User",
-            action: "commented on $authorName's post",
+            userName: comment.user?.name ?? _translations.unknownUser,
+            action: "commented on ${authorName}'s post",
             message: comment.text ?? "",
             timestamp: commentTime,
             profileImage: comment.user?.profileImage ?? "",
@@ -351,5 +407,11 @@ class HomeTabInstructor extends StatelessWidget {
     }
     activities.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     return activities;
+  }
+
+  @override
+  void dispose() {
+    _localizationService.removeListener(_onLocaleChanged);
+    super.dispose();
   }
 }
