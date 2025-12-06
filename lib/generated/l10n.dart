@@ -137,6 +137,11 @@ class S {
   String get profilePreview => _translate('profilePreview');
   String get tapToChangePhoto => _translate('tapToChangePhoto');
   String get updatingProfile => _translate('updatingProfile');
+  String get errorLoadingPosts => _translate('errorLoadingPosts');
+  String get removeSelectedImage => _translate('removeSelectedImage');
+  String get communityActivity => _translate('communityActivity');
+  String get postsAndEngagement => _translate('postsAndEngagement');
+  String get noCommunityActivityYet => _translate('noCommunityActivityYet');
 
   // Placeholders
   String get usernamePlaceholder => _translate('usernamePlaceholder');
@@ -161,9 +166,7 @@ class S {
   String get recentActivity => _translate('recentActivity');
   String get noRecentEnrollments => _translate('noRecentEnrollments');
   String get recently => _translate('recently');
-  String get enrolledIn => _translate('enrolledIn');
-  String get communityActivity => _translate('communityActivity');
-  String get noCommunityActivity => _translate('noCommunityActivity');
+  String get enrolledIn => _translate('enrolledIn');  String get noCommunityActivity => _translate('noCommunityActivity');
   String get failedToLoadActivity => _translate('failedToLoadActivity');
   String get posted => _translate('posted');
   String get commentedOn => _translate('commentedOn');
@@ -174,7 +177,6 @@ class S {
   String get noCoursesEnrolledYet => _translate('noCoursesEnrolledYet');
   String get unknownInstructor => _translate('unknownInstructor');
   String get untitledCourse => _translate('untitledCourse');
-  String get noCommunityActivityYet => _translate('noCommunityActivityYet');
   String get skillDevelopment => _translate('skillDevelopment');
   String get enrollInCoursesToDevelopSkills => _translate('enrollInCoursesToDevelopSkills');
   String get learners => _translate('learners');
@@ -371,6 +373,12 @@ class S {
     'profilePreview': 'Profile Preview',
     'tapToChangePhoto': 'Tap the camera icon to change photo',
     'updatingProfile': 'Updating profile...',
+    'removeSelectedImage': 'Remove selected image',
+    'communityActivity': 'Community Activity',
+    'postsAndEngagement': 'Posts & engagement in the community',
+    'noCommunityActivityYet': 'No community posts yet',
+    'errorLoadingPosts': 'Error loading posts',
+    'somethingWentWrong': 'Something went wrong',
 
     // Placeholders
     'usernamePlaceholder': 'username@gmail.com',
@@ -402,7 +410,6 @@ class S {
     'noRecentEnrollments': 'No recent enrollments.',
     'recently': 'Recently',
     'enrolledIn': 'enrolled in',
-    'communityActivity': 'Community Activity',
     'noCommunityActivity': 'No community activity yet.',
     'failedToLoadActivity': 'Failed to load activity',
     'posted': 'posted',
@@ -414,7 +421,6 @@ class S {
     'noCoursesEnrolledYet': 'No courses enrolled yet.',
     'unknownInstructor': 'Unknown Instructor',
     'untitledCourse': 'Untitled Course',
-    'noCommunityActivityYet': 'No community activity yet.',
     'skillDevelopment': 'Skill Development',
     'enrollInCoursesToDevelopSkills': 'Enroll in courses to develop skills.',
     'learners': 'Learners',
@@ -607,6 +613,11 @@ class S {
     'profilePreview': 'معاينة الملف',
     'tapToChangePhoto': 'انقر على أيقونة الكاميرا لتغيير الصورة',
     'updatingProfile': 'جاري تحديث الملف...',
+    'removeSelectedImage': 'إزالة الصورة المختارة',
+    'communityActivity': 'النشاط المجتمعي',
+    'postsAndEngagement': 'المشاركات والتفاعل في المجتمع',
+    'noCommunityActivityYet': 'لا توجد مشاركات مجتمعية بعد',
+    'errorLoadingPosts': 'خطأ في تحميل المشاركات',
 
     // Placeholders
     'usernamePlaceholder': 'اسم المستخدم@gmail.com',
@@ -638,7 +649,6 @@ class S {
     'noRecentEnrollments': 'لا توجد تسجيلات حديثة.',
     'recently': 'مؤخراً',
     'enrolledIn': 'سجل في',
-    'communityActivity': 'نشاط المجتمع',
     'noCommunityActivity': 'لا يوجد نشاط مجتمعي بعد.',
     'failedToLoadActivity': 'فشل تحميل النشاط',
     'posted': 'نشر',
@@ -650,7 +660,6 @@ class S {
     'noCoursesEnrolledYet': 'لا توجد دورات مسجلة بعد.',
     'unknownInstructor': 'مدرس غير معروف',
     'untitledCourse': 'دورة بدون عنوان',
-    'noCommunityActivityYet': 'لا يوجد نشاط مجتمعي بعد.',
     'skillDevelopment': 'تطوير المهارات',
     'enrollInCoursesToDevelopSkills': 'سجل في الدورات لتطوير المهارات.',
     'learners': 'المتعلمين',

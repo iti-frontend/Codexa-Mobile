@@ -1,17 +1,20 @@
-// Complete ProfileScreen with RTL support
 import 'dart:io';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_cubit/profile_states.dart';
-import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
-import 'package:codexa_mobile/localization/localization_service.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
+import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
-import 'package:codexa_mobile/generated/l10n.dart';
 import 'profile_cubit/profile_cubit.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:codexa_mobile/localization/localization_service.dart';
+import 'package:codexa_mobile/generated/l10n.dart';
 
 class ProfileScreen<T> extends StatefulWidget {
   static const String routeName = "/profile";
@@ -36,23 +39,24 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   bool _isEditing = false;
   File? _selectedImage;
 
-  // Store translations instance
-  late S _translations;
+  // Image picker fields
+  bool _isPickingImage = false;
+  bool _isUploadingImage = false;
   late LocalizationService _localizationService;
+  bool _showLanguageSection = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeControllers();
-
-    // Get the LocalizationService singleton instance
     _localizationService = LocalizationService();
-
-    // Initialize with current locale
-    _translations = S(_localizationService.locale);
-
+    _initializeControllers();
     print('🎯 ProfileScreen initialized for ${widget.userType}');
-    print('🌐 Current locale: ${_localizationService.locale}');
+    print('👤 User: ${widget.user}');
+
+    // Load user's community posts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CommunityPostsCubit>().fetchPosts();
+    });
   }
 
   void _initializeControllers() {
@@ -70,315 +74,23 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    // Listen to LocalizationService changes
-    _localizationService.addListener(_onLocaleChanged);
-  }
-
-  void _onLocaleChanged() {
-    if (mounted) {
-      print('🔄 Language changed in ProfileScreen: ${_localizationService.locale}');
-      setState(() {
-        _translations = S(_localizationService.locale);
-      });
+  String get _userName {
+    if (widget.user is StudentEntity) {
+      return (widget.user as StudentEntity).name ?? S.current.unknown;
+    } else if (widget.user is InstructorEntity) {
+      return (widget.user as InstructorEntity).name ?? S.current.unknown;
     }
+    return S.current.unknown;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // Always use current translations from LocalizationService
-    final isRTL = _localizationService.isRTL();
-
-    print('🎯 Building ProfileScreen for ${widget.userType}');
-    print('🌐 Current locale: ${_localizationService.locale}');
-    print('🌐 RTL: $isRTL');
-
-    // Wrap with Directionality for RTL support
-    return Directionality(
-      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-      child: BlocConsumer<ProfileCubit<T>, ProfileState>(
-        listener: (context, state) {
-          print('🎯 BlocConsumer Listener - Current state: $state');
-
-          if (state is ProfileSuccess<T>) {
-            print('✅ Profile update successful!');
-            _updateAuthProvider(state.user);
-
-            setState(() {
-              _isEditing = false;
-              _selectedImage = null;
-            });
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(_translations.profileUpdated),
-                backgroundColor: Colors.green,
-              ),
-            );
-
-            Future.delayed(const Duration(milliseconds: 1500), () {
-              if (mounted) {
-                print('🔙 Navigating back after successful update');
-                Navigator.pop(context);
-              }
-            });
-          } else if (state is ProfileError) {
-            print('❌ Profile error: ${state.failure.errorMessage}');
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.failure.errorMessage ?? _translations.somethingWentWrong),
-                backgroundColor: Colors.red,
-              ),
-            );
-          } else if (state is ProfileLoading) {
-            print('⏳ Profile update in progress...');
-          }
-        },
-        builder: (context, state) {
-          print('🎯 BlocConsumer Builder - Current state: $state');
-
-          return Scaffold(
-            appBar: AppBar(
-              backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).cardColor,
-              foregroundColor: Theme.of(context).iconTheme.color,
-              title: Text(
-                widget.userType == 'Student'
-                    ? _translations.studentProfile
-                    : _translations.instructorProfile,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).iconTheme.color,
-                ),
-              ),
-              leading: IconButton(
-                icon: Icon(
-                  isRTL ? Icons.arrow_forward : Icons.arrow_back,
-                  color: Theme.of(context).iconTheme.color,
-                ),
-                onPressed: () {
-                  print('🔙 Back button pressed');
-                  Navigator.pop(context);
-                },
-              ),
-              actions: [
-                if (!_isEditing)
-                  IconButton(
-                    icon: Icon(Icons.edit, color: Theme.of(context).iconTheme.color),
-                    onPressed: _startEditing,
-                    tooltip: _translations.editProfile,
-                  ),
-              ],
-            ),
-            body: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: isRTL
-                    ? CrossAxisAlignment.end
-                    : CrossAxisAlignment.start,
-                children: [
-                  // Profile image section
-                  _buildProfileImageSection(Theme.of(context)),
-                  const SizedBox(height: 32),
-
-                  // Form fields
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: isRTL
-                            ? CrossAxisAlignment.end
-                            : CrossAxisAlignment.start,
-                        children: [
-                          // Selected image info
-                          if (_isEditing && _selectedImage != null) ...[
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).progressIndicatorTheme.color?.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: Theme.of(context).progressIndicatorTheme.color?.withOpacity(0.3) ?? Colors.blue,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: isRTL
-                                    ? MainAxisAlignment.end
-                                    : MainAxisAlignment.start,
-                                children: [
-                                  if (!isRTL)
-                                    Icon(Icons.check_circle,
-                                        color: Theme.of(context).progressIndicatorTheme.color, size: 24),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: isRTL
-                                          ? CrossAxisAlignment.end
-                                          : CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          _translations.newImageSelected,
-                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                            fontWeight: FontWeight.w600,
-                                            color: Theme.of(context).progressIndicatorTheme.color,
-                                          ),
-                                          textAlign: isRTL
-                                              ? TextAlign.right
-                                              : TextAlign.left,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          _selectedImage!.path.split('/').last,
-                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                            color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                          textAlign: isRTL
-                                              ? TextAlign.right
-                                              : TextAlign.left,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  if (isRTL)
-                                    Icon(Icons.check_circle,
-                                        color: Theme.of(context).progressIndicatorTheme.color, size: 24),
-                                  IconButton(
-                                    onPressed: _removeSelectedImage,
-                                    icon: Icon(Icons.delete_outline,
-                                        color: Theme.of(context).iconTheme.color),
-                                    tooltip: _translations.remove,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-
-                          // Name field - USING _translations directly
-                          _buildModernTextField(
-                            theme: Theme.of(context),
-                            controller: nameController,
-                            label: _translations.fullName,
-                            icon: Icons.person_outline,
-                            enabled: _isEditing,
-                            isRTL: isRTL,
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Email field - USING _translations directly
-                          _buildModernTextField(
-                            theme: Theme.of(context),
-                            controller: emailController,
-                            label: _translations.email,
-                            icon: Icons.email_outlined,
-                            enabled: _isEditing,
-                            keyboardType: TextInputType.emailAddress,
-                            isRTL: isRTL,
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Language Settings
-                          if (!_isEditing) ...[
-                            const SizedBox(height: 30),
-                            Text(
-                              _translations.settings,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).iconTheme.color,
-                              ),
-                              textAlign: isRTL
-                                  ? TextAlign.right
-                                  : TextAlign.left,
-                            ),
-                            const SizedBox(height: 16),
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                color: Theme.of(context).cardTheme.color,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Theme.of(context).shadowColor.withOpacity(0.1),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: ListTile(
-                                leading: isRTL ? null : Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).progressIndicatorTheme.color?.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Icon(
-                                    Icons.language,
-                                    color: Theme.of(context).progressIndicatorTheme.color,
-                                    size: 22,
-                                  ),
-                                ),
-                                trailing: isRTL ? Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).progressIndicatorTheme.color?.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Icon(
-                                    Icons.language,
-                                    color: Theme.of(context).progressIndicatorTheme.color,
-                                    size: 22,
-                                  ),
-                                ) : null,
-                                title: Text(
-                                  _translations.language,
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: Theme.of(context).iconTheme.color,
-                                  ),
-                                  textAlign: isRTL
-                                      ? TextAlign.right
-                                      : TextAlign.left,
-                                ),
-                                subtitle: Text(
-                                  isRTL ? 'العربية' : 'English',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).iconTheme.color?.withOpacity(0.6),
-                                  ),
-                                  textAlign: isRTL
-                                      ? TextAlign.right
-                                      : TextAlign.left,
-                                ),
-                                onTap: _showLanguageDialog,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                          ],
-
-                          const SizedBox(height: 40),
-
-                          // Action buttons
-                          if (_isEditing) ...[
-                            state is ProfileLoading
-                                ? _buildLoadingState(Theme.of(context))
-                                : _buildActionButtons(Theme.of(context), isRTL),
-                          ]
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
+  String get _userProfileImage {
+    if (widget.user is StudentEntity) {
+      return (widget.user as StudentEntity).profileImage ?? '';
+    } else if (widget.user is InstructorEntity) {
+      return (widget.user as InstructorEntity).profileImage ?? '';
+    }
+    return '';
   }
-
-  // ============ MISSING METHODS ============
 
   void _startEditing() {
     setState(() {
@@ -396,6 +108,18 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     print('❌ Cancelled editing');
   }
 
+  void _toggleLanguageSection() {
+    setState(() {
+      _showLanguageSection = !_showLanguageSection;
+    });
+  }
+
+  Future<void> _changeLanguage(String languageCode) async {
+    await _localizationService.changeLanguage(languageCode);
+    _toggleLanguageSection();
+  }
+
+  // Image picking methods
   Future<void> _pickImageFromGallery() async {
     try {
       final XFile? image = await _imagePicker.pickImage(
@@ -411,15 +135,294 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         });
       }
     } catch (e) {
-      _showErrorSnackBar('${_translations.somethingWentWrong}: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.current.somethingWentWrong)),
+      );
     }
+  }
+
+  /// Upload profile image to server and return the public URL or path.
+  /// Returns null on failure.
+  Future<String?> _uploadProfileImage(File file) async {
+    setState(() {
+      _isUploadingImage = true;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final apiManager = ApiManager(prefs: prefs);
+
+      // Try uploading with PUT (many APIs accept PUT for updating profile image)
+      final response = await apiManager.putMultipartData(
+        '/uploads/profile',
+        file: file,
+        fileFieldName: 'image',
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        String? url;
+
+        // Try multiple common shapes returned by file upload endpoints
+        try {
+          if (data is Map) {
+            // 1) { data: { url: '...' } } or { data: { path: '...' } }
+            final d = data['data'];
+            if (d is Map) {
+              url = d['url'] ??
+                  d['path'] ??
+                  d['filePath'] ??
+                  d['profileImage'] ??
+                  d['location'];
+            }
+
+            // 2) top-level url/path
+            url ??= data['url'] ??
+                data['path'] ??
+                data['filePath'] ??
+                data['profileImage'] ??
+                data['location'];
+
+            // 3) files array: { files: [{ url: '...' }] } or { files: [{ path: '...' }] }
+            if (url == null &&
+                data['files'] is List &&
+                data['files'].isNotEmpty) {
+              final f0 = data['files'][0];
+              if (f0 is Map) {
+                url =
+                    f0['url'] ?? f0['path'] ?? f0['filePath'] ?? f0['location'];
+              } else if (f0 is String) {
+                url = f0;
+              }
+            }
+          } else if (data is List && data.isNotEmpty) {
+            // 4) response is a list: [{ path: '...'}]
+            final first = data[0];
+            if (first is Map) {
+              url = first['url'] ??
+                  first['path'] ??
+                  first['filePath'] ??
+                  first['location'];
+            } else if (first is String) {
+              url = first;
+            }
+          } else if (data is String) {
+            // 5) response is just a string path/url
+            url = data;
+          }
+        } catch (e) {
+          // parsing failed — fall through to null
+          print('⚠️ _uploadProfileImage: parsing response failed: $e');
+        }
+
+        // Final normalization: if we have a leading-slash path, prefix baseUrl
+        if (url != null) {
+          if (url.startsWith('/')) {
+            final base = ApiManager.baseUrl;
+            final normalizedBase =
+            base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+            url = normalizedBase + url;
+          }
+          return url;
+        }
+
+        // If we couldn't parse a url, but response contains a readable body, show it briefly
+        _showErrorSnackBar(S.current.somethingWentWrong);
+        return null;
+      } else {
+        _showErrorSnackBar(S.current.somethingWentWrong);
+        return null;
+      }
+    } catch (e) {
+      _showErrorSnackBar(S.current.somethingWentWrong);
+      return null;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingImage = false;
+        });
+      }
+    }
+  }
+
+  void _showImageSourceDialog() {
+    final theme = Theme.of(context);
+    final isRTL = _localizationService.isRTL();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Directionality(
+        textDirection: _localizationService.textDirection,
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.cardTheme.color,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    S.current.changeProfilePicture,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.iconTheme.color,
+                    ),
+                    textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                  ),
+                ),
+                if (_isPickingImage)
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Loading...'),
+                      ],
+                    ),
+                  )
+                else ...[
+                  _buildImageSourceOption(
+                    icon: Icons.photo_library,
+                    title: S.current.chooseFromGallery,
+                    onTap: _pickImageFromGallery,
+                    isRTL: isRTL,
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      side: BorderSide(color: theme.dividerColor),
+                    ),
+                    child: Text(
+                      S.current.cancel,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.iconTheme.color,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageSourceOption({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    required bool isRTL,
+  }) {
+    final theme = Theme.of(context);
+
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: theme.progressIndicatorTheme.color?.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          color: theme.progressIndicatorTheme.color,
+        ),
+      ),
+      title: Text(
+        title,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.iconTheme.color,
+        ),
+        textAlign: isRTL ? TextAlign.right : TextAlign.left,
+      ),
+      trailing: Icon(
+        isRTL ? Icons.arrow_back : Icons.arrow_forward_ios,
+        size: 16,
+        color: theme.iconTheme.color,
+      ),
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
+    );
   }
 
   void _removeSelectedImage() {
     setState(() {
       _selectedImage = null;
     });
-    _showSuccessSnackBar(_translations.imageSelectionRemoved);
+    _showSuccessSnackBar(S.current.imageSelectionRemoved);
+  }
+
+  T _createUpdatedUser({String? uploadedImageUrl}) {
+    print('🔄 Creating updated user...');
+
+    if (widget.user is StudentEntity) {
+      final original = widget.user as StudentEntity;
+      final updatedStudent = StudentEntity(
+        id: original.id,
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        profileImage: uploadedImageUrl ??
+            (_selectedImage != null
+                ? _selectedImage!.path
+                : original.profileImage),
+        role: original.role,
+        isAdmin: original.isAdmin,
+        isActive: original.isActive,
+        emailVerified: original.emailVerified,
+        authProvider: original.authProvider,
+        token: original.token,
+      ) as T;
+      return updatedStudent;
+    } else if (widget.user is InstructorEntity) {
+      final original = widget.user as InstructorEntity;
+      final updatedInstructor = InstructorEntity(
+        id: original.id,
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        profileImage: uploadedImageUrl ??
+            (_selectedImage != null
+                ? _selectedImage!.path
+                : original.profileImage),
+        role: original.role,
+        isActive: original.isActive,
+        emailVerified: original.emailVerified,
+        authProvider: original.authProvider,
+        token: original.token,
+        isAdmin: original.isAdmin,
+      ) as T;
+      return updatedInstructor;
+    }
+    throw Exception('Unsupported user type');
+  }
+
+  void _updateAuthProvider(T updatedUser) {
+    print('🔄 Updating auth provider with new user data');
+    final authProvider = Provider.of<UserProvider>(context, listen: false);
+
+    // Use the new updateUser method
+    authProvider.updateUser(updatedUser);
+
+    print('✅ Updated user in auth provider: ${updatedUser.runtimeType}');
   }
 
   void _showSuccessSnackBar(String message) {
@@ -442,7 +445,582 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     );
   }
 
-  // ============ UI WIDGET METHODS ============
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isRTL = _localizationService.isRTL();
+    final translations = S.current;
+
+    print('🎯 Building ProfileScreen for ${widget.userType}');
+
+    return BlocConsumer<ProfileCubit<T>, ProfileState>(
+      listener: (context, state) {
+        print('🎯 BlocConsumer Listener - Current state: $state');
+
+        if (state is ProfileSuccess<T>) {
+          print('✅ Profile update successful!');
+          _updateAuthProvider(state.user);
+
+          setState(() {
+            _isEditing = false;
+            _selectedImage = null;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(translations.profileUpdated),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (mounted) {
+              print('🔙 Navigating back after successful update');
+              Navigator.pop(context);
+            }
+          });
+        } else if (state is ProfileError) {
+          print('❌ Profile error: ${state.failure.errorMessage}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.failure.errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else if (state is ProfileLoading) {
+          print('⏳ Profile update in progress...');
+        }
+      },
+      builder: (context, state) {
+        print('🎯 BlocConsumer Builder - Current state: $state');
+
+        return Directionality(
+          textDirection: _localizationService.textDirection,
+          child: Scaffold(
+            appBar: AppBar(
+              backgroundColor:
+              theme.appBarTheme.backgroundColor ?? theme.cardColor,
+              foregroundColor: theme.iconTheme.color,
+              title: Text(
+                widget.userType == 'Student'
+                    ? translations.studentProfile
+                    : translations.instructorProfile,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.iconTheme.color,
+                ),
+              ),
+              leading: IconButton(
+                icon: Icon(
+                  isRTL ? Icons.arrow_forward : Icons.arrow_back,
+                  color: theme.iconTheme.color,
+                ),
+                onPressed: () {
+                  print('🔙 Back button pressed');
+                  Navigator.pop(context);
+                },
+              ),
+              actions: [
+                if (!_isEditing) ...[
+                  IconButton(
+                    icon: Icon(Icons.language, color: theme.iconTheme.color),
+                    onPressed: _toggleLanguageSection,
+                    tooltip: translations.language,
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.edit, color: theme.iconTheme.color),
+                    onPressed: _startEditing,
+                    tooltip: translations.editProfile,
+                  ),
+                ],
+              ],
+            ),
+            body: _isEditing
+                ? Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: isRTL
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
+                children: [
+                  // Profile image section
+                  _buildProfileImageSection(theme, isRTL),
+                  const SizedBox(height: 32),
+
+                  // Form fields
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: isRTL
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
+                        children: [
+                          // Selected image info
+                          if (_isEditing && _selectedImage != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: theme.progressIndicatorTheme.color
+                                    ?.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color:
+                                  theme.progressIndicatorTheme.color
+                                      ?.withOpacity(0.3) ??
+                                      Colors.blue,
+                                ),
+                              ),
+                              child: Row(
+                                children: isRTL
+                                    ? [
+                                  IconButton(
+                                    onPressed: _removeSelectedImage,
+                                    icon: Icon(Icons.delete_outline,
+                                        color:
+                                        theme.iconTheme.color),
+                                    tooltip: translations
+                                        .removeSelectedImage,
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          translations
+                                              .newImageSelected,
+                                          style: theme.textTheme
+                                              .bodyMedium
+                                              ?.copyWith(
+                                            fontWeight:
+                                            FontWeight.w600,
+                                            color: theme
+                                                .progressIndicatorTheme
+                                                .color,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _selectedImage!.path
+                                              .split('/')
+                                              .last,
+                                          style: theme.textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                            color: theme.iconTheme
+                                                .color
+                                                ?.withOpacity(0.7),
+                                          ),
+                                          overflow:
+                                          TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Icon(Icons.check_circle,
+                                      color: theme
+                                          .progressIndicatorTheme
+                                          .color,
+                                      size: 24),
+                                ]
+                                    : [
+                                  Icon(Icons.check_circle,
+                                      color: theme
+                                          .progressIndicatorTheme
+                                          .color,
+                                      size: 24),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          translations
+                                              .newImageSelected,
+                                          style: theme.textTheme
+                                              .bodyMedium
+                                              ?.copyWith(
+                                            fontWeight:
+                                            FontWeight.w600,
+                                            color: theme
+                                                .progressIndicatorTheme
+                                                .color,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _selectedImage!.path
+                                              .split('/')
+                                              .last,
+                                          style: theme.textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                            color: theme.iconTheme
+                                                .color
+                                                ?.withOpacity(0.7),
+                                          ),
+                                          overflow:
+                                          TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: _removeSelectedImage,
+                                    icon: Icon(Icons.delete_outline,
+                                        color:
+                                        theme.iconTheme.color),
+                                    tooltip: translations
+                                        .removeSelectedImage,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+
+                          // Name field
+                          _buildModernTextField(
+                            theme: theme,
+                            controller: nameController,
+                            label: translations.fullName,
+                            icon: Icons.person_outline,
+                            enabled: _isEditing,
+                            isRTL: isRTL,
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Email field
+                          _buildModernTextField(
+                            theme: theme,
+                            controller: emailController,
+                            label: translations.email,
+                            icon: Icons.email_outlined,
+                            enabled: _isEditing,
+                            keyboardType: TextInputType.emailAddress,
+                            isRTL: isRTL,
+                          ),
+                          const SizedBox(height: 20),
+
+                          const SizedBox(height: 40),
+
+                          // Action buttons
+                          if (_isEditing) ...[
+                            state is ProfileLoading
+                                ? _buildLoadingState(theme, isRTL)
+                                : _buildActionButtons(theme, isRTL),
+                          ]
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+                : SingleChildScrollView(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: isRTL
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
+                      children: [
+                        _buildProfileImageSection(theme, isRTL),
+                        const SizedBox(height: 32),
+                        _buildModernTextField(
+                          theme: theme,
+                          controller: nameController,
+                          label: translations.fullName,
+                          icon: Icons.person_outline,
+                          enabled: false,
+                          isRTL: isRTL,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildModernTextField(
+                          theme: theme,
+                          controller: emailController,
+                          label: translations.email,
+                          icon: Icons.email_outlined,
+                          enabled: false,
+                          keyboardType: TextInputType.emailAddress,
+                          isRTL: isRTL,
+                        ),
+                        // Language Section Toggle
+                        _buildLanguageToggleSection(theme, isRTL),
+                        if (_showLanguageSection)
+                          _buildLanguageOptions(theme, isRTL),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  // Community Activity Section
+                  _buildCommunityActivitySection(theme, isRTL),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLanguageToggleSection(ThemeData theme, bool isRTL) {
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: theme.cardTheme.color,
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: theme.progressIndicatorTheme.color?.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            Icons.language,
+            color: theme.progressIndicatorTheme.color,
+          ),
+        ),
+        title: Text(
+          S.current.language,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.iconTheme.color,
+          ),
+          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+        ),
+        subtitle: Text(
+          _localizationService.locale.languageCode == 'ar'
+              ? 'العربية'
+              : 'English',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.iconTheme.color?.withOpacity(0.6),
+          ),
+          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+        ),
+        trailing: Icon(
+          _showLanguageSection
+              ? Icons.expand_less
+              : (isRTL ? Icons.expand_more : Icons.arrow_forward_ios),
+          color: theme.iconTheme.color,
+        ),
+        onTap: _toggleLanguageSection,
+      ),
+    );
+  }
+
+  Widget _buildLanguageOptions(ThemeData theme, bool isRTL) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: theme.cardTheme.color?.withOpacity(0.8),
+      ),
+      child: Column(
+        children: [
+          _buildLanguageOption(
+            theme: theme,
+            isRTL: isRTL,
+            languageCode: 'en',
+            title: 'English',
+            flag: '🇺🇸',
+            isSelected: _localizationService.locale.languageCode == 'en',
+          ),
+          Divider(
+            color: theme.dividerColor.withOpacity(0.3),
+            height: 1,
+          ),
+          _buildLanguageOption(
+            theme: theme,
+            isRTL: isRTL,
+            languageCode: 'ar',
+            title: 'العربية',
+            flag: '🇸🇦',
+            isSelected: _localizationService.locale.languageCode == 'ar',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption({
+    required ThemeData theme,
+    required bool isRTL,
+    required String languageCode,
+    required String title,
+    required String flag,
+    required bool isSelected,
+  }) {
+    return ListTile(
+      leading: Text(
+        flag,
+        style: const TextStyle(fontSize: 24),
+      ),
+      title: Text(
+        title,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.iconTheme.color,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+        textAlign: isRTL ? TextAlign.right : TextAlign.left,
+      ),
+      trailing: isSelected
+          ? Icon(
+        Icons.check_circle,
+        color: theme.progressIndicatorTheme.color,
+        size: 20,
+      )
+          : null,
+      onTap: () => _changeLanguage(languageCode),
+    );
+  }
+
+  /// Build Community Activity Section
+  Widget _buildCommunityActivitySection(ThemeData theme, bool isRTL) {
+    final currentUserId = _getCurrentUserId();
+
+    return Column(
+      crossAxisAlignment:
+      isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            crossAxisAlignment:
+            isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            children: [
+              Text(
+                S.current.communityActivity,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
+                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                S.current.postsAndEngagement,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                ),
+                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+              ),
+            ],
+          ),
+        ),
+        BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
+          builder: (context, state) {
+            if (state is CommunityPostsLoading) {
+              return Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    theme.progressIndicatorTheme.color ?? Colors.blueAccent,
+                  ),
+                ),
+              );
+            } else if (state is CommunityPostsLoaded) {
+              // Filter posts to show only current user's posts
+              final userPosts = state.posts
+                  .where((post) => post.author?.id == currentUserId)
+                  .toList();
+
+              if (userPosts.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: theme.cardTheme.color,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: theme.dividerColor),
+                    ),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.post_add,
+                            size: 48,
+                            color: theme.iconTheme.color?.withOpacity(0.3),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            S.current.noCommunityActivityYet,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withOpacity(0.6),
+                            ),
+                            textAlign: isRTL ? TextAlign.right : TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: userPosts.length,
+                padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+                itemBuilder: (context, index) {
+                  final post = userPosts[index];
+                  return PostCard(post: post);
+                },
+              );
+            } else if (state is CommunityPostsError) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: theme.cardTheme.color,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: theme.dividerColor),
+                  ),
+                  child: Center(
+                    child: Text(
+                      S.current.errorLoadingPosts,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.red,
+                      ),
+                      textAlign: isRTL ? TextAlign.right : TextAlign.center,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+  }
+
+  String _getCurrentUserId() {
+    if (widget.user is StudentEntity) {
+      return (widget.user as StudentEntity).id ?? '';
+    } else if (widget.user is InstructorEntity) {
+      return (widget.user as InstructorEntity).id ?? '';
+    }
+    return '';
+  }
 
   Widget _buildModernTextField({
     required ThemeData theme,
@@ -450,14 +1028,16 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     required String label,
     required IconData icon,
     required bool enabled,
-    bool isRTL = false,
+    required bool isRTL,
     TextInputType keyboardType = TextInputType.text,
     ValueChanged<String>? onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: enabled ? theme.cardTheme.color : theme.cardTheme.color?.withOpacity(0.5),
+        color: enabled
+            ? theme.cardTheme.color
+            : theme.cardTheme.color?.withOpacity(0.5),
         boxShadow: [
           if (enabled)
             BoxShadow(
@@ -472,36 +1052,33 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         enabled: enabled,
         keyboardType: keyboardType,
         onChanged: onChanged,
-        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
         textAlign: isRTL ? TextAlign.right : TextAlign.left,
         style: theme.textTheme.bodyLarge?.copyWith(
-          color: enabled ? theme.dividerTheme.color : theme.iconTheme.color?.withOpacity(0.5),
+          color: enabled
+              ? theme.dividerTheme.color
+              : theme.iconTheme.color?.withOpacity(0.5),
         ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
             color: theme.iconTheme.color?.withOpacity(0.6),
           ),
-          prefixIcon: isRTL ? null : Container(
-            margin: const EdgeInsets.all(12),
-            child: Icon(
-              icon,
-              color: enabled
-                  ? theme.progressIndicatorTheme.color
-                  : theme.iconTheme.color?.withOpacity(0.3),
-              size: 20,
-            ),
+          prefixIcon: isRTL
+              ? null
+              : Icon(
+            icon,
+            color: enabled
+                ? theme.progressIndicatorTheme.color
+                : theme.iconTheme.color?.withOpacity(0.3),
           ),
-          suffixIcon: isRTL ? Container(
-            margin: const EdgeInsets.all(12),
-            child: Icon(
-              icon,
-              color: enabled
-                  ? theme.progressIndicatorTheme.color
-                  : theme.iconTheme.color?.withOpacity(0.3),
-              size: 20,
-            ),
-          ) : null,
+          suffixIcon: isRTL
+              ? Icon(
+            icon,
+            color: enabled
+                ? theme.progressIndicatorTheme.color
+                : theme.iconTheme.color?.withOpacity(0.3),
+          )
+              : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
@@ -525,13 +1102,12 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             horizontal: 16,
             vertical: 18,
           ),
-          alignLabelWithHint: true,
         ),
       ),
     );
   }
 
-  Widget _buildProfileImageSection(ThemeData theme) {
+  Widget _buildProfileImageSection(ThemeData theme, bool isRTL) {
     return Column(
       children: [
         Stack(
@@ -544,7 +1120,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 shape: BoxShape.circle,
                 color: theme.colorScheme.surfaceVariant,
                 border: Border.all(
-                  color: theme.progressIndicatorTheme.color?.withOpacity(0.2) ?? Colors.blue.withOpacity(0.2),
+                  color: theme.progressIndicatorTheme.color?.withOpacity(0.2) ??
+                      Colors.blue.withOpacity(0.2),
                   width: 3,
                 ),
               ),
@@ -555,7 +1132,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             if (_isEditing)
               Positioned(
                 bottom: 4,
-                right: 4,
+                right: isRTL ? null : 4,
+                left: isRTL ? 4 : null,
                 child: GestureDetector(
                   onTap: _showImageSourceDialog,
                   child: Container(
@@ -588,355 +1166,29 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         ),
         const SizedBox(height: 16),
         Text(
-          _isEditing ? _translations.profilePreview : _getUserName(),
+          _isEditing ? S.current.profilePreview : _userName,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             color: theme.iconTheme.color,
           ),
-          textAlign: _localizationService.isRTL() ? TextAlign.right : TextAlign.left,
+          textAlign: isRTL ? TextAlign.right : TextAlign.left,
         ),
         if (_isEditing) ...[
           const SizedBox(height: 4),
           Text(
-            _translations.tapToChangePhoto,
+            S.current.tapToChangePhoto,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.iconTheme.color?.withOpacity(0.6),
             ),
-            textAlign: _localizationService.isRTL() ? TextAlign.right : TextAlign.left,
+            textAlign: isRTL ? TextAlign.right : TextAlign.left,
           ),
         ],
       ],
     );
   }
 
-  void _showImageSourceDialog() {
-    final theme = Theme.of(context);
-    final isRTL = _localizationService.isRTL();
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Directionality(
-        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-        child: Container(
-          decoration: BoxDecoration(
-            color: theme.cardTheme.color,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-          ),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    _translations.changeProfilePicture,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.iconTheme.color,
-                    ),
-                    textAlign: isRTL ? TextAlign.right : TextAlign.left,
-                  ),
-                ),
-                _buildImageSourceOption(
-                  icon: Icons.photo_library,
-                  title: _translations.chooseFromGallery,
-                  onTap: _pickImageFromGallery,
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  margin: const EdgeInsets.all(16),
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      side: BorderSide(color: theme.dividerColor),
-                    ),
-                    child: Text(
-                      _translations.cancel,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.iconTheme.color,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageSourceOption({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    final isRTL = _localizationService.isRTL();
-
-    return ListTile(
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: theme.progressIndicatorTheme.color?.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(
-          icon,
-          color: theme.progressIndicatorTheme.color,
-        ),
-      ),
-      title: Text(
-        title,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.iconTheme.color,
-        ),
-        textAlign: isRTL ? TextAlign.right : TextAlign.left,
-      ),
-      trailing: Icon(
-        Icons.arrow_forward_ios,
-        size: 16,
-        color: theme.iconTheme.color,
-      ),
-      onTap: () {
-        Navigator.pop(context);
-        onTap();
-      },
-    );
-  }
-
-  void _showLanguageDialog() {
-    final theme = Theme.of(context);
-    final isRTL = _localizationService.isRTL();
-
-    showDialog(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-        child: AlertDialog(
-          title: Text(
-            _translations.language,
-            textAlign: isRTL ? TextAlign.right : TextAlign.left,
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Text('🇺🇸'),
-                title: const Text('English'),
-                onTap: () => _changeLanguage('en'),
-              ),
-              ListTile(
-                leading: const Text('🇸🇦'),
-                title: const Text('العربية'),
-                onTap: () => _changeLanguage('ar'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _changeLanguage(String languageCode) async {
-    await _localizationService.changeLanguage(languageCode);
-    Navigator.pop(context); // Close language dialog
-
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(languageCode == 'en'
-            ? 'Language changed to English'
-            : 'تم تغيير اللغة إلى العربية'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  Widget _buildActionButtons(ThemeData theme, bool isRTL) {
-    return Row(
-      children: isRTL
-          ? [
-        // RTL layout: Save button first
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isEmpty) {
-                _showErrorSnackBar(_translations.enterName);
-                return;
-              }
-
-              if (emailController.text.isEmpty) {
-                _showErrorSnackBar(_translations.enterEmail);
-                return;
-              }
-
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(emailController.text)) {
-                print('❌ Validation failed: Invalid email format');
-                _showErrorSnackBar(_translations.validEmail);
-                return;
-              }
-
-              try {
-                final updatedUser = _createUpdatedUser();
-                final cubit = context.read<ProfileCubit<T>>();
-                cubit.updateProfile(updatedUser);
-                print('🚀 updateProfile method called successfully');
-              } catch (e, stackTrace) {
-                _showErrorSnackBar('${_translations.error}: $e');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              backgroundColor: theme.progressIndicatorTheme.color,
-            ),
-            child: Text(
-              _translations.saveChanges,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.iconTheme.color,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: OutlinedButton(
-            onPressed: _cancelEditing,
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              side: BorderSide(
-                color: theme.dividerColor,
-              ),
-            ),
-            child: Text(
-              _translations.cancelEditing,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.iconTheme.color,
-              ),
-            ),
-          ),
-        ),
-      ]
-          : [
-        // LTR layout: Cancel button first
-        Expanded(
-          child: OutlinedButton(
-            onPressed: _cancelEditing,
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              side: BorderSide(
-                color: theme.dividerColor,
-              ),
-            ),
-            child: Text(
-              _translations.cancelEditing,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.iconTheme.color,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isEmpty) {
-                _showErrorSnackBar(_translations.enterName);
-                return;
-              }
-
-              if (emailController.text.isEmpty) {
-                _showErrorSnackBar(_translations.enterEmail);
-                return;
-              }
-
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(emailController.text)) {
-                print('❌ Validation failed: Invalid email format');
-                _showErrorSnackBar(_translations.validEmail);
-                return;
-              }
-
-              try {
-                final updatedUser = _createUpdatedUser();
-                final cubit = context.read<ProfileCubit<T>>();
-                cubit.updateProfile(updatedUser);
-                print('🚀 updateProfile method called successfully');
-              } catch (e, stackTrace) {
-                _showErrorSnackBar('${_translations.error}: $e');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              backgroundColor: theme.progressIndicatorTheme.color,
-            ),
-            child: Text(
-              _translations.saveChanges,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.iconTheme.color,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLoadingState(ThemeData theme) {
-    return Column(
-      children: [
-        CircularProgressIndicator(
-          color: theme.progressIndicatorTheme.color,
-        ),
-        const SizedBox(height: 16),
-        Text(
-          _translations.updatingProfile,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.iconTheme.color?.withOpacity(0.6),
-          ),
-          textAlign: _localizationService.isRTL() ? TextAlign.right : TextAlign.left,
-        ),
-      ],
-    );
-  }
-
-  // ============ HELPER METHODS ============
-
-  String _getUserName() {
-    if (widget.user is StudentEntity) {
-      return (widget.user as StudentEntity).name ?? _translations.student;
-    } else if (widget.user is InstructorEntity) {
-      return (widget.user as InstructorEntity).name ?? _translations.instructor;
-    }
-    return _translations.profile;
-  }
-
   Widget _getProfileImageWidget(ThemeData theme) {
+    // ... keep existing image loading logic unchanged
     if (_selectedImage != null) {
       return ClipOval(
         child: Image.file(
@@ -952,7 +1204,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
       );
     }
 
-    final imageUrl = _getUserProfileImage();
+    final imageUrl = _userProfileImage;
     if (imageUrl.isNotEmpty) {
       if (imageUrl.startsWith('http')) {
         return ClipOval(
@@ -973,7 +1225,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             },
           ),
         );
-      } else if (imageUrl.startsWith('assets/') || imageUrl.startsWith('/')) {
+      } else if (imageUrl.startsWith('assets/')) {
         return ClipOval(
           child: Image.asset(
             imageUrl,
@@ -986,19 +1238,58 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             },
           ),
         );
+      } else if (imageUrl.startsWith('/')) {
+        final lower = imageUrl.toLowerCase();
+        final looksLikeLocal = lower.startsWith('/storage') ||
+            lower.startsWith('/data') ||
+            lower.startsWith('file:');
+
+        if (looksLikeLocal) {
+          try {
+            final localFile = File(imageUrl);
+            if (localFile.existsSync()) {
+              return ClipOval(
+                child: Image.file(
+                  localFile,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                  errorBuilder: (context, error, stackTrace) {
+                    print('❌ Error loading file image: $error');
+                    return _buildDefaultProfileIcon(theme);
+                  },
+                ),
+              );
+            }
+          } catch (e) {
+            print('⚠️ Failed checking local file: $e');
+          }
+        }
+
+        final base = ApiManager.baseUrl;
+        final normalizedBase =
+        base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+        final fullUrl = '${normalizedBase}${imageUrl}';
+        return ClipOval(
+          child: Image.network(
+            fullUrl,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const Center(child: CircularProgressIndicator());
+            },
+            errorBuilder: (context, error, stackTrace) {
+              print('❌ Error loading network image: $error');
+              return _buildDefaultProfileIcon(theme);
+            },
+          ),
+        );
       }
     }
 
     return _buildDefaultProfileIcon(theme);
-  }
-
-  String _getUserProfileImage() {
-    if (widget.user is StudentEntity) {
-      return (widget.user as StudentEntity).profileImage ?? '';
-    } else if (widget.user is InstructorEntity) {
-      return (widget.user as InstructorEntity).profileImage ?? '';
-    }
-    return '';
   }
 
   Widget _buildDefaultProfileIcon(ThemeData theme) {
@@ -1009,58 +1300,113 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     );
   }
 
-  T _createUpdatedUser() {
-    print('🔄 Creating updated user...');
+  Widget _buildActionButtons(ThemeData theme, bool isRTL) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _cancelEditing,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              side: BorderSide(
+                color: theme.dividerColor,
+              ),
+            ),
+            child: Text(
+              S.current.cancelEditing,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.iconTheme.color,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _isUploadingImage
+                ? null
+                : () async {
+              // Validation
+              if (nameController.text.isEmpty) {
+                _showErrorSnackBar(S.current.enterName);
+                return;
+              }
 
-    if (widget.user is StudentEntity) {
-      final original = widget.user as StudentEntity;
-      final updatedStudent = StudentEntity(
-        id: original.id,
-        name: nameController.text.trim(),
-        email: emailController.text.trim(),
-        profileImage: _selectedImage != null
-            ? _selectedImage!.path
-            : original.profileImage,
-        role: original.role,
-        isAdmin: original.isAdmin,
-        isActive: original.isActive,
-        emailVerified: original.emailVerified,
-        authProvider: original.authProvider,
-        token: original.token,
-      ) as T;
-      return updatedStudent;
-    } else if (widget.user is InstructorEntity) {
-      final original = widget.user as InstructorEntity;
-      final updatedInstructor = InstructorEntity(
-        id: original.id,
-        name: nameController.text.trim(),
-        email: emailController.text.trim(),
-        profileImage: _selectedImage != null
-            ? _selectedImage!.path
-            : original.profileImage,
-        role: original.role,
-        isActive: original.isActive,
-        emailVerified: original.emailVerified,
-        authProvider: original.authProvider,
-        token: original.token,
-        isAdmin: original.isAdmin,
-      ) as T;
-      return updatedInstructor;
-    }
-    throw Exception('Unsupported user type');
+              if (emailController.text.isEmpty) {
+                _showErrorSnackBar(S.current.enterEmail);
+                return;
+              }
+
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                  .hasMatch(emailController.text)) {
+                print('❌ Validation failed: Invalid email format');
+                _showErrorSnackBar(S.current.validEmail);
+                return;
+              }
+
+              try {
+                String? uploadedUrl;
+                if (_selectedImage != null) {
+                  uploadedUrl =
+                  await _uploadProfileImage(_selectedImage!);
+                  if (uploadedUrl == null) {
+                    return;
+                  }
+                }
+
+                final updatedUser =
+                _createUpdatedUser(uploadedImageUrl: uploadedUrl);
+                final cubit = context.read<ProfileCubit<T>>();
+                cubit.updateProfile(updatedUser);
+                print('🚀 updateProfile method called successfully');
+              } catch (e) {
+                _showErrorSnackBar('${S.current.error}: $e');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              backgroundColor: theme.progressIndicatorTheme.color,
+            ),
+            child: Text(
+              S.current.saveChanges,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.iconTheme.color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
-  void _updateAuthProvider(T updatedUser) {
-    print('🔄 Updating auth provider with new user data');
-    final authProvider = Provider.of<UserProvider>(context, listen: false);
-    authProvider.updateUser(updatedUser);
-    print('✅ Updated user in auth provider: ${updatedUser.runtimeType}');
+  Widget _buildLoadingState(ThemeData theme, bool isRTL) {
+    return Column(
+      children: [
+        CircularProgressIndicator(
+          color: theme.progressIndicatorTheme.color,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          S.current.updatingProfile,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.iconTheme.color?.withOpacity(0.6),
+          ),
+          textAlign: isRTL ? TextAlign.right : TextAlign.center,
+        ),
+      ],
+    );
   }
 
   @override
   void dispose() {
-    // Remove listener when widget is disposed
-    _localizationService.removeListener(_onLocaleChanged);
     print('🗑️ Disposing ProfileScreen');
     nameController.dispose();
     emailController.dispose();
