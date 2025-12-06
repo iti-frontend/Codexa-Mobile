@@ -66,10 +66,7 @@ class InstructorDto extends InstructorEntity {
 }
 
 class InstructorUserDto {
-  InstructorUserDto({
-    this.token,
-    this.instructor,
-  });
+  InstructorUserDto({this.token, this.instructor});
 
   factory InstructorUserDto.fromJson(Map<String, dynamic> json) {
     return InstructorUserDto(
@@ -91,4 +88,21 @@ class InstructorUserDto {
 
   String? token;
   InstructorDto? instructor;
+}
+
+extension InstructorMapper on InstructorDto {
+  InstructorEntity toEntity(String? token) {
+    return InstructorEntity(
+      id: id,
+      name: name,
+      email: email,
+      profileImage: profileImage,
+      role: role,
+      isAdmin: isAdmin,
+      isActive: isActive,
+      emailVerified: emailVerified,
+      authProvider: authProvider,
+      token: token,
+    );
+  }
 }

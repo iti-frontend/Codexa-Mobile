@@ -1,128 +1,225 @@
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/create_course.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructor_courses_state.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_details.dart';
+import 'package:codexa_mobile/Ui/utils/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:codexa_mobile/localization/localization_service.dart';
+import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
-class CoursesTab extends StatefulWidget {
-  const CoursesTab({super.key});
+class CoursesInstructorTab extends StatefulWidget {
+  const CoursesInstructorTab({super.key});
 
   @override
-  State<CoursesTab> createState() => _CoursesTabState();
+  State<CoursesInstructorTab> createState() => _CoursesInstructorTabState();
 }
 
-class _CoursesTabState extends State<CoursesTab> {
-  final List<Map<String, dynamic>> courseCards = [
-    {
-      'categoryTitle': 'Web Development',
-      'courseTitle': 'Mastering React.js',
-      'percentage': 0.85,
-      'percentageByNumber': '85%',
-      'enrolled': 30
-    },
-    {
-      'categoryTitle': 'Mobile Development',
-      'courseTitle': 'Flutter from Zero to Hero',
-      'percentage': 0.65,
-      'percentageByNumber': '65%',
-      'enrolled': 15
-    },
-    {
-      'categoryTitle': 'Data Science',
-      'courseTitle': 'Python for Machine Learning',
-      'percentage': 0.45,
-      'percentageByNumber': '45%',
-      'enrolled': 10
-    },
-    {
-      'categoryTitle': 'UI/UX Design',
-      'courseTitle': 'Design Thinking Basics',
-      'percentage': 0.75,
-      'percentageByNumber': '75%',
-      'enrolled': 6
-    },
-    {
-      'categoryTitle': 'Backend Development',
-      'courseTitle': 'Node.js & MongoDB Masterclass',
-      'percentage': 0.9,
-      'percentageByNumber': '90%',
-      'enrolled': 45
-    },
-  ];
+class _CoursesInstructorTabState extends State<CoursesInstructorTab> {
+  late LocalizationService _localizationService;
+  late generated.S _translations;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeLocalization();
+  }
+
+  void _initializeLocalization() {
+    _localizationService = LocalizationService();
+    _translations = generated.S(_localizationService.locale);
+    _localizationService.addListener(_onLocaleChanged);
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) {
+      setState(() {
+        _translations = generated.S(_localizationService.locale);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    return _CoursesInstructorView(translations: _translations);
+  }
 
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20.0),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: courseCards.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final course = courseCards[index];
-                return Card(
-                  margin: EdgeInsets.zero,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+  @override
+  void dispose() {
+    _localizationService.removeListener(_onLocaleChanged);
+    super.dispose();
+  }
+}
+
+class _CoursesInstructorView extends StatelessWidget {
+  final generated.S translations;
+
+  const _CoursesInstructorView({required this.translations});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: CustomButton(
+            text: translations.createNewCourse,
+            onPressed: () {
+              final cubit = context.read<InstructorCoursesCubit>();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider.value(
+                    value: cubit,
+                    child: AddEditCourseScreen(cubit: cubit),
                   ),
-                  elevation: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          course['courseTitle'],
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.iconTheme.color,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                ),
+              );
+            },
+          ),
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: BlocBuilder<InstructorCoursesCubit, InstructorCoursesState>(
+              builder: (context, state) {
+                if (state is InstructorCoursesLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state is InstructorCoursesError) {
+                  return Center(
+                    child: Text(
+                      '${translations.error}: ${state.message}',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  );
+                } else if (state is InstructorCoursesLoaded) {
+                  if (state.courses.isEmpty) {
+                    return Center(child: Text(translations.noCoursesYet));
+                  }
+                  return ListView.separated(
+                    itemCount: state.courses.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final course = state.courses[index];
+                      return Slidable(
+                        key: ValueKey(course.id ?? index),
+                        startActionPane: ActionPane(
+                          motion: const DrawerMotion(),
                           children: [
-                            Text(
-                              "${course['enrolled'] ?? 0} enrolled",
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.iconTheme.color,
+                            SlidableAction(
+                              onPressed: (context) {
+                                final cubit =
+                                context.read<InstructorCoursesCubit>();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => BlocProvider.value(
+                                      value: cubit,
+                                      child: AddEditCourseScreen(
+                                        cubit: cubit,
+                                        course: course,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              icon: Icons.edit,
+                              label: translations.edit,
+                              borderRadius: const BorderRadius.only(
+                                bottomLeft: Radius.circular(12),
+                                topLeft: Radius.circular(12),
                               ),
                             ),
-                            Text(
-                              course['percentageByNumber'],
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: theme.iconTheme.color,
+                            SlidableAction(
+                              onPressed: (context) {
+                                final id = course.id;
+                                if (id != null && id.isNotEmpty) {
+                                  context
+                                      .read<InstructorCoursesCubit>()
+                                      .deleteCourse(id);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(translations.invalidCourseId),
+                                    ),
+                                  );
+                                }
+                              },
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              icon: Icons.delete,
+                              label: translations.delete,
+                              borderRadius: const BorderRadius.only(
+                                bottomRight: Radius.circular(12),
+                                topRight: Radius.circular(12),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: LinearProgressIndicator(
-                            value: course['percentage'],
-                            minHeight: MediaQuery.of(context).size.width > 600
-                                ? 10
-                                : 8,
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CourseDetails(course: course),
+                              ),
+                            );
+                          },
+                          child: Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.drag_handle,
+                                      color: Colors.grey),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          course.title?.isNotEmpty == true
+                                              ? course.title!
+                                              : translations.untitled,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          course.category?.isNotEmpty == true
+                                              ? course.category!
+                                              : translations.noCategory,
+                                          style: const TextStyle(
+                                              color: Colors.grey),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                );
+                      );
+                    },
+                  );
+                }
+
+                return const SizedBox.shrink();
               },
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

@@ -8,6 +8,7 @@ class CoursesDto extends CourseEntity {
     super.description,
     super.price,
     super.category,
+    super.level,
     super.instructor,
     super.enrolledStudents,
     super.videos,
@@ -15,6 +16,7 @@ class CoursesDto extends CourseEntity {
     super.createdAt,
     super.updatedAt,
     super.v,
+    super.isFavourite,
   });
 
   factory CoursesDto.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class CoursesDto extends CourseEntity {
           ? json['price'] as int
           : int.tryParse('${json['price']}'),
       category: json['category']?.toString(),
+      level: json['level']?.toString(),
       instructor: json['instructor'] != null
           ? InstructorDto.fromJson(json['instructor'])
           : null,
@@ -37,6 +40,7 @@ class CoursesDto extends CourseEntity {
       v: json['__v'] is int
           ? json['__v'] as int
           : int.tryParse('${json['__v']}'),
+      isFavourite: json['isFavourite'] as bool?,
     );
   }
 
@@ -45,8 +49,9 @@ class CoursesDto extends CourseEntity {
       '_id': id,
       'title': title,
       'description': description,
-      'price': price,
+      'price': price ?? 0,
       'category': category,
+      'level': level,
       'instructor': instructor is InstructorDto
           ? (instructor as InstructorDto).toJson()
           : null,
@@ -56,6 +61,7 @@ class CoursesDto extends CourseEntity {
       'createdAt': createdAt,
       'updatedAt': updatedAt,
       '__v': v,
+      'isFavourite': isFavourite,
     };
   }
 }

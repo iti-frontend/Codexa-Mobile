@@ -1,45 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
+/// Minimalist social login icon with cool animations.
+/// Appears "alone" (no background) but alive.
 class CustomSocialIcon extends StatelessWidget {
   final String assetPath;
   final VoidCallback? onTap;
-  final double height;
-  final double width;
+  final double size;
 
   const CustomSocialIcon({
     super.key,
     required this.assetPath,
     this.onTap,
-    this.height = 50,
-    this.width = 70,
+    this.size = 50, // Slightly larger by default
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        height: height,
-        width: width,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Image.asset(
-            assetPath,
-            height: 24,
-          ),
-        ),
-      ),
+      child: Image.asset(
+        assetPath,
+        height: size,
+        width: size,
+        fit: BoxFit.contain,
+      )
+          .animate(onPlay: (controller) => controller.repeat(reverse: true))
+          .scaleXY(
+              begin: 1.0,
+              end: 1.1,
+              duration: 1.5.seconds,
+              curve: Curves.easeInOut) // Breathing effect
+          .then()
+          .shimmer(duration: 2.seconds, delay: 1.seconds) // Occasional shimmer
+          .animate() // Entrance animation
+          .fadeIn(duration: 600.ms)
+          .slideY(
+              begin: 0.5, end: 0, duration: 600.ms, curve: Curves.easeOutBack),
     );
   }
 }

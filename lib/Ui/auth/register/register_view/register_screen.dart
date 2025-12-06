@@ -1,14 +1,10 @@
 // lib/src/ui/auth/register/register_screen.dart
 
-import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
-import 'package:codexa_mobile/Data/Repository/auth_repository.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/register_instructor_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/register_student_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/social_login_instructor_usecase.dart';
-import 'package:codexa_mobile/Domain/usecases/auth/social_login_student_usecase.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_viewModel/register_bloc.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_viewModel/register_state.dart';
+import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
+import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_text_field.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_social_icon.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
@@ -16,6 +12,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -27,66 +25,74 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final RegisterViewModel authViewModel;
-
-  // visibility flags for option B (buttons below fields)
   bool _showPassword = false;
   bool _showRePassword = false;
 
   @override
-  void initState() {
-    super.initState();
-    final apiManager = ApiManager();
-    final authRepo = AuthRepoImpl(apiManager);
-
-    authViewModel = RegisterViewModel(
-      registerStudentUseCase: RegisterStudentUseCase(authRepo),
-      socialLoginStudentUseCase: SocialLoginStudentUseCase(authRepo),
-      registerInstructorUseCase: RegisterInstructorUseCase(authRepo),
-      socialLoginInstructorUseCase: SocialLoginInstructorUseCase(authRepo),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // role comes from RoleSelectionScreen via Navigator arguments
     final String role = ModalRoute.of(context)!.settings.arguments as String;
 
-    return BlocProvider<RegisterViewModel>.value(
-      value: authViewModel,
-      child: BlocListener<RegisterViewModel, RegisterStates>(
-        listener: (context, state) {
-          if (state is StudentRegisterSuccessState) {
-            // Registration success -> navigate to CategoryScreen (student)
-            ScaffoldMessenger.of(context).clearSnackBars();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                  content: Text('✅ Registration Successful! Redirecting...')),
-            );
-            Navigator.pushReplacementNamed(
-                context, '/home'); // use CategoryScreen.routeName if available
-          } else if (state is InstructorRegisterSuccessState) {
-            ScaffoldMessenger.of(context).clearSnackBars();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                  content: Text('✅ Registration Successful! Redirecting...')),
-            );
-            Navigator.pushReplacementNamed(
-                context, '/home'); // use TeacherScreen.routeName if available
-          } else if (state is RegisterLoadingState) {
-            // show a transient message
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
-          } else if (state is RegisterErrorState) {
-            final err = state.failure.errorMessage ?? 'Registration failed';
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(err)),
-            );
-          }
-        },
-        child: Scaffold(
-          backgroundColor: AppColorsDark.accentBlue,
+    return BlocConsumer<RegisterViewModel, RegisterStates>(
+      listener: (context, state) {
+        if (state is StudentRegisterSuccessState ||
+            state is InstructorRegisterSuccessState) {
+          final token = (state is StudentRegisterSuccessState)
+              ? state.student.token
+              : (state as InstructorRegisterSuccessState).instructor.token;
+
+          final user = (state is StudentRegisterSuccessState)
+              ? state.student
+              : (state as InstructorRegisterSuccessState).instructor;
+
+          final role =
+              state is StudentRegisterSuccessState ? 'student' : 'instructor';
+          Provider.of<UserProvider>(context, listen: false).saveUser(
+            token: token ?? "",
+            role: role,
+            user: user,
+          );
+
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Registration Successful! Redirecting...'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          Navigator.pushReplacementNamed(context, OnboardingScreen.routeName);
+        } else if (state is RegisterLoadingState) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+        } else if (state is RegisterErrorState) {
+          final err = state.failure.errorMessage;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(err), backgroundColor: Colors.red),
+          );
+        }
+      },
+      builder: (context, state) {
+        final authViewModel = context.read<RegisterViewModel>();
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        final backgroundColor = isDarkMode
+            ? AppColorsDark.primaryBackground
+            : AppColorsLight.primaryBackground;
+        final cardColor = isDarkMode
+            ? AppColorsDark.cardBackground
+            : AppColorsLight.cardBackground;
+        final textColor =
+            isDarkMode ? AppColorsDark.primaryText : AppColorsLight.primaryText;
+        final secondaryTextColor = isDarkMode
+            ? AppColorsDark.secondaryText
+            : AppColorsLight.secondaryText;
+        final buttonColor =
+            isDarkMode ? AppColorsDark.accentGreen : AppColorsLight.accentBlue;
+        final accentColor =
+            isDarkMode ? AppColorsDark.accentGreen : AppColorsLight.accentBlue;
+
+        return Scaffold(
+          backgroundColor: backgroundColor,
           body: SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -96,7 +102,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   constraints: const BoxConstraints(maxWidth: 400),
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
-                    color: AppColorsDark.accentBlueAuth,
+                    color: cardColor,
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Form(
@@ -104,12 +110,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Register',
                           style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white),
+                              color: textColor),
                         ),
                         const SizedBox(height: 20),
 
@@ -117,19 +123,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Center(
                           child: Stack(
                             children: [
-                              const CircleAvatar(
+                              CircleAvatar(
                                 radius: 45,
-                                backgroundColor: Colors.white24,
+                                backgroundColor: isDarkMode
+                                    ? Colors.white24
+                                    : Colors.black12,
                                 child: Icon(Icons.person,
-                                    size: 50, color: Colors.white70),
+                                    size: 50,
+                                    color: isDarkMode
+                                        ? Colors.white70
+                                        : Colors.black54),
                               ),
                               Positioned(
                                 bottom: 0,
                                 right: 0,
                                 child: CircleAvatar(
                                   radius: 16,
-                                  backgroundColor: Colors.blueAccent,
-                                  child: Icon(Icons.edit,
+                                  backgroundColor: accentColor,
+                                  child: const Icon(Icons.edit,
                                       size: 16, color: Colors.white),
                                 ),
                               ),
@@ -139,8 +150,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SizedBox(height: 24),
 
                         // Full Name
-                        const Text('Full Name',
-                            style: TextStyle(color: Colors.white70)),
+                        Text('Full Name',
+                            style: TextStyle(color: secondaryTextColor)),
                         const SizedBox(height: 6),
                         CustomTextField(
                           hintText: 'Full Name',
@@ -152,8 +163,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SizedBox(height: 16),
 
                         // Email
-                        const Text('Email',
-                            style: TextStyle(color: Colors.white70)),
+                        Text('Email',
+                            style: TextStyle(color: secondaryTextColor)),
                         const SizedBox(height: 6),
                         CustomTextField(
                           hintText: 'username@gmail.com',
@@ -168,8 +179,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SizedBox(height: 16),
 
                         // Password
-                        const Text('Password',
-                            style: TextStyle(color: Colors.white70)),
+                        Text('Password',
+                            style: TextStyle(color: secondaryTextColor)),
                         const SizedBox(height: 6),
                         CustomTextField(
                           hintText: 'Password',
@@ -196,8 +207,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SizedBox(height: 8),
 
                         // Confirm Password
-                        const Text('Confirm Password',
-                            style: TextStyle(color: Colors.white70)),
+                        Text('Confirm Password',
+                            style: TextStyle(color: secondaryTextColor)),
                         const SizedBox(height: 6),
                         CustomTextField(
                           hintText: 'Confirm Password',
@@ -227,38 +238,52 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Register button
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColorsDark.accentBlue,
+                            backgroundColor: buttonColor,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),
                             minimumSize: const Size.fromHeight(48),
                           ),
-                          onPressed: () => _submitRegister(role),
-                          child: const Text('Register',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
+                          onPressed: state is RegisterLoadingState
+                              ? null
+                              : () => _submitRegister(role),
+                          child: state is RegisterLoadingState
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : Text('Register',
+                                  style: TextStyle(
+                                      color: isDarkMode
+                                          ? Colors.black
+                                          : Colors.white,
+                                      fontWeight: FontWeight.bold)),
                         ),
                         const SizedBox(height: 20),
 
-                        const Center(
+                        Center(
                             child: Text('or continue with',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(
+                                    color: isDarkMode
+                                        ? AppColorsDark.secondaryText
+                                        : AppColorsLight.secondaryText))),
                         const SizedBox(height: 16),
 
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            GestureDetector(
+                            CustomSocialIcon(
+                              assetPath: 'assets/images/google.png',
                               onTap: () => _googleSignIn(role),
-                              child: const CustomSocialIcon(
-                                  assetPath: 'assets/images/google.png'),
                             ),
-                            // GitHub button placeholder (implement flow if available)
-                            GestureDetector(
+                            const SizedBox(width: 24),
+                            CustomSocialIcon(
+                              assetPath: 'assets/images/github.png',
                               onTap: () => _githubSignIn(role),
-                              child: const CustomSocialIcon(
-                                  assetPath: 'assets/images/github.png'),
                             ),
                           ],
                         ),
@@ -268,7 +293,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: RichText(
                             text: TextSpan(
                               text: "Already Have An Account ? ",
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : Colors.black87),
                               children: [
                                 WidgetSpan(
                                   child: GestureDetector(
@@ -276,32 +304,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       Navigator.pushReplacementNamed(
                                           context, LoginScreen.routeName);
                                     },
-                                    child: const Text('Login Now',
+                                    child: Text('Login Now',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             decoration:
                                                 TextDecoration.underline,
-                                            color: Color(0xFF1A73E8))),
+                                            color: isDarkMode
+                                                ? AppColorsDark.accentBlueAuth
+                                                : Color(0xFF1A73E8))),
                                   ),
                                 ),
                               ],
                             ),
                           ),
                         ),
-                      ],
+                      ].animate(interval: 50.ms).fade(duration: 400.ms).slideY(
+                          begin: 0.1, end: 0, curve: Curves.easeOutQuad),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   void _submitRegister(String role) {
     if (_formKey.currentState?.validate() != true) return;
+
+    final authViewModel = context.read<RegisterViewModel>();
 
     if (role == 'student') {
       authViewModel.registerStudent();
@@ -314,7 +347,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final googleSignIn = GoogleSignIn(scopes: ['email']);
       final googleUser = await googleSignIn.signIn();
-      if (googleUser == null) return; // user cancelled
+      if (googleUser == null) return;
 
       final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
@@ -333,6 +366,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
       final firebaseIdToken = await userCredential.user!.getIdToken();
+
+      final authViewModel = context.read<RegisterViewModel>();
 
       if (role == 'student') {
         authViewModel.socialRegisterStudent(token: firebaseIdToken ?? "");
@@ -358,6 +393,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
         return;
       }
+
+      final authViewModel = context.read<RegisterViewModel>();
+
       if (role == 'student') {
         authViewModel.socialRegisterStudent(
           token: firebaseIdToken,

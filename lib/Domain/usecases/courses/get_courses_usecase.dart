@@ -10,4 +10,15 @@ class GetCoursesUseCase {
   Future<Either<Failures, List<CourseEntity>>> call() {
     return repo.getCourses();
   }
+
+  Future<Either<Failures, List<CourseEntity>>> instructorCall() async {
+    return await repo.getInstructorCourses();
+  }
+
+  Future<Either<Failures, bool>> callEnroll({
+    required String token,
+    required String courseId,
+  }) {
+    return repo.enrollInCourse(courseId: courseId);
+  }
 }

@@ -22,4 +22,34 @@ class StudentEntity {
     required this.authProvider,
     required this.token,
   });
+
+  factory StudentEntity.fromJson(Map<String, dynamic> json) {
+    return StudentEntity(
+      id: json['_id'] ?? json['id'],
+      name: json['name'],
+      email: json['email'],
+      profileImage: json['profileImage'],
+      role: json['role'],
+      isAdmin: json['isAdmin'],
+      isActive: json['isActive'],
+      emailVerified: json['emailVerified'],
+      authProvider: json['authProvider'],
+      token: json['token'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'name': name,
+      'email': email,
+      'profileImage': profileImage,
+      'role': role,
+      'isAdmin': isAdmin,
+      'isActive': isActive,
+      'emailVerified': emailVerified,
+      'authProvider': authProvider,
+      'token': token,
+    };
+  }
 }
