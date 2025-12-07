@@ -15,6 +15,7 @@ import 'package:codexa_mobile/Domain/usecases/courses/toggle_favourite_usecase.d
 import 'package:codexa_mobile/Domain/usecases/courses/get_favourites_usecase.dart';
 import 'package:codexa_mobile/core/di/injection_container.dart';
 import 'package:flutter/material.dart';
+import 'package:codexa_mobile/Ui/utils/widgets/course_card_skeleton.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
@@ -440,10 +441,10 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                 BlocBuilder<StudentCoursesCubit, StudentCoursesState>(
                   builder: (context, state) {
                     if (state is StudentCoursesLoading) {
-                      return Center(
-                        child: CircularProgressIndicator(
-                          color: theme.progressIndicatorTheme.color,
-                        ),
+                      return CoursesListSkeleton(
+                        itemCount: 4,
+                        showFavouriteButton: true,
+                        isRTL: isRTL,
                       );
                     } else if (state is StudentCoursesError) {
                       return Center(
