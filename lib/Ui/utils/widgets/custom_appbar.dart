@@ -568,12 +568,13 @@ class _AnimatedThemeToggleState extends State<_AnimatedThemeToggle>
   late AnimationController _animationController;
   late Animation<double> _rotationAnimation;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _glowAnimation;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
 
@@ -582,12 +583,20 @@ class _AnimatedThemeToggleState extends State<_AnimatedThemeToggle>
       end: 1,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeInOutBack,
+      curve: Curves.easeOutBack,
     ));
 
     _scaleAnimation = Tween<double>(
       begin: 1.0,
-      end: 1.2,
+      end: 1.15,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _glowAnimation = Tween<double>(
+      begin: 0.2,
+      end: 0.5,
     ).animate(CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeInOut,
@@ -635,32 +644,37 @@ class _AnimatedThemeToggleState extends State<_AnimatedThemeToggle>
     // Use ThemeSwitcher.of(context) which is now at the root of the app
     return GestureDetector(
       onTap: () => _toggleTheme(context, themeProvider),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColorsDark.cardBackground.withOpacity(0.5)
-              : AppColorsLight.cardBackground,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
+      child: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
               color: isDark
-                  ? Colors.amber.withOpacity(0.2)
-                  : AppColorsLight.accentBlue.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+                  ? AppColorsDark.cardBackground.withAlpha(128)
+                  : AppColorsLight.cardBackground,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.amber
+                          .withAlpha(((_glowAnimation.value) * 255).toInt())
+                      : AppColorsLight.accentBlue
+                          .withAlpha(((_glowAnimation.value) * 255).toInt()),
+                  blurRadius: 12 + (_glowAnimation.value * 8),
+                  spreadRadius: _glowAnimation.value * 2,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return Transform.rotate(
-              angle: _rotationAnimation.value * 3.14159,
+            child: Transform.rotate(
+              angle: _rotationAnimation.value * 3.14159 * 2,
               child: Transform.scale(
                 scale: _scaleAnimation.value,
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
+                  duration: const Duration(milliseconds: 350),
+                  switchInCurve: Curves.easeOutBack,
+                  switchOutCurve: Curves.easeIn,
                   transitionBuilder: (child, animation) {
                     return FadeTransition(
                       opacity: animation,
@@ -678,9 +692,9 @@ class _AnimatedThemeToggleState extends State<_AnimatedThemeToggle>
                   ),
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }

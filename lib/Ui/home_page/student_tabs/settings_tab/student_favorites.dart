@@ -16,6 +16,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:async';
 import 'package:codexa_mobile/localization/localization_service.dart';
 import 'package:codexa_mobile/generated/l10n.dart' as generated;
+import 'package:codexa_mobile/Ui/utils/widgets/course_card_skeleton.dart';
 
 class FavoriteStudentTab extends StatelessWidget {
   const FavoriteStudentTab({super.key});
@@ -71,20 +72,20 @@ class _FavouritesViewState extends State<FavouritesView> {
     // Listen to favourite toggle events from other tabs
     _favouriteSubscription =
         FavouriteToggleNotifier().stream.listen((event) async {
-          print(
-              '🔵 [SETTINGS_TAB] Received toggle event: courseId=${event.courseId}, isFavourite=${event.isFavourite}');
-          print('🔵 [SETTINGS_TAB] Waiting 500ms for backend to update...');
+      print(
+          '🔵 [SETTINGS_TAB] Received toggle event: courseId=${event.courseId}, isFavourite=${event.isFavourite}');
+      print('🔵 [SETTINGS_TAB] Waiting 500ms for backend to update...');
 
-          // Wait a bit for backend to update
-          await Future.delayed(const Duration(milliseconds: 500));
+      // Wait a bit for backend to update
+      await Future.delayed(const Duration(milliseconds: 500));
 
-          if (mounted) {
-            print('🟢 [SETTINGS_TAB] Refreshing favourites list...');
-            context.read<FavouritesCubit>().getFavourites(refresh: true);
-          } else {
-            print('🔴 [SETTINGS_TAB] Widget unmounted, skipping refresh');
-          }
-        });
+      if (mounted) {
+        print('🟢 [SETTINGS_TAB] Refreshing favourites list...');
+        context.read<FavouritesCubit>().getFavourites(refresh: true);
+      } else {
+        print('🔴 [SETTINGS_TAB] Widget unmounted, skipping refresh');
+      }
+    });
   }
 
   void _initializeLocalization() {
@@ -143,7 +144,8 @@ class _FavouritesViewState extends State<FavouritesView> {
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
-            crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment:
+                isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               Container(
                 width: double.infinity,
@@ -163,13 +165,10 @@ class _FavouritesViewState extends State<FavouritesView> {
                   builder: (context, state) {
                     if (state is FavouritesLoading &&
                         context.read<FavouritesCubit>().allCourses.isEmpty) {
-                      return Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            theme.progressIndicatorTheme.color ??
-                                Colors.blueAccent,
-                          ),
-                        ),
+                      return CoursesListSkeleton(
+                        itemCount: 4,
+                        showFavouriteButton: true,
+                        isRTL: isRTL,
                       );
                     } else if (state is FavouritesEmpty) {
                       return Center(
@@ -189,7 +188,8 @@ class _FavouritesViewState extends State<FavouritesView> {
                                 color: theme.iconTheme.color,
                                 fontWeight: FontWeight.w500,
                               ),
-                              textAlign: isRTL ? TextAlign.center : TextAlign.center,
+                              textAlign:
+                                  isRTL ? TextAlign.center : TextAlign.center,
                             ),
                             const SizedBox(height: 8),
                             Text(
@@ -198,7 +198,8 @@ class _FavouritesViewState extends State<FavouritesView> {
                                 fontSize: 14,
                                 color: theme.dividerTheme.color,
                               ),
-                              textAlign: isRTL ? TextAlign.center : TextAlign.center,
+                              textAlign:
+                                  isRTL ? TextAlign.center : TextAlign.center,
                             ),
                           ],
                         ),
@@ -222,7 +223,8 @@ class _FavouritesViewState extends State<FavouritesView> {
                                 color: theme.iconTheme.color,
                                 fontWeight: FontWeight.w500,
                               ),
-                              textAlign: isRTL ? TextAlign.center : TextAlign.center,
+                              textAlign:
+                                  isRTL ? TextAlign.center : TextAlign.center,
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton(
@@ -248,8 +250,8 @@ class _FavouritesViewState extends State<FavouritesView> {
                       },
                       child: ListView.builder(
                         controller: _scrollController,
-                        itemCount:
-                        courses.length + (state is FavouritesLoading ? 1 : 0),
+                        itemCount: courses.length +
+                            (state is FavouritesLoading ? 1 : 0),
                         itemBuilder: (context, index) {
                           if (index >= courses.length) {
                             return Center(

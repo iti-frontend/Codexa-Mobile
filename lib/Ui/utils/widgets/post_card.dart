@@ -402,12 +402,12 @@ class _PostCardState extends State<PostCard> {
                     const Spacer(),
 
                     // Share button with better styling
-                    IconButton(
-                      onPressed: () {},
-                      icon: Icon(Icons.share_outlined,
-                          color: theme.textTheme.bodyMedium?.color),
-                      splashRadius: 20,
-                    ),
+                    // IconButton(
+                    //   onPressed: () {},
+                    //   icon: Icon(Icons.share_outlined,
+                    //       color: theme.textTheme.bodyMedium?.color),
+                    //   splashRadius: 20,
+                    // ),
                   ],
                 ),
               ),

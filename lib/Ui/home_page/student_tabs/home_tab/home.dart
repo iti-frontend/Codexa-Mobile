@@ -13,6 +13,8 @@ import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:codexa_mobile/localization/localization_service.dart';
 import 'package:codexa_mobile/generated/l10n.dart' as generated;
+import 'package:codexa_mobile/Ui/utils/widgets/course_card_skeleton.dart';
+import 'package:codexa_mobile/Ui/utils/widgets/skeleton_shimmer.dart';
 
 class ActivityItemModel {
   final String userName;
@@ -94,7 +96,7 @@ class _HomeStudentTabState extends State<HomeStudentTab> {
             child: BlocBuilder<StudentCoursesCubit, StudentCoursesState>(
               builder: (context, state) {
                 if (state is StudentCoursesLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const DashboardContentSkeleton(itemCount: 3);
                 } else if (state is StudentCoursesLoaded) {
                   final courses = state.courses;
 
@@ -120,8 +122,8 @@ class _HomeStudentTabState extends State<HomeStudentTab> {
                       return Column(
                         children: [
                           CourseProgressItem(
-                            instructorName:
-                            course.instructor?.name ?? _translations.unknownInstructor,
+                            instructorName: course.instructor?.name ??
+                                _translations.unknownInstructor,
                             title: course.title ?? _translations.untitledCourse,
                             progress: _calculateProgress(course),
                           ),
@@ -142,7 +144,7 @@ class _HomeStudentTabState extends State<HomeStudentTab> {
             child: BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
               builder: (context, state) {
                 if (state is CommunityPostsLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const DashboardContentSkeleton(itemCount: 5);
                 } else if (state is CommunityPostsLoaded) {
                   final allActivities = _aggregateActivities(state.posts);
 
@@ -219,8 +221,7 @@ class _HomeStudentTabState extends State<HomeStudentTab> {
                           courses.where((c) => c.title == title).first.level;
                       return SkillCard(
                         title: title!,
-                        level: level ??
-                            "",
+                        level: level ?? "",
                         progress: progress,
                       );
                     }).toList(),
@@ -272,7 +273,11 @@ class _HomeStudentTabState extends State<HomeStudentTab> {
             child: BlocBuilder<StudentCoursesCubit, StudentCoursesState>(
               builder: (context, state) {
                 if (state is StudentCoursesLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const DelayedLoadingIndicator(
+                    delay: Duration(milliseconds: 350),
+                    placeholder: DashboardContentSkeleton(itemCount: 1),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
                 } else if (state is StudentCoursesError) {
                   return Center(
                     child: Text(
