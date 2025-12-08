@@ -1,6 +1,6 @@
 import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/get_favourites_usecase.dart';
-import 'package:codexa_mobile/Ui/home_page/student_tabs/settings_tab/favourites_state.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/favorites_tab/favourites_state.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

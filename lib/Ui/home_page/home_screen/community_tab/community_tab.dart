@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/comment_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/likes_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/comment_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/likes_cubit.dart';
 import 'package:codexa_mobile/Domain/entities/community_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/post_details_screen.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/posts_state.dart';
 import 'package:codexa_mobile/localization/localization_service.dart';
 import 'package:codexa_mobile/generated/l10n.dart' as generated;
-import 'package:provider/provider.dart';
 
-class CommunityStudentTab extends StatefulWidget {
-  const CommunityStudentTab({super.key});
+/// Unified Community Tab for both Student and Instructor roles
+class CommunityTab extends StatefulWidget {
+  const CommunityTab({super.key});
 
   @override
-  State<CommunityStudentTab> createState() => _CommunityStudentTabState();
+  State<CommunityTab> createState() => _CommunityTabState();
 }
 
-class _CommunityStudentTabState extends State<CommunityStudentTab> {
+class _CommunityTabState extends State<CommunityTab> {
   late LocalizationService _localizationService;
   late generated.S _translations;
 
@@ -103,7 +103,7 @@ class _CommunityStudentTabState extends State<CommunityStudentTab> {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                      Theme.of(context).progressIndicatorTheme.color,
+                          Theme.of(context).progressIndicatorTheme.color,
                     ),
                   ),
                 ],
@@ -157,20 +157,20 @@ class _CommunityStudentTabState extends State<CommunityStudentTab> {
                       constraints: const BoxConstraints(maxWidth: 1000),
                       child: isWide
                           ? Wrap(
-                        spacing: 16,
-                        runSpacing: 16,
-                        children: posts.map((post) {
-                          return SizedBox(
-                            width: 480,
-                            child: _buildPostCard(context, post),
-                          );
-                        }).toList(),
-                      )
+                              spacing: 16,
+                              runSpacing: 16,
+                              children: posts.map((post) {
+                                return SizedBox(
+                                  width: 480,
+                                  child: _buildPostCard(context, post),
+                                );
+                              }).toList(),
+                            )
                           : Column(
-                        children: posts.map((post) {
-                          return _buildPostCard(context, post);
-                        }).toList(),
-                      ),
+                              children: posts.map((post) {
+                                return _buildPostCard(context, post);
+                              }).toList(),
+                            ),
                     ),
                   ),
                 );

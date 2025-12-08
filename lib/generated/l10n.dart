@@ -28,7 +28,7 @@ class S {
     if (inherited == null) {
       throw FlutterError(
           'S.of() called with a context that does not contain S. '
-              'Make sure your widget is wrapped in MaterialApp or Localizations widget.');
+          'Make sure your widget is wrapped in MaterialApp or Localizations widget.');
     }
     return inherited.localizations;
   }
@@ -166,7 +166,8 @@ class S {
   String get recentActivity => _translate('recentActivity');
   String get noRecentEnrollments => _translate('noRecentEnrollments');
   String get recently => _translate('recently');
-  String get enrolledIn => _translate('enrolledIn');  String get noCommunityActivity => _translate('noCommunityActivity');
+  String get enrolledIn => _translate('enrolledIn');
+  String get noCommunityActivity => _translate('noCommunityActivity');
   String get failedToLoadActivity => _translate('failedToLoadActivity');
   String get posted => _translate('posted');
   String get commentedOn => _translate('commentedOn');
@@ -178,7 +179,8 @@ class S {
   String get unknownInstructor => _translate('unknownInstructor');
   String get untitledCourse => _translate('untitledCourse');
   String get skillDevelopment => _translate('skillDevelopment');
-  String get enrollInCoursesToDevelopSkills => _translate('enrollInCoursesToDevelopSkills');
+  String get enrollInCoursesToDevelopSkills =>
+      _translate('enrollInCoursesToDevelopSkills');
   String get learners => _translate('learners');
   String get companies => _translate('companies');
   String get recommendedForYou => _translate('recommendedForYou');
@@ -267,10 +269,25 @@ class S {
   String get paymentFeatureComingSoon => _translate('paymentFeatureComingSoon');
   String get proceedToPayment => _translate('proceedToPayment');
 
+  // Payment
+  String get securePayment => _translate('securePayment');
+  String get loadingPaymentPage => _translate('loadingPaymentPage');
+  String get cancelPayment => _translate('cancelPayment');
+  String get cancelPaymentConfirmation =>
+      _translate('cancelPaymentConfirmation');
+  String get yes => _translate('yes');
+  String get no => _translate('no');
+  String get paymentSuccessful => _translate('paymentSuccessful');
+  String get paymentFailed => _translate('paymentFailed');
+  String get paymentCancelled => _translate('paymentCancelled');
+  String get verifyingPayment => _translate('verifyingPayment');
+  String get enrolledSuccessfully => _translate('enrolledSuccessfully');
+  String get viewMyCourses => _translate('viewMyCourses');
+  String get paymentError => _translate('paymentError');
+
   //search
   String get tryDifferentKeywords => _translate('tryDifferentKeywords');
   String get searchForCourses => _translate('searchForCourses');
-
 
   String _translate(String key) {
     switch (locale.languageCode) {
@@ -515,10 +532,25 @@ class S {
     'paymentFeatureComingSoon': 'Payment feature coming soon!',
     'proceedToPayment': 'Proceed to Payment',
 
+    // Payment
+    'securePayment': 'Secure Payment',
+    'loadingPaymentPage': 'Loading payment page...',
+    'cancelPayment': 'Cancel Payment',
+    'cancelPaymentConfirmation':
+        'Are you sure you want to cancel this payment?',
+    'yes': 'Yes',
+    'no': 'No',
+    'paymentSuccessful': 'Payment Successful!',
+    'paymentFailed': 'Payment Failed',
+    'paymentCancelled': 'Payment was cancelled',
+    'verifyingPayment': 'Verifying payment...',
+    'enrolledSuccessfully': 'You are now enrolled in the courses!',
+    'viewMyCourses': 'View My Courses',
+    'paymentError': 'Payment error occurred',
+
     //search
     'tryDifferentKeywords': 'Try different keywords or check back later',
     'searchForCourses': 'Search for courses',
-
   };
 
   static final Map<String, String> _arabicTranslations = {
@@ -754,10 +786,24 @@ class S {
     'paymentFeatureComingSoon': 'ميزة الدفع قريباً!',
     'proceedToPayment': 'تابع للدفع',
 
+    // Payment
+    'securePayment': 'دفع آمن',
+    'loadingPaymentPage': 'جاري تحميل صفحة الدفع...',
+    'cancelPayment': 'إلغاء الدفع',
+    'cancelPaymentConfirmation': 'هل أنت متأكد من إلغاء هذا الدفع؟',
+    'yes': 'نعم',
+    'no': 'لا',
+    'paymentSuccessful': 'تم الدفع بنجاح!',
+    'paymentFailed': 'فشل الدفع',
+    'paymentCancelled': 'تم إلغاء الدفع',
+    'verifyingPayment': 'جاري التحقق من الدفع...',
+    'enrolledSuccessfully': 'أنت مسجل الآن في الدورات!',
+    'viewMyCourses': 'عرض دوراتي',
+    'paymentError': 'حدث خطأ في الدفع',
+
     //search
     'tryDifferentKeywords': 'جرب كلمات مفتاحية مختلفة أو تحقق لاحقاً',
     'searchForCourses': 'ابحث عن الدورات',
-
   };
 }
 

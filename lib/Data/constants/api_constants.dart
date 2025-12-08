@@ -133,4 +133,14 @@ class ApiConstants {
   /// GET - Average Rating for Course/Instructor
   static String averageRating(String itemType, String itemId) =>
       "/reviews/$itemType/$itemId/average";
+
+  // ============================
+  // !Payment / Orders
+  // ============================
+
+  /// POST - Create Stripe Checkout Session
+  static const String createCheckoutSession = '/orders/checkout-session';
+
+  /// POST - Verify Payment Success (not used - backend uses webhooks)
+  static const String verifyPayment = '/orders/verify-payment';
 }

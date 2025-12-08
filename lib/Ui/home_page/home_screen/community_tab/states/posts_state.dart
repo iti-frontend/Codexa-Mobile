@@ -1,4 +1,4 @@
-import '../../../../../Domain/entities/community_entity.dart';
+import 'package:codexa_mobile/Domain/entities/community_entity.dart';
 
 abstract class CommunityPostsState {}
 

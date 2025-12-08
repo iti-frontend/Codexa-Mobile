@@ -1,8 +1,8 @@
 import 'package:codexa_mobile/Domain/entities/community_entity.dart';
 import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
 import 'package:codexa_mobile/Domain/entities/student_entity.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/posts_state.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/create_course.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructor_courses_state.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
@@ -104,7 +104,7 @@ class _HomeTabInstructorState extends State<HomeTabInstructor> {
           final activeCoursesCount = courses.length;
           final totalStudents = courses.fold<int>(
             0,
-                (prev, course) => prev + (course.enrolledStudents?.length ?? 0),
+            (prev, course) => prev + (course.enrolledStudents?.length ?? 0),
           );
           final lastTwoCourses = courses.length >= 2
               ? courses.sublist(courses.length - 2)
@@ -164,13 +164,13 @@ class _HomeTabInstructorState extends State<HomeTabInstructor> {
                       ),
                     ),
                   ...lastTwoCourses.map((course) => Padding(
-                    padding: const EdgeInsets.only(bottom: 5),
-                    child: CourseProgressCard(
-                      title: course.title ?? '',
-                      students: course.enrolledStudents?.length ?? 0,
-                      progress: 0.0,
-                    ),
-                  )),
+                        padding: const EdgeInsets.only(bottom: 5),
+                        child: CourseProgressCard(
+                          title: course.title ?? '',
+                          students: course.enrolledStudents?.length ?? 0,
+                          progress: 0.0,
+                        ),
+                      )),
                   const SizedBox(height: 5),
                   CustomButton(
                     text: _translations.createNewCourse,
@@ -193,47 +193,47 @@ class _HomeTabInstructorState extends State<HomeTabInstructor> {
                     title: _translations.recentActivity,
                     child: recentEnrollments.isEmpty
                         ? Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        _translations.noRecentEnrollments,
-                        style: TextStyle(color: theme.iconTheme.color),
-                      ),
-                    )
-                        : Column(
-                      children: recentEnrollments.map((activity) {
-                        // Determine time display - show "Recently" if timestamp is missing
-                        final timeDisplay = activity.enrolledAt != null
-                            ? _formatTimeAgo(activity.enrolledAt!)
-                            : _translations.recently;
-
-                        return Column(
-                          children: [
-                            RecentActivityItem(
-                              action: _translations.enrolledIn,
-                              avatarImg: activity.studentImage,
-                              name: activity.studentName,
-                              subject: activity.courseTitle,
-                              timeAgo: timeDisplay,
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              _translations.noRecentEnrollments,
+                              style: TextStyle(color: theme.iconTheme.color),
                             ),
-                            const SizedBox(height: 20),
-                          ],
-                        );
-                      }).toList(),
-                    ),
+                          )
+                        : Column(
+                            children: recentEnrollments.map((activity) {
+                              // Determine time display - show "Recently" if timestamp is missing
+                              final timeDisplay = activity.enrolledAt != null
+                                  ? _formatTimeAgo(activity.enrolledAt!)
+                                  : _translations.recently;
+
+                              return Column(
+                                children: [
+                                  RecentActivityItem(
+                                    action: _translations.enrolledIn,
+                                    avatarImg: activity.studentImage,
+                                    name: activity.studentName,
+                                    subject: activity.courseTitle,
+                                    timeAgo: timeDisplay,
+                                  ),
+                                  const SizedBox(height: 20),
+                                ],
+                              );
+                            }).toList(),
+                          ),
                   ),
                   const SizedBox(height: 10),
                   // Community Activity (global feed)
                   DashboardCard(
                     title: _translations.communityActivity,
                     child:
-                    BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
+                        BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
                       builder: (context, state) {
                         if (state is CommunityPostsLoading) {
                           return const Center(
                               child: CircularProgressIndicator());
                         } else if (state is CommunityPostsLoaded) {
                           final allActivities =
-                          _aggregateActivities(state.posts);
+                              _aggregateActivities(state.posts);
                           if (allActivities.isEmpty) {
                             return Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -244,14 +244,15 @@ class _HomeTabInstructorState extends State<HomeTabInstructor> {
                             );
                           }
                           final displayActivities =
-                          allActivities.take(5).toList();
+                              allActivities.take(5).toList();
                           return Column(
                             children: displayActivities.map((activity) {
                               return Column(
                                 children: [
                                   CommunityItem(
                                     name: activity.userName,
-                                    action: _getActionTranslation(activity.action),
+                                    action:
+                                        _getActionTranslation(activity.action),
                                     message: activity.message,
                                     time: _formatTimeAgo(activity.timestamp),
                                     profileImage: activity.profileImage,

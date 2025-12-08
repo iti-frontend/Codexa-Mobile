@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_cubit/profile_states.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/posts_state.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -220,7 +220,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           if (url.startsWith('/')) {
             final base = ApiManager.baseUrl;
             final normalizedBase =
-            base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+                base.endsWith('/') ? base.substring(0, base.length - 1) : base;
             url = normalizedBase + url;
           }
           return url;
@@ -499,7 +499,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           child: Scaffold(
             appBar: AppBar(
               backgroundColor:
-              theme.appBarTheme.backgroundColor ?? theme.cardColor,
+                  theme.appBarTheme.backgroundColor ?? theme.cardColor,
               foregroundColor: theme.iconTheme.color,
               title: Text(
                 widget.userType == 'Student'
@@ -537,232 +537,232 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             ),
             body: _isEditing
                 ? Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: isRTL
-                    ? CrossAxisAlignment.end
-                    : CrossAxisAlignment.start,
-                children: [
-                  // Profile image section
-                  _buildProfileImageSection(theme, isRTL),
-                  const SizedBox(height: 32),
-
-                  // Form fields
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: isRTL
-                            ? CrossAxisAlignment.end
-                            : CrossAxisAlignment.start,
-                        children: [
-                          // Selected image info
-                          if (_isEditing && _selectedImage != null) ...[
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: theme.progressIndicatorTheme.color
-                                    ?.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color:
-                                  theme.progressIndicatorTheme.color
-                                      ?.withOpacity(0.3) ??
-                                      Colors.blue,
-                                ),
-                              ),
-                              child: Row(
-                                children: isRTL
-                                    ? [
-                                  IconButton(
-                                    onPressed: _removeSelectedImage,
-                                    icon: Icon(Icons.delete_outline,
-                                        color:
-                                        theme.iconTheme.color),
-                                    tooltip: translations
-                                        .removeSelectedImage,
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                      CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          translations
-                                              .newImageSelected,
-                                          style: theme.textTheme
-                                              .bodyMedium
-                                              ?.copyWith(
-                                            fontWeight:
-                                            FontWeight.w600,
-                                            color: theme
-                                                .progressIndicatorTheme
-                                                .color,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          _selectedImage!.path
-                                              .split('/')
-                                              .last,
-                                          style: theme.textTheme
-                                              .bodySmall
-                                              ?.copyWith(
-                                            color: theme.iconTheme
-                                                .color
-                                                ?.withOpacity(0.7),
-                                          ),
-                                          overflow:
-                                          TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Icon(Icons.check_circle,
-                                      color: theme
-                                          .progressIndicatorTheme
-                                          .color,
-                                      size: 24),
-                                ]
-                                    : [
-                                  Icon(Icons.check_circle,
-                                      color: theme
-                                          .progressIndicatorTheme
-                                          .color,
-                                      size: 24),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          translations
-                                              .newImageSelected,
-                                          style: theme.textTheme
-                                              .bodyMedium
-                                              ?.copyWith(
-                                            fontWeight:
-                                            FontWeight.w600,
-                                            color: theme
-                                                .progressIndicatorTheme
-                                                .color,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          _selectedImage!.path
-                                              .split('/')
-                                              .last,
-                                          style: theme.textTheme
-                                              .bodySmall
-                                              ?.copyWith(
-                                            color: theme.iconTheme
-                                                .color
-                                                ?.withOpacity(0.7),
-                                          ),
-                                          overflow:
-                                          TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: _removeSelectedImage,
-                                    icon: Icon(Icons.delete_outline,
-                                        color:
-                                        theme.iconTheme.color),
-                                    tooltip: translations
-                                        .removeSelectedImage,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-
-                          // Name field
-                          _buildModernTextField(
-                            theme: theme,
-                            controller: nameController,
-                            label: translations.fullName,
-                            icon: Icons.person_outline,
-                            enabled: _isEditing,
-                            isRTL: isRTL,
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Email field
-                          _buildModernTextField(
-                            theme: theme,
-                            controller: emailController,
-                            label: translations.email,
-                            icon: Icons.email_outlined,
-                            enabled: _isEditing,
-                            keyboardType: TextInputType.emailAddress,
-                            isRTL: isRTL,
-                          ),
-                          const SizedBox(height: 20),
-
-                          const SizedBox(height: 40),
-
-                          // Action buttons
-                          if (_isEditing) ...[
-                            state is ProfileLoading
-                                ? _buildLoadingState(theme, isRTL)
-                                : _buildActionButtons(theme, isRTL),
-                          ]
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )
-                : SingleChildScrollView(
-              child: Column(
-                children: [
-                  Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: isRTL
                           ? CrossAxisAlignment.end
                           : CrossAxisAlignment.start,
                       children: [
+                        // Profile image section
                         _buildProfileImageSection(theme, isRTL),
                         const SizedBox(height: 32),
-                        _buildModernTextField(
-                          theme: theme,
-                          controller: nameController,
-                          label: translations.fullName,
-                          icon: Icons.person_outline,
-                          enabled: false,
-                          isRTL: isRTL,
+
+                        // Form fields
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: isRTL
+                                  ? CrossAxisAlignment.end
+                                  : CrossAxisAlignment.start,
+                              children: [
+                                // Selected image info
+                                if (_isEditing && _selectedImage != null) ...[
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: theme.progressIndicatorTheme.color
+                                          ?.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: theme
+                                                .progressIndicatorTheme.color
+                                                ?.withOpacity(0.3) ??
+                                            Colors.blue,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: isRTL
+                                          ? [
+                                              IconButton(
+                                                onPressed: _removeSelectedImage,
+                                                icon: Icon(Icons.delete_outline,
+                                                    color:
+                                                        theme.iconTheme.color),
+                                                tooltip: translations
+                                                    .removeSelectedImage,
+                                              ),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.end,
+                                                  children: [
+                                                    Text(
+                                                      translations
+                                                          .newImageSelected,
+                                                      style: theme
+                                                          .textTheme.bodyMedium
+                                                          ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: theme
+                                                            .progressIndicatorTheme
+                                                            .color,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      _selectedImage!.path
+                                                          .split('/')
+                                                          .last,
+                                                      style: theme
+                                                          .textTheme.bodySmall
+                                                          ?.copyWith(
+                                                        color: theme
+                                                            .iconTheme.color
+                                                            ?.withOpacity(0.7),
+                                                      ),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Icon(Icons.check_circle,
+                                                  color: theme
+                                                      .progressIndicatorTheme
+                                                      .color,
+                                                  size: 24),
+                                            ]
+                                          : [
+                                              Icon(Icons.check_circle,
+                                                  color: theme
+                                                      .progressIndicatorTheme
+                                                      .color,
+                                                  size: 24),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      translations
+                                                          .newImageSelected,
+                                                      style: theme
+                                                          .textTheme.bodyMedium
+                                                          ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: theme
+                                                            .progressIndicatorTheme
+                                                            .color,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      _selectedImage!.path
+                                                          .split('/')
+                                                          .last,
+                                                      style: theme
+                                                          .textTheme.bodySmall
+                                                          ?.copyWith(
+                                                        color: theme
+                                                            .iconTheme.color
+                                                            ?.withOpacity(0.7),
+                                                      ),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              IconButton(
+                                                onPressed: _removeSelectedImage,
+                                                icon: Icon(Icons.delete_outline,
+                                                    color:
+                                                        theme.iconTheme.color),
+                                                tooltip: translations
+                                                    .removeSelectedImage,
+                                              ),
+                                            ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                ],
+
+                                // Name field
+                                _buildModernTextField(
+                                  theme: theme,
+                                  controller: nameController,
+                                  label: translations.fullName,
+                                  icon: Icons.person_outline,
+                                  enabled: _isEditing,
+                                  isRTL: isRTL,
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Email field
+                                _buildModernTextField(
+                                  theme: theme,
+                                  controller: emailController,
+                                  label: translations.email,
+                                  icon: Icons.email_outlined,
+                                  enabled: _isEditing,
+                                  keyboardType: TextInputType.emailAddress,
+                                  isRTL: isRTL,
+                                ),
+                                const SizedBox(height: 20),
+
+                                const SizedBox(height: 40),
+
+                                // Action buttons
+                                if (_isEditing) ...[
+                                  state is ProfileLoading
+                                      ? _buildLoadingState(theme, isRTL)
+                                      : _buildActionButtons(theme, isRTL),
+                                ]
+                              ],
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                        _buildModernTextField(
-                          theme: theme,
-                          controller: emailController,
-                          label: translations.email,
-                          icon: Icons.email_outlined,
-                          enabled: false,
-                          keyboardType: TextInputType.emailAddress,
-                          isRTL: isRTL,
+                      ],
+                    ),
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: isRTL
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            children: [
+                              _buildProfileImageSection(theme, isRTL),
+                              const SizedBox(height: 32),
+                              _buildModernTextField(
+                                theme: theme,
+                                controller: nameController,
+                                label: translations.fullName,
+                                icon: Icons.person_outline,
+                                enabled: false,
+                                isRTL: isRTL,
+                              ),
+                              const SizedBox(height: 20),
+                              _buildModernTextField(
+                                theme: theme,
+                                controller: emailController,
+                                label: translations.email,
+                                icon: Icons.email_outlined,
+                                enabled: false,
+                                keyboardType: TextInputType.emailAddress,
+                                isRTL: isRTL,
+                              ),
+                              // Language Section Toggle
+                              _buildLanguageToggleSection(theme, isRTL),
+                              if (_showLanguageSection)
+                                _buildLanguageOptions(theme, isRTL),
+                            ],
+                          ),
                         ),
-                        // Language Section Toggle
-                        _buildLanguageToggleSection(theme, isRTL),
-                        if (_showLanguageSection)
-                          _buildLanguageOptions(theme, isRTL),
+                        const SizedBox(height: 32),
+                        // Community Activity Section
+                        _buildCommunityActivitySection(theme, isRTL),
+                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  // Community Activity Section
-                  _buildCommunityActivitySection(theme, isRTL),
-                  const SizedBox(height: 32),
-                ],
-              ),
-            ),
           ),
         );
       },
@@ -881,10 +881,10 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
       ),
       trailing: isSelected
           ? Icon(
-        Icons.check_circle,
-        color: theme.progressIndicatorTheme.color,
-        size: 20,
-      )
+              Icons.check_circle,
+              color: theme.progressIndicatorTheme.color,
+              size: 20,
+            )
           : null,
       onTap: () => _changeLanguage(languageCode),
     );
@@ -896,13 +896,13 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
     return Column(
       crossAxisAlignment:
-      isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
             crossAxisAlignment:
-            isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               Text(
                 S.current.communityActivity,
@@ -964,7 +964,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                               color: theme.textTheme.bodyMedium?.color
                                   ?.withOpacity(0.6),
                             ),
-                            textAlign: isRTL ? TextAlign.right : TextAlign.center,
+                            textAlign:
+                                isRTL ? TextAlign.right : TextAlign.center,
                           ),
                         ],
                       ),
@@ -1066,18 +1067,18 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           prefixIcon: isRTL
               ? null
               : Icon(
-            icon,
-            color: enabled
-                ? theme.progressIndicatorTheme.color
-                : theme.iconTheme.color?.withOpacity(0.3),
-          ),
+                  icon,
+                  color: enabled
+                      ? theme.progressIndicatorTheme.color
+                      : theme.iconTheme.color?.withOpacity(0.3),
+                ),
           suffixIcon: isRTL
               ? Icon(
-            icon,
-            color: enabled
-                ? theme.progressIndicatorTheme.color
-                : theme.iconTheme.color?.withOpacity(0.3),
-          )
+                  icon,
+                  color: enabled
+                      ? theme.progressIndicatorTheme.color
+                      : theme.iconTheme.color?.withOpacity(0.3),
+                )
               : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -1268,7 +1269,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
         final base = ApiManager.baseUrl;
         final normalizedBase =
-        base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+            base.endsWith('/') ? base.substring(0, base.length - 1) : base;
         final fullUrl = '${normalizedBase}${imageUrl}';
         return ClipOval(
           child: Image.network(
@@ -1330,43 +1331,43 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             onPressed: _isUploadingImage
                 ? null
                 : () async {
-              // Validation
-              if (nameController.text.isEmpty) {
-                _showErrorSnackBar(S.current.enterName);
-                return;
-              }
+                    // Validation
+                    if (nameController.text.isEmpty) {
+                      _showErrorSnackBar(S.current.enterName);
+                      return;
+                    }
 
-              if (emailController.text.isEmpty) {
-                _showErrorSnackBar(S.current.enterEmail);
-                return;
-              }
+                    if (emailController.text.isEmpty) {
+                      _showErrorSnackBar(S.current.enterEmail);
+                      return;
+                    }
 
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                  .hasMatch(emailController.text)) {
-                print('❌ Validation failed: Invalid email format');
-                _showErrorSnackBar(S.current.validEmail);
-                return;
-              }
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                        .hasMatch(emailController.text)) {
+                      print('❌ Validation failed: Invalid email format');
+                      _showErrorSnackBar(S.current.validEmail);
+                      return;
+                    }
 
-              try {
-                String? uploadedUrl;
-                if (_selectedImage != null) {
-                  uploadedUrl =
-                  await _uploadProfileImage(_selectedImage!);
-                  if (uploadedUrl == null) {
-                    return;
-                  }
-                }
+                    try {
+                      String? uploadedUrl;
+                      if (_selectedImage != null) {
+                        uploadedUrl =
+                            await _uploadProfileImage(_selectedImage!);
+                        if (uploadedUrl == null) {
+                          return;
+                        }
+                      }
 
-                final updatedUser =
-                _createUpdatedUser(uploadedImageUrl: uploadedUrl);
-                final cubit = context.read<ProfileCubit<T>>();
-                cubit.updateProfile(updatedUser);
-                print('🚀 updateProfile method called successfully');
-              } catch (e) {
-                _showErrorSnackBar('${S.current.error}: $e');
-              }
-            },
+                      final updatedUser =
+                          _createUpdatedUser(uploadedImageUrl: uploadedUrl);
+                      final cubit = context.read<ProfileCubit<T>>();
+                      cubit.updateProfile(updatedUser);
+                      print('🚀 updateProfile method called successfully');
+                    } catch (e) {
+                      _showErrorSnackBar('${S.current.error}: $e');
+                    }
+                  },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(

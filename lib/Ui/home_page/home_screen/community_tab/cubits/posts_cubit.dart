@@ -6,7 +6,7 @@ import 'package:codexa_mobile/Domain/usecases/community/get_all_posts_usecase.da
 import 'package:codexa_mobile/Domain/usecases/community/create_post_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/community/delete_post_usecase.dart';
 
-import '../community_tab_states/posts_state.dart';
+import '../states/posts_state.dart';
 
 class CommunityPostsCubit extends Cubit<CommunityPostsState> {
   final GetAllPostsUseCase getAllPostsUseCase;

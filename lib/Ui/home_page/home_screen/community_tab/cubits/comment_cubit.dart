@@ -1,7 +1,7 @@
 import 'package:codexa_mobile/Domain/entities/community_entity.dart';
 import 'package:codexa_mobile/Domain/usecases/community/add_comment_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/community/delete_comment_usecase.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/comment_state.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/comment_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CommentCubit extends Cubit<CommentState> {
