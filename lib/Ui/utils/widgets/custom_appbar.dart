@@ -1,5 +1,5 @@
 import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
-import 'package:codexa_mobile/Ui/home_page/additional_screens/search_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/additional_screens/search/search_screen.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/theme_provider.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
@@ -9,6 +9,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
 import 'dart:io';
 import 'package:codexa_mobile/Data/api_manager/api_manager.dart';
 import 'package:provider/provider.dart';
@@ -139,6 +141,20 @@ class CustomAppbar extends StatelessWidget {
                   context: context,
                   icon: Icons.logout_rounded,
                   onTap: () {
+                    // Reset all cubits to clear cached data
+                    try {
+                      context.read<StudentCoursesCubit>().reset();
+                    } catch (_) {}
+                    try {
+                      context.read<InstructorCoursesCubit>().reset();
+                    } catch (_) {}
+                    try {
+                      context.read<CommunityPostsCubit>().reset();
+                    } catch (_) {}
+                    try {
+                      context.read<CartCubit>().reset();
+                    } catch (_) {}
+
                     final userProvider =
                         Provider.of<UserProvider>(context, listen: false);
                     userProvider.logout();

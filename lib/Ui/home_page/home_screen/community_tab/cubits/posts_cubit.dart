@@ -86,4 +86,31 @@ class CommunityPostsCubit extends Cubit<CommunityPostsState> {
       }
     }
   }
+
+  /// Update likes for a specific post
+  void updatePostLikes(String postId, List<LikesEntity> likes) {
+    if (state is CommunityPostsLoaded) {
+      final currentPosts = (state as CommunityPostsLoaded).posts;
+      final index = currentPosts.indexWhere((p) => p.id == postId);
+      if (index != -1) {
+        final newPosts = List<CommunityEntity>.from(currentPosts);
+        final post = newPosts[index];
+        newPosts[index] = CommunityEntity(
+          id: post.id,
+          author: post.author,
+          content: post.content,
+          createdAt: post.createdAt,
+          image: post.image,
+          likes: likes,
+          comments: post.comments,
+        );
+        emit(CommunityPostsLoaded(newPosts));
+      }
+    }
+  }
+
+  /// Reset cubit state - call this on logout
+  void reset() {
+    emit(CommunityPostsInitial());
+  }
 }

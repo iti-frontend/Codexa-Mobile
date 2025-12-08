@@ -2,7 +2,7 @@ import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
 import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_view/login_screen.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_view/register_role_screen.dart';
-import 'package:codexa_mobile/Ui/home_page/additional_screens/chatbot_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/additional_screens/chatbot/chatbot_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/home_screen.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/on_boarding/onboarding_screen.dart';
 import 'package:codexa_mobile/Ui/splash_onboarding/splash_screen/splash_screen.dart';

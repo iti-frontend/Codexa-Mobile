@@ -117,7 +117,8 @@ class SearchCoursesScreen extends SearchDelegate {
                   )
                 },
                 child: CourseProgressItem(
-                  instructorName: course.instructor?.name ?? _translations.unknownInstructor,
+                  instructorName: course.instructor?.name ??
+                      _translations.unknownInstructor,
                   categoryTitle: course.category ?? _translations.noCategory,
                   hasCategory: true,
                   title: course.title ?? _translations.untitledCourse,

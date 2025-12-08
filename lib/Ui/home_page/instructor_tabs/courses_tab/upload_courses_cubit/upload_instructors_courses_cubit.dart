@@ -84,4 +84,9 @@ class InstructorCoursesCubit extends Cubit<InstructorCoursesState> {
     await fetchCourses();
     return result;
   }
+
+  /// Reset cubit state - call this on logout
+  void reset() {
+    emit(InstructorCoursesInitial());
+  }
 }
