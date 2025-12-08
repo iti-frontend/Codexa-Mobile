@@ -1,6 +1,6 @@
 import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
 import 'package:codexa_mobile/Domain/entities/student_entity.dart';
-import 'package:codexa_mobile/Ui/home_page/additional_screens/chatbot_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/additional_screens/chatbot/chatbot_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/screens/cart_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/community_tab.dart';

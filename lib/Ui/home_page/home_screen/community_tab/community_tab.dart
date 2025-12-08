@@ -4,7 +4,7 @@ import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/post
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/comment_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/likes_cubit.dart';
 import 'package:codexa_mobile/Domain/entities/community_entity.dart';
-import 'package:codexa_mobile/Ui/home_page/additional_screens/post_details_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/additional_screens/post_details/post_details_screen.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/posts_state.dart';
 import 'package:codexa_mobile/localization/localization_service.dart';

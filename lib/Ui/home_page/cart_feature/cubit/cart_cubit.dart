@@ -137,4 +137,10 @@ class CartCubit extends Cubit<CartState> {
       },
     );
   }
+
+  /// Reset cubit state - call this on logout
+  void reset() {
+    _currentCart = null;
+    emit(CartInitial());
+  }
 }

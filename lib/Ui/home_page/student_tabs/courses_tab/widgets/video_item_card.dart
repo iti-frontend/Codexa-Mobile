@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:codexa_mobile/Ui/home_page/additional_screens/video_player_course.dart';
+import 'package:codexa_mobile/Ui/home_page/additional_screens/video_player/video_player_course.dart';
 import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
 /// Single video item card with lock/unlock state

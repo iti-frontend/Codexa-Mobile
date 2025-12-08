@@ -14,7 +14,7 @@ import 'package:provider/provider.dart';
 import 'package:codexa_mobile/generated/l10n.dart' as generated;
 import 'package:codexa_mobile/localization/localization_service.dart';
 
-// Widget imports
+// Widget imports - updated to use local widgets folder
 import 'widgets/post_header_section.dart';
 import 'widgets/post_reactions_bar.dart';
 import 'widgets/comment_item.dart';
@@ -165,8 +165,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                       child: PostReactionsBar(
                         likesCount: post.likes?.length ?? 0,
                         commentsCount: _comments.length,
-                        isLiked: post.likes?.any((l) =>
-                                l.user == _getCurrentUserIdSafe(context)) ??
+                        isLiked: post.likes?.any(
+                                (l) => l == _getCurrentUserIdSafe(context)) ??
                             false,
                         onLikeTap: () {
                           if (post.id != null) {
