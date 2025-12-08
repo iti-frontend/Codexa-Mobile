@@ -55,6 +55,10 @@ dependencies:
   timeago: ^3.7.1
   image_picker: ^1.0.7
   
+  # Stripe Payment WebView
+  webview_flutter: ^4.10.0
+  
+  
   
   flutter_localizations:
     sdk: flutter

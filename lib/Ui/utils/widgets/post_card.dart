@@ -1,7 +1,7 @@
 import 'package:codexa_mobile/Data/services/likes_persistence_service.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/likes_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/likes_state.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/likes_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/likes_state.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/core/di/injection_container.dart';
 import 'package:flutter/material.dart';

@@ -16,6 +16,8 @@ import 'package:codexa_mobile/Domain/repo/community_repo.dart';
 import 'package:codexa_mobile/Domain/repo/get_courses_repo.dart';
 import 'package:codexa_mobile/Domain/repo/profile_repo.dart';
 import 'package:codexa_mobile/Domain/repo/review_repository.dart';
+import 'package:codexa_mobile/Domain/repo/payment_repository.dart';
+import 'package:codexa_mobile/Data/Repository/payment_repository_impl.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/login_instructor_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/login_student_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/register_instructor_usecase.dart';
@@ -23,6 +25,7 @@ import 'package:codexa_mobile/Domain/usecases/auth/register_student_usecase.dart
 import 'package:codexa_mobile/Domain/usecases/auth/social_login_instructor_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/auth/social_login_student_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/cart/cart_usecases.dart';
+import 'package:codexa_mobile/Domain/usecases/payment/payment_usecases.dart';
 import 'package:codexa_mobile/Domain/usecases/community/add_comment_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/community/add_reply_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/community/create_post_usecase.dart';
@@ -45,10 +48,11 @@ import 'package:codexa_mobile/Domain/usecases/reviews/get_reviews_usecase.dart';
 import 'package:codexa_mobile/Ui/auth/login/login_viewModel/LoginBloc.dart';
 import 'package:codexa_mobile/Ui/auth/register/register_viewModel/register_bloc.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/comment_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/likes_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/reply_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/payment_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/comment_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/likes_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/reply_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/enroll_cubit/enroll_courses_cubit.dart';
@@ -150,6 +154,11 @@ void _registerRepositories() {
   sl.registerLazySingleton<ReviewRepository>(
     () => ReviewRepositoryImpl(sl<ApiManager>()),
   );
+
+  // Payment Repository
+  sl.registerLazySingleton<PaymentRepository>(
+    () => PaymentRepositoryImpl(sl<ApiManager>()),
+  );
 }
 
 // =============================================================================
@@ -163,6 +172,7 @@ void _registerUseCases() {
   _registerProfileUseCases();
   _registerCartUseCases();
   _registerReviewUseCases();
+  _registerPaymentUseCases();
 }
 
 void _registerAuthUseCases() {
@@ -222,6 +232,13 @@ void _registerReviewUseCases() {
   sl.registerLazySingleton(() => GetReviewsUseCase(sl<ReviewRepository>()));
   sl.registerLazySingleton(
       () => GetAverageRatingUseCase(sl<ReviewRepository>()));
+}
+
+void _registerPaymentUseCases() {
+  // Payment use cases
+  sl.registerLazySingleton(
+      () => CreateCheckoutSessionUseCase(sl<PaymentRepository>()));
+  sl.registerLazySingleton(() => VerifyPaymentUseCase(sl<PaymentRepository>()));
 }
 
 // =============================================================================
@@ -331,6 +348,14 @@ void _registerCubits() {
       deleteReviewUseCase: sl<DeleteReviewUseCase>(),
       getReviewsUseCase: sl<GetReviewsUseCase>(),
       getAverageRatingUseCase: sl<GetAverageRatingUseCase>(),
+    ),
+  );
+
+  // Payment Cubit
+  sl.registerFactory(
+    () => PaymentCubit(
+      createCheckoutSessionUseCase: sl<CreateCheckoutSessionUseCase>(),
+      verifyPaymentUseCase: sl<VerifyPaymentUseCase>(),
     ),
   );
 }

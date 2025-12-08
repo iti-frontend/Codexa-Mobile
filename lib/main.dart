@@ -18,22 +18,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'Ui/auth/register/register_view/register_screen.dart';
 import 'Ui/auth/login/login_viewModel/LoginBloc.dart';
-import 'Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/reply_cubit.dart';
+import 'Ui/home_page/home_screen/community_tab/cubits/reply_cubit.dart';
 import 'Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
 import 'Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'Ui/home_page/student_tabs/courses_tab/enroll_cubit/enroll_courses_cubit.dart';
-import 'Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
+import 'Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:codexa_mobile/generated/l10n.dart';
 import 'package:codexa_mobile/localization//localization_service.dart';
-import 'Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/likes_cubit.dart';
-import 'Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/comment_cubit.dart';
+import 'Ui/home_page/home_screen/community_tab/cubits/likes_cubit.dart';
+import 'Ui/home_page/home_screen/community_tab/cubits/comment_cubit.dart';
 import 'Ui/utils/provider_ui/auth_provider.dart';
 import 'Ui/auth/register/register_viewModel/register_bloc.dart';
 import 'Ui/home_page/additional_screens/profile/profile_screen.dart';
 import 'Ui/home_page/additional_screens/profile/profile_cubit/profile_cubit.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/payment_cubit.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:animated_theme_switcher/animated_theme_switcher.dart'
     as animated;
@@ -123,6 +124,7 @@ class MyApp extends StatelessWidget {
                     BlocProvider(create: (_) => sl<ReplyCubit>()),
                     BlocProvider(create: (_) => sl<ProfileCubit>()),
                     BlocProvider(create: (_) => sl<CartCubit>()..getCart()),
+                    BlocProvider(create: (_) => sl<PaymentCubit>()),
                   ],
                   child: MaterialApp(
                     debugShowCheckedModeBanner: false,

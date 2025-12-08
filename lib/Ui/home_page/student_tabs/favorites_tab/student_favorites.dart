@@ -6,9 +6,9 @@ import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubi
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_details.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/toggle_favourite_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/toggle_favourite_state.dart';
-import 'package:codexa_mobile/Ui/home_page/student_tabs/settings_tab/favourite_toggle_notifier.dart';
-import 'package:codexa_mobile/Ui/home_page/student_tabs/settings_tab/favourites_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/student_tabs/settings_tab/favourites_state.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/favorites_tab/favourite_toggle_notifier.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/favorites_tab/favourites_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/favorites_tab/favourites_state.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_home_tape_components.dart';
 import 'package:codexa_mobile/core/di/injection_container.dart';
 import 'package:flutter/material.dart';

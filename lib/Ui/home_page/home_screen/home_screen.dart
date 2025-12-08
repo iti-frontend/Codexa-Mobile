@@ -3,15 +3,14 @@ import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/chatbot_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/screens/cart_screen.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/widgets/create_post_dialog.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/community_tab.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/widgets/create_post_dialog.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/courses_instructor.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/home_tab_instructor/home_tab_instructor.dart';
-import 'package:codexa_mobile/Ui/home_page/student_tabs/community_tab/community.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_student.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/home_tab/home.dart';
-import 'package:codexa_mobile/Ui/home_page/student_tabs/settings_tab/student_favorites.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/favorites_tab/student_favorites.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_appbar.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_bottom_navbar.dart';
@@ -182,14 +181,14 @@ class _HomescreenState extends State<HomeScreen> {
     List<Widget> studentTabs = [
       HomeStudentTab(),
       StudentCoursesTab(),
-      CommunityStudentTab(),
+      const CommunityTab(),
       FavoriteStudentTab(),
     ];
 
     List<Widget> instructorTabs = [
       HomeTabInstructor(),
       CoursesInstructorTab(),
-      CommunityInstructorTab(),
+      const CommunityTab(),
     ];
 
     final userProfileImage = _getUserProfileImage(userProvider);

@@ -1,5 +1,5 @@
 import 'package:codexa_mobile/Domain/entities/community_entity.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 
 /// Shows delete confirmation dialog with double confirmation pattern
 /// Returns true if user confirmed deletion, false otherwise
-Future<bool> showDeletePostConfirmation(
+Future<bool> showDeletePostConfirmationWithOwnerCheck(
     BuildContext context, CommunityEntity post) async {
   // Check if user owns the post
   final userProvider = Provider.of<UserProvider>(context, listen: false);
