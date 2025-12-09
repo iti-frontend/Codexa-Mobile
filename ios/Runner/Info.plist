@@ -52,5 +52,7 @@
 	<string>This app needs photo library access to choose profile pictures</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app needs microphone access for video recording</string>
+	<key>NSMicrophoneUsageDescription</key>
+    <string>This app needs access to microphone for voice recording</string>
 </dict>
 </plist>

@@ -54,6 +54,12 @@ dependencies:
   video_player: ^2.10.1
   timeago: ^3.7.1
   image_picker: ^1.0.7
+  audioplayers: ^6.5.1
+  flutter_sound: ^9.2.13
+  animations: ^2.0.7
+  path_provider: ^2.1.1
+  mime: ^1.0.4
+  permission_handler: ^11.2.0
   
   # Stripe Payment WebView
   webview_flutter: ^4.10.0

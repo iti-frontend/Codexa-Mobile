@@ -137,10 +137,16 @@ class ApiConstants {
   // ============================
   // !Payment / Orders
   // ============================
-
   /// POST - Create Stripe Checkout Session
   static const String createCheckoutSession = '/orders/checkout-session';
 
   /// POST - Verify Payment Success (not used - backend uses webhooks)
   static const String verifyPayment = '/orders/verify-payment';
+
+  // ============================
+  // !Chatbot
+  // ============================
+  static String chatAIEndpoint="/ai/chat";
+  static String textToVoiceEndpoint="/ai/text-to-voice";
+  static String voiceToTextEndpoint="/ai/voice-to-text";
 }
