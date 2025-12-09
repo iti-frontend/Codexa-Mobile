@@ -133,4 +133,9 @@ class ApiConstants {
   /// GET - Average Rating for Course/Instructor
   static String averageRating(String itemType, String itemId) =>
       "/reviews/$itemType/$itemId/average";
+
+  // Chatbot
+static String chatAIEndpoint="/ai/chat";
+static String textToVoiceEndpoint="/ai/text-to-voice";
+static String voiceToTextEndpoint="/ai/voice-to-text";
 }
