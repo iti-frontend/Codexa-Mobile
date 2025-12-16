@@ -85,7 +85,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
 
   Color _getButtonColor(ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
-    return isDark ? AppColorsDark.accentGreen : AppColorsLight.accentBlue;
+    return isDark ? AppColorsDark.accentBlue : AppColorsLight.accentBlue;
   }
 
   @override
@@ -428,7 +428,9 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
                   if (icon != null)
                     Icon(
                       icon,
-                      color: theme.colorScheme.primary,
+                      color: isDark
+                          ? AppColorsDark.accentBlue
+                          : AppColorsLight.accentBlue,
                       size: 22,
                     ),
                 ]
@@ -436,7 +438,9 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
                   if (icon != null)
                     Icon(
                       icon,
-                      color: theme.colorScheme.primary,
+                      color: isDark
+                          ? AppColorsDark.accentBlue
+                          : AppColorsLight.accentBlue,
                       size: 22,
                     ),
                   if (icon != null) const SizedBox(width: 8),

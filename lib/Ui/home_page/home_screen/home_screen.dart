@@ -2,12 +2,15 @@ import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
 import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/chatbot/chatbot_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_screen.dart';
+import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/cart_feature/screens/cart_screen.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/community_tab.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/widgets/create_post_dialog.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/courses_instructor.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/home_tab_instructor/home_tab_instructor.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_student.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/home_tab/home.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/favorites_tab/student_favorites.dart';
@@ -46,9 +49,53 @@ class _HomescreenState extends State<HomeScreen> {
   Future<void> _loadUser() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     await userProvider.loadUser();
+
+    // Refresh all cubit data after user is loaded
+    // This ensures data is fetched even after logout/login
+    _refreshAllData(userProvider.role);
+
     setState(() {
       _isUserLoaded = true;
     });
+  }
+
+  /// Refreshes all cubit data for the new user session
+  /// This fixes the issue where data doesn't appear after logout/login
+  void _refreshAllData(String? role) {
+    print('🔄 Refreshing all cubit data for role: $role');
+
+    try {
+      // Always refresh community posts (available for both roles)
+      context.read<CommunityPostsCubit>().fetchPosts();
+      print('✅ CommunityPostsCubit refreshed');
+    } catch (e) {
+      print('⚠️ Could not refresh CommunityPostsCubit: $e');
+    }
+
+    if (role?.toLowerCase() == 'student') {
+      // Refresh student-specific cubits
+      try {
+        context.read<StudentCoursesCubit>().fetchCourses();
+        print('✅ StudentCoursesCubit refreshed');
+      } catch (e) {
+        print('⚠️ Could not refresh StudentCoursesCubit: $e');
+      }
+
+      try {
+        context.read<CartCubit>().getCart();
+        print('✅ CartCubit refreshed');
+      } catch (e) {
+        print('⚠️ Could not refresh CartCubit: $e');
+      }
+    } else if (role?.toLowerCase() == 'instructor') {
+      // Refresh instructor-specific cubits
+      try {
+        context.read<InstructorCoursesCubit>().fetchCourses();
+        print('✅ InstructorCoursesCubit refreshed');
+      } catch (e) {
+        print('⚠️ Could not refresh InstructorCoursesCubit: $e');
+      }
+    }
   }
 
   Future<void> _initializeLocalization() async {
@@ -155,7 +202,7 @@ class _HomescreenState extends State<HomeScreen> {
           backgroundColor: theme.progressIndicatorTheme.color,
           foregroundColor: Colors.white,
           shape: const CircleBorder(),
-          child: const Icon(Icons.chat, size: 24),
+          child: const Icon(Icons.smart_toy, size: 24),
           elevation: 0,
         ),
       ),

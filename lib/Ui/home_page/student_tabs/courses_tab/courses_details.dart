@@ -226,6 +226,8 @@ class _CourseDetailsState extends State<CourseDetails> {
                   itemId: _currentCourse.id ?? '',
                   itemType: 'Course',
                   isInstructor: isInstructor,
+                  isEnrolled:
+                      _isEnrolled, // Only enrolled students can add reviews
                   currentUserId: _getUserId(userProvider.user),
                   theme: theme,
                   isRTL: isRTL,
@@ -286,6 +288,8 @@ class _CourseDetailsState extends State<CourseDetails> {
                     itemId: _currentCourse.instructor!.id ?? '',
                     itemType: 'Instructor',
                     isInstructor: isInstructor,
+                    isEnrolled:
+                        _isEnrolled, // Only enrolled students can add reviews
                     currentUserId: _getUserId(userProvider.user),
                     theme: theme,
                     isRTL: isRTL,
