@@ -181,12 +181,15 @@ class CoursesListSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(
-        itemCount,
-        (index) => CourseCardSkeleton(
-          showFavouriteButton: showFavouriteButton,
-          isRTL: isRTL,
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Column(
+        children: List.generate(
+          itemCount,
+          (index) => CourseCardSkeleton(
+            showFavouriteButton: showFavouriteButton,
+            isRTL: isRTL,
+          ),
         ),
       ),
     );

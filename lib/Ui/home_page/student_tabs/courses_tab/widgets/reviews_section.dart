@@ -12,6 +12,7 @@ class ReviewsSection extends StatefulWidget {
   final String itemId;
   final String itemType; // "Course" or "Instructor"
   final bool isInstructor;
+  final bool isEnrolled; // Whether the student is enrolled in the course
   final String? currentUserId;
   final ThemeData theme;
   final bool isRTL;
@@ -21,6 +22,8 @@ class ReviewsSection extends StatefulWidget {
     required this.itemId,
     required this.itemType,
     required this.isInstructor,
+    this.isEnrolled =
+        false, // Default to false - only enrolled students can add reviews
     required this.currentUserId,
     required this.theme,
     required this.isRTL,
@@ -133,8 +136,8 @@ class _ReviewsSectionState extends State<ReviewsSection> {
             const Divider(),
             const SizedBox(height: 10),
 
-            // Review Input Section (Students only)
-            if (!widget.isInstructor) ...[
+            // Review Input Section (Students only - must be enrolled to add reviews)
+            if (!widget.isInstructor && widget.isEnrolled) ...[
               _buildReviewInputSection(myReview, state),
               const SizedBox(height: 20),
               const Divider(),

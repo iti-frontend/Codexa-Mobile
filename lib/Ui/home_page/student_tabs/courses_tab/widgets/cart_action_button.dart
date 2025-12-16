@@ -98,7 +98,7 @@ class CartActionButton extends StatelessWidget {
                 backgroundColor: isInCart
                     ? Colors.red
                     : (theme.brightness == Brightness.dark
-                        ? AppColorsDark.accentGreen
+                        ? AppColorsDark.accentBlue
                         : AppColorsLight.accentBlue),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(

@@ -18,7 +18,7 @@ class AppThemeData {
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       backgroundColor: AppColorsDark.cardBackground,
-      selectedItemColor: AppColorsDark.accentGreen,
+      selectedItemColor: AppColorsDark.accentBlue,
       unselectedItemColor: AppColorsDark.secondaryText,
       elevation: 4,
     ),
@@ -29,19 +29,19 @@ class AppThemeData {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColorsDark.accentGreen,
+        backgroundColor: AppColorsDark.accentBlue,
         foregroundColor: AppColorsDark.primaryText,
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: AppColorsDark.accentGreen,
+      backgroundColor: AppColorsDark.accentBlue,
       foregroundColor: AppColorsDark.primaryText,
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(
       linearTrackColor: AppColorsDark.secondaryText,
-      color: AppColorsDark.accentGreen,
+      color: AppColorsDark.accentBlue,
     ),
     iconTheme: IconThemeData(color: AppColorsDark.primaryText),
     dividerTheme: DividerThemeData(color: AppColorsDark.secondaryText),

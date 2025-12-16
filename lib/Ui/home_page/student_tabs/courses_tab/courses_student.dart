@@ -234,7 +234,14 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
             ),
           );
         } else if (state is StudentCoursesLoaded) {
-          final courses = state.courses;
+          final userId = _getUserId(context);
+
+          // Filter out enrolled courses - students shouldn't see courses they're enrolled in
+          final courses = state.courses.where((course) {
+            final isEnrolled =
+                course.enrolledStudents?.contains(userId) ?? false;
+            return !isEnrolled; // Only show non-enrolled courses
+          }).toList();
 
           if (courses.isEmpty) {
             return Center(

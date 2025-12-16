@@ -3,6 +3,7 @@ import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/like
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/likes_state.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
+import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:codexa_mobile/core/di/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -347,7 +348,10 @@ class _PostCardState extends State<PostCard> {
                         margin: const EdgeInsets.symmetric(horizontal: 4),
                         decoration: BoxDecoration(
                           color: _isCurrentUserLiked()
-                              ? theme.colorScheme.primary.withOpacity(0.15)
+                              ? (theme.brightness == Brightness.dark
+                                      ? AppColorsDark.accentBlue
+                                      : AppColorsLight.accentBlue)
+                                  .withOpacity(0.15)
                               : theme.dividerColor.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -358,7 +362,9 @@ class _PostCardState extends State<PostCard> {
                                   ? Icons.thumb_up_alt_rounded
                                   : Icons.thumb_up_off_alt,
                               color: _isCurrentUserLiked()
-                                  ? theme.colorScheme.primary
+                                  ? (theme.brightness == Brightness.dark
+                                      ? AppColorsDark.accentBlue
+                                      : AppColorsLight.accentBlue)
                                   : (theme.textTheme.bodyMedium?.color ??
                                       Colors.grey),
                               size: 18,
