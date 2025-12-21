@@ -1,60 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'package:codexa_mobile/generated/l10n.dart' as generated;
-
-/// Reusable section title with icon - RTL aware
-class SectionTitle extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final bool isRTL;
-
-  const SectionTitle({
-    Key? key,
-    required this.icon,
-    required this.title,
-    required this.isRTL,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      children: isRTL
-          ? [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: theme.iconTheme.color,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
-            ]
-          : [
-              Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: theme.iconTheme.color,
-                ),
-              ),
-            ],
-    );
-  }
-}
-
-/// Reusable detail item with icon, title, and value - RTL aware
 class DetailItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final String value;
   final Color? valueColor;
+  final Color? iconColor;
+  final double? iconSize;
   final bool isRTL;
 
   const DetailItem({
@@ -63,6 +15,73 @@ class DetailItem extends StatelessWidget {
     required this.title,
     required this.value,
     this.valueColor,
+    this.iconColor,
+    this.iconSize = 22,
+    required this.isRTL
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            color: iconColor ?? theme.progressIndicatorTheme.color,
+            size: iconSize,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: theme.iconTheme.color,
+                  ),
+                  textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                  textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: valueColor ?? theme.iconTheme.color,
+                    height: 1.4,
+                  ),
+                  textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                  textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SectionTitle extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Color? iconColor;
+  final double? iconSize;
+  final bool isRTL;
+
+  const SectionTitle({
+    Key? key,
+    required this.icon,
+    required this.title,
+    this.iconColor,
+    this.iconSize = 22,
     required this.isRTL,
   }) : super(key: key);
 
@@ -73,67 +92,27 @@ class DetailItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-        children: isRTL
-            ? [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: theme.iconTheme.color,
-                        ),
-                        textAlign: TextAlign.right,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: valueColor ?? theme.iconTheme.color,
-                          height: 1.4,
-                        ),
-                        textAlign: TextAlign.right,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
-              ]
-            : [
-                Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: theme.iconTheme.color,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: valueColor ?? theme.iconTheme.color,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: iconColor ?? theme.progressIndicatorTheme.color,
+            size: iconSize,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: theme.iconTheme.color,
+              ),
+              textAlign: isRTL ? TextAlign.right : TextAlign.left,
+              textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+            ),
+          ),
+        ],
       ),
     );
   }

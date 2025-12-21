@@ -146,15 +146,17 @@ class _HomescreenState extends State<HomeScreen> {
     );
   }
 
-  void _showCreatePostDialog() {
+  void _showCreatePostDialog(bool isRTL,generated.S _translations) {
     showDialog(
       context: context,
       builder: (dialogContext) {
         // Get the context of the community tab by finding the navigator state
         return BlocProvider.value(
           value: context.read<CommunityPostsCubit>(),
-          child: const CreatePostDialog(),
-        );
+          child: CreatePostDialog(
+        isRTL: isRTL, // Pass your isRTL boolean
+        translations: _translations, // Pass your translations),
+        ));
       },
     );
   }
@@ -245,7 +247,7 @@ class _HomescreenState extends State<HomeScreen> {
     VoidCallback? onCreatePostTap;
     if (selectedIndex == 2) {
       // Community tab (index 2 for both roles)
-      onCreatePostTap = _showCreatePostDialog;
+      onCreatePostTap  = () => _showCreatePostDialog(isRTL,_translations);
     }
 
     // Wrap the entire Scaffold with Directionality for RTL support

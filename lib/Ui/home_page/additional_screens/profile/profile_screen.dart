@@ -499,7 +499,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           child: Scaffold(
             appBar: AppBar(
               backgroundColor:
-                  theme.appBarTheme.backgroundColor ?? theme.cardColor,
+              theme.appBarTheme.backgroundColor ?? theme.cardColor,
               foregroundColor: theme.iconTheme.color,
               title: Text(
                 widget.userType == 'Student'
@@ -537,232 +537,226 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             ),
             body: _isEditing
                 ? Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: isRTL
-                          ? CrossAxisAlignment.end
-                          : CrossAxisAlignment.start,
-                      children: [
-                        // Profile image section
-                        _buildProfileImageSection(theme, isRTL),
-                        const SizedBox(height: 32),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start, // Always use start
+                children: [
+                  // Profile image section
+                  _buildProfileImageSection(theme, isRTL),
+                  const SizedBox(height: 32),
 
-                        // Form fields
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: isRTL
-                                  ? CrossAxisAlignment.end
-                                  : CrossAxisAlignment.start,
-                              children: [
-                                // Selected image info
-                                if (_isEditing && _selectedImage != null) ...[
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: theme.progressIndicatorTheme.color
-                                          ?.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: theme
-                                                .progressIndicatorTheme.color
-                                                ?.withOpacity(0.3) ??
-                                            Colors.blue,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: isRTL
-                                          ? [
-                                              IconButton(
-                                                onPressed: _removeSelectedImage,
-                                                icon: Icon(Icons.delete_outline,
-                                                    color:
-                                                        theme.iconTheme.color),
-                                                tooltip: translations
-                                                    .removeSelectedImage,
-                                              ),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.end,
-                                                  children: [
-                                                    Text(
-                                                      translations
-                                                          .newImageSelected,
-                                                      style: theme
-                                                          .textTheme.bodyMedium
-                                                          ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color: theme
-                                                            .progressIndicatorTheme
-                                                            .color,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 4),
-                                                    Text(
-                                                      _selectedImage!.path
-                                                          .split('/')
-                                                          .last,
-                                                      style: theme
-                                                          .textTheme.bodySmall
-                                                          ?.copyWith(
-                                                        color: theme
-                                                            .iconTheme.color
-                                                            ?.withOpacity(0.7),
-                                                      ),
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Icon(Icons.check_circle,
-                                                  color: theme
-                                                      .progressIndicatorTheme
-                                                      .color,
-                                                  size: 24),
-                                            ]
-                                          : [
-                                              Icon(Icons.check_circle,
-                                                  color: theme
-                                                      .progressIndicatorTheme
-                                                      .color,
-                                                  size: 24),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      translations
-                                                          .newImageSelected,
-                                                      style: theme
-                                                          .textTheme.bodyMedium
-                                                          ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color: theme
-                                                            .progressIndicatorTheme
-                                                            .color,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 4),
-                                                    Text(
-                                                      _selectedImage!.path
-                                                          .split('/')
-                                                          .last,
-                                                      style: theme
-                                                          .textTheme.bodySmall
-                                                          ?.copyWith(
-                                                        color: theme
-                                                            .iconTheme.color
-                                                            ?.withOpacity(0.7),
-                                                      ),
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              IconButton(
-                                                onPressed: _removeSelectedImage,
-                                                icon: Icon(Icons.delete_outline,
-                                                    color:
-                                                        theme.iconTheme.color),
-                                                tooltip: translations
-                                                    .removeSelectedImage,
-                                              ),
-                                            ],
+                  // Form fields
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start, // Always use start
+                        children: [
+                          // Selected image info
+                          if (_isEditing && _selectedImage != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: theme.progressIndicatorTheme.color
+                                    ?.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: theme
+                                      .progressIndicatorTheme.color
+                                      ?.withOpacity(0.3) ??
+                                      Colors.blue,
+                                ),
+                              ),
+                              child: Row(
+                                children: isRTL
+                                    ? [
+                                  IconButton(
+                                    onPressed: _removeSelectedImage,
+                                    icon: Icon(Icons.delete_outline,
+                                        color:
+                                        theme.iconTheme.color),
+                                    tooltip: translations
+                                        .removeSelectedImage,
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          translations
+                                              .newImageSelected,
+                                          style: theme
+                                              .textTheme.bodyMedium
+                                              ?.copyWith(
+                                            fontWeight:
+                                            FontWeight.w600,
+                                            color: theme
+                                                .progressIndicatorTheme
+                                                .color,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _selectedImage!.path
+                                              .split('/')
+                                              .last,
+                                          style: theme
+                                              .textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: theme
+                                                .iconTheme.color
+                                                ?.withOpacity(0.7),
+                                          ),
+                                          overflow:
+                                          TextOverflow.ellipsis,
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(height: 20),
-                                ],
-
-                                // Name field
-                                _buildModernTextField(
-                                  theme: theme,
-                                  controller: nameController,
-                                  label: translations.fullName,
-                                  icon: Icons.person_outline,
-                                  enabled: _isEditing,
-                                  isRTL: isRTL,
-                                ),
-                                const SizedBox(height: 20),
-
-                                // Email field
-                                _buildModernTextField(
-                                  theme: theme,
-                                  controller: emailController,
-                                  label: translations.email,
-                                  icon: Icons.email_outlined,
-                                  enabled: _isEditing,
-                                  keyboardType: TextInputType.emailAddress,
-                                  isRTL: isRTL,
-                                ),
-                                const SizedBox(height: 20),
-
-                                const SizedBox(height: 40),
-
-                                // Action buttons
-                                if (_isEditing) ...[
-                                  state is ProfileLoading
-                                      ? _buildLoadingState(theme, isRTL)
-                                      : _buildActionButtons(theme, isRTL),
+                                  const SizedBox(width: 12),
+                                  Icon(Icons.check_circle,
+                                      color: theme
+                                          .progressIndicatorTheme
+                                          .color,
+                                      size: 24),
                                 ]
-                              ],
+                                    : [
+                                  Icon(Icons.check_circle,
+                                      color: theme
+                                          .progressIndicatorTheme
+                                          .color,
+                                      size: 24),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          translations
+                                              .newImageSelected,
+                                          style: theme
+                                              .textTheme.bodyMedium
+                                              ?.copyWith(
+                                            fontWeight:
+                                            FontWeight.w600,
+                                            color: theme
+                                                .progressIndicatorTheme
+                                                .color,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _selectedImage!.path
+                                              .split('/')
+                                              .last,
+                                          style: theme
+                                              .textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: theme
+                                                .iconTheme.color
+                                                ?.withOpacity(0.7),
+                                          ),
+                                          overflow:
+                                          TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: _removeSelectedImage,
+                                    icon: Icon(Icons.delete_outline,
+                                        color:
+                                        theme.iconTheme.color),
+                                    tooltip: translations
+                                        .removeSelectedImage,
+                                  ),
+                                ],
+                              ),
                             ),
+                            const SizedBox(height: 20),
+                          ],
+
+                          // Name field
+                          _buildModernTextField(
+                            theme: theme,
+                            controller: nameController,
+                            label: translations.fullName,
+                            icon: Icons.person_outline,
+                            enabled: _isEditing,
+                            isRTL: isRTL,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 20),
+
+                          // Email field
+                          _buildModernTextField(
+                            theme: theme,
+                            controller: emailController,
+                            label: translations.email,
+                            icon: Icons.email_outlined,
+                            enabled: _isEditing,
+                            keyboardType: TextInputType.emailAddress,
+                            isRTL: isRTL,
+                          ),
+                          const SizedBox(height: 20),
+
+                          const SizedBox(height: 40),
+
+                          // Action buttons
+                          if (_isEditing) ...[
+                            state is ProfileLoading
+                                ? _buildLoadingState(theme, isRTL)
+                                : _buildActionButtons(theme, isRTL),
+                          ]
+                        ],
+                      ),
                     ),
-                  )
+                  ),
+                ],
+              ),
+            )
                 : SingleChildScrollView(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(20),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start, // Always use start
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: isRTL
-                                ? CrossAxisAlignment.end
-                                : CrossAxisAlignment.start,
-                            children: [
-                              _buildProfileImageSection(theme, isRTL),
-                              const SizedBox(height: 32),
-                              _buildModernTextField(
-                                theme: theme,
-                                controller: nameController,
-                                label: translations.fullName,
-                                icon: Icons.person_outline,
-                                enabled: false,
-                                isRTL: isRTL,
-                              ),
-                              const SizedBox(height: 20),
-                              _buildModernTextField(
-                                theme: theme,
-                                controller: emailController,
-                                label: translations.email,
-                                icon: Icons.email_outlined,
-                                enabled: false,
-                                keyboardType: TextInputType.emailAddress,
-                                isRTL: isRTL,
-                              ),
-                              // Language Section Toggle
-                              _buildLanguageToggleSection(theme, isRTL),
-                              if (_showLanguageSection)
-                                _buildLanguageOptions(theme, isRTL),
-                            ],
-                          ),
+                        _buildProfileImageSection(theme, isRTL),
+                        const SizedBox(height: 32),
+                        _buildModernTextField(
+                          theme: theme,
+                          controller: nameController,
+                          label: translations.fullName,
+                          icon: Icons.person_outline,
+                          enabled: false,
+                          isRTL: isRTL,
                         ),
-                        const SizedBox(height: 32),
-                        // Community Activity Section
-                        _buildCommunityActivitySection(theme, isRTL),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 20),
+                        _buildModernTextField(
+                          theme: theme,
+                          controller: emailController,
+                          label: translations.email,
+                          icon: Icons.email_outlined,
+                          enabled: false,
+                          keyboardType: TextInputType.emailAddress,
+                          isRTL: isRTL,
+                        ),
+                        // Language Section Toggle
+                        _buildLanguageToggleSection(theme, isRTL),
+                        if (_showLanguageSection)
+                          _buildLanguageOptions(theme, isRTL),
                       ],
                     ),
                   ),
+                  const SizedBox(height: 32),
+                  // Community Activity Section
+                  _buildCommunityActivitySection(theme, isRTL,translations),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -891,18 +885,16 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   }
 
   /// Build Community Activity Section
-  Widget _buildCommunityActivitySection(ThemeData theme, bool isRTL) {
+  Widget _buildCommunityActivitySection(ThemeData theme, bool isRTL, S translations) {
     final currentUserId = _getCurrentUserId();
 
     return Column(
-      crossAxisAlignment:
-          isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch, // Use stretch instead of start/end
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
-            crossAxisAlignment:
-                isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch, // Use stretch for consistency
             children: [
               Text(
                 S.current.communityActivity,
@@ -910,7 +902,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                   fontWeight: FontWeight.bold,
                   color: theme.textTheme.bodyLarge?.color,
                 ),
-                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                textAlign: TextAlign.start, // Always start for both RTL and LTR
               ),
               const SizedBox(height: 8),
               Text(
@@ -918,7 +910,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
                 ),
-                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                textAlign: TextAlign.start, // Always start for both RTL and LTR
               ),
             ],
           ),
@@ -927,9 +919,12 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           builder: (context, state) {
             if (state is CommunityPostsLoading) {
               return Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    theme.progressIndicatorTheme.color ?? Colors.blueAccent,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.progressIndicatorTheme.color ?? Colors.blueAccent,
+                    ),
                   ),
                 ),
               );
@@ -949,26 +944,22 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: theme.dividerColor),
                     ),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.post_add,
-                            size: 48,
-                            color: theme.iconTheme.color?.withOpacity(0.3),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.post_add,
+                          size: 48,
+                          color: theme.iconTheme.color?.withOpacity(0.3),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          S.current.noCommunityActivityYet,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            S.current.noCommunityActivityYet,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.textTheme.bodyMedium?.color
-                                  ?.withOpacity(0.6),
-                            ),
-                            textAlign:
-                                isRTL ? TextAlign.right : TextAlign.center,
-                          ),
-                        ],
-                      ),
+                          textAlign: TextAlign.center, // Center for both RTL and LTR
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -981,7 +972,10 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
                 itemBuilder: (context, index) {
                   final post = userPosts[index];
-                  return PostCard(post: post);
+                  return Directionality(
+                    textDirection: _localizationService.textDirection,
+                    child: PostCard(post: post,isRTL:isRTL,translations: translations,),
+                  );
                 },
               );
             } else if (state is CommunityPostsError) {
@@ -1000,7 +994,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: Colors.red,
                       ),
-                      textAlign: isRTL ? TextAlign.right : TextAlign.center,
+                      textAlign: TextAlign.center, // Center for both RTL and LTR
                     ),
                   ),
                 ),
@@ -1111,77 +1105,86 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   Widget _buildProfileImageSection(ThemeData theme, bool isRTL) {
     return Column(
       children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: theme.colorScheme.surfaceVariant,
-                border: Border.all(
-                  color: theme.progressIndicatorTheme.color?.withOpacity(0.2) ??
-                      Colors.blue.withOpacity(0.2),
-                  width: 3,
+        // Fixed size container to ensure proper constraints
+        SizedBox(
+          width: 120,
+          height: 120,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Profile image container
+              Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: theme.colorScheme.surfaceVariant,
+                  border: Border.all(
+                    color: theme.progressIndicatorTheme.color?.withOpacity(0.2) ??
+                        Colors.blue.withOpacity(0.2),
+                    width: 3,
+                  ),
                 ),
+                child: _getProfileImageWidget(theme),
               ),
-              child: _getProfileImageWidget(theme),
-            ),
 
-            // Camera icon
-            if (_isEditing)
-              Positioned(
-                bottom: 4,
-                right: isRTL ? null : 4,
-                left: isRTL ? 4 : null,
-                child: GestureDetector(
-                  onTap: _showImageSourceDialog,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: theme.progressIndicatorTheme.color,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+              // Camera icon - Using Align with AlignmentDirectional for proper RTL
+              if (_isEditing)
+                Align(
+                  alignment: AlignmentDirectional.bottomEnd, // Automatically handles RTL
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: GestureDetector(
+                      onTap: _showImageSourceDialog,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: theme.progressIndicatorTheme.color,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 2,
+                          ),
                         ),
-                      ],
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 2,
+                        child: Icon(
+                          Icons.camera_alt,
+                          color: theme.iconTheme.color,
+                          size: 16,
+                        ),
                       ),
-                    ),
-                    child: Icon(
-                      Icons.camera_alt,
-                      color: theme.iconTheme.color,
-                      size: 16,
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 16),
+        // User name - centered for both RTL and LTR
         Text(
           _isEditing ? S.current.profilePreview : _userName,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             color: theme.iconTheme.color,
           ),
-          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+          textAlign: TextAlign.center,
         ),
         if (_isEditing) ...[
           const SizedBox(height: 4),
+          // Instruction text - centered for both RTL and LTR
           Text(
             S.current.tapToChangePhoto,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.iconTheme.color?.withOpacity(0.6),
             ),
-            textAlign: isRTL ? TextAlign.right : TextAlign.left,
+            textAlign: TextAlign.center,
           ),
         ],
       ],
@@ -1189,6 +1192,14 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   }
 
   Widget _getProfileImageWidget(ThemeData theme) {
+    // Wrap the entire image widget in Directionality to ensure proper RTL context
+    return Directionality(
+      textDirection: TextDirection.ltr, // Images should always be LTR regardless of app language
+      child: _getImageContent(theme),
+    );
+  }
+
+  Widget _getImageContent(ThemeData theme) {
     // ... keep existing image loading logic unchanged
     if (_selectedImage != null) {
       return ClipOval(
@@ -1269,7 +1280,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
         final base = ApiManager.baseUrl;
         final normalizedBase =
-            base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+        base.endsWith('/') ? base.substring(0, base.length - 1) : base;
         final fullUrl = '${normalizedBase}${imageUrl}';
         return ClipOval(
           child: Image.network(
@@ -1294,10 +1305,13 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   }
 
   Widget _buildDefaultProfileIcon(ThemeData theme) {
-    return Icon(
-      Icons.person,
-      size: 48,
-      color: theme.iconTheme.color,
+    return Directionality(
+      textDirection: TextDirection.ltr, // Icons should always be LTR
+      child: Icon(
+        Icons.person,
+        size: 48,
+        color: theme.iconTheme.color,
+      ),
     );
   }
 

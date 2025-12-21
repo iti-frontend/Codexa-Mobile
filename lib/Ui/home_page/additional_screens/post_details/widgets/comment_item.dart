@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import 'package:codexa_mobile/Domain/entities/community_entity.dart';
-import 'package:codexa_mobile/localization/localization_service.dart';
 import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
 /// Single comment item widget with RTL support
@@ -10,7 +9,7 @@ class CommentItem extends StatelessWidget {
   final CommentsEntity comment;
   final bool isMine;
   final VoidCallback? onDelete;
-  final LocalizationService localizationService;
+  final bool isRTL;
   final generated.S translations;
 
   const CommentItem({
@@ -18,14 +17,14 @@ class CommentItem extends StatelessWidget {
     required this.comment,
     required this.isMine,
     this.onDelete,
-    required this.localizationService,
+    required this.isRTL,
     required this.translations,
   }) : super(key: key);
 
-  String _formatTime(String? dateStr) {
+  String _formatTime(String? dateStr, BuildContext context) {
     if (dateStr == null) return '';
     try {
-      final locale = localizationService.locale.languageCode;
+      final locale = Localizations.localeOf(context).languageCode;
       if (locale == 'ar') {
         timeago.setLocaleMessages('ar', timeago.ArMessages());
         return timeago.format(DateTime.parse(dateStr), locale: 'ar');
@@ -39,7 +38,6 @@ class CommentItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isRTL = localizationService.isRTL();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -53,105 +51,64 @@ class CommentItem extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(12),
         child: Row(
+          mainAxisAlignment: isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: isRTL ? _buildRTLLayout(theme) : _buildLTRLayout(theme),
+
+          children: [
+            // Avatar on left for both RTL/LTR (for consistency)
+            _buildAvatar(theme),
+            const SizedBox(width: 10),
+
+            Expanded(
+              child: Column(
+                mainAxisAlignment: isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        comment.user?.name ?? translations.unknown,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: theme.iconTheme.color,
+                          fontSize: 13,
+                        ),
+                        textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+                      ),
+                      const SizedBox(width: 10),
+                        Text(
+                          _formatTime(comment.createdAt, context),
+                          style: TextStyle(
+                            color: theme.dividerTheme.color?.withOpacity(0.7),
+                            fontSize: 11,
+                          ),
+                          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+                        ),
+                      if (isMine) const Spacer(),
+                      if (isMine) _buildDeleteButton(),
+
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    comment.text ?? '',
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.4,
+                      color: theme.iconTheme.color,
+                    ),
+                    textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                    textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
-  }
-
-  List<Widget> _buildRTLLayout(ThemeData theme) {
-    return [
-      // RTL layout: Content first
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Row(
-              children: [
-                if (isMine) _buildDeleteButton(),
-                const Spacer(),
-                Text(
-                  _formatTime(comment.createdAt),
-                  style: TextStyle(
-                    color: theme.dividerTheme.color?.withOpacity(0.7),
-                    fontSize: 11,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  comment.user?.name ?? translations.unknown,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: theme.iconTheme.color,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              comment.text ?? '',
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.4,
-                color: theme.iconTheme.color,
-              ),
-              textAlign: TextAlign.right,
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(width: 10),
-      _buildAvatar(theme),
-    ];
-  }
-
-  List<Widget> _buildLTRLayout(ThemeData theme) {
-    return [
-      // LTR layout: Avatar first
-      _buildAvatar(theme),
-      const SizedBox(width: 10),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  comment.user?.name ?? translations.unknown,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: theme.iconTheme.color,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _formatTime(comment.createdAt),
-                  style: TextStyle(
-                    color: theme.dividerTheme.color?.withOpacity(0.7),
-                    fontSize: 11,
-                  ),
-                ),
-                const Spacer(),
-                if (isMine) _buildDeleteButton(),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              comment.text ?? '',
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.4,
-                color: theme.iconTheme.color,
-              ),
-              textAlign: TextAlign.left,
-            ),
-          ],
-        ),
-      ),
-    ];
   }
 
   Widget _buildAvatar(ThemeData theme) {
@@ -163,10 +120,10 @@ class CommentItem extends StatelessWidget {
           : null,
       child: comment.user?.profileImage == null
           ? Icon(
-              Icons.person_outline,
-              size: 16,
-              color: theme.dividerTheme.color,
-            )
+        Icons.person_outline,
+        size: 16,
+        color: theme.dividerTheme.color,
+      )
           : null,
     );
   }
@@ -180,7 +137,7 @@ class CommentItem extends StatelessWidget {
           color: Colors.red.withOpacity(0.1),
           borderRadius: BorderRadius.circular(6),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.delete_outline,
           size: 16,
           color: Colors.red,

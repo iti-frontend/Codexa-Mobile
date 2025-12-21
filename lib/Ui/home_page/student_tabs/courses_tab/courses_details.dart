@@ -37,7 +37,7 @@ class CourseDetails extends StatefulWidget {
 class _CourseDetailsState extends State<CourseDetails> {
   late CourseEntity _currentCourse;
   bool _isEnrolled = false;
-  late LocalizationService _localizationService;
+  late Locale _currentLocale;
   late generated.S _translations;
 
   @override
@@ -49,17 +49,15 @@ class _CourseDetailsState extends State<CourseDetails> {
   }
 
   void _initializeLocalization() {
-    _localizationService = LocalizationService();
-    _translations = generated.S(_localizationService.locale);
-    _localizationService.addListener(_onLocaleChanged);
+    // Get locale directly from LocalizationService
+    final localizationService = LocalizationService();
+    _currentLocale = localizationService.locale;
+    _translations = generated.S(_currentLocale);
   }
 
-  void _onLocaleChanged() {
-    if (mounted) {
-      setState(() {
-        _translations = generated.S(_localizationService.locale);
-      });
-    }
+  // Check if current locale is RTL
+  bool _isRTL() {
+    return _currentLocale.languageCode == 'ar';
   }
 
   void _checkEnrollmentStatus() {
@@ -68,7 +66,7 @@ class _CourseDetailsState extends State<CourseDetails> {
 
     if (userId != null && _currentCourse.enrolledStudents != null) {
       setState(() =>
-          _isEnrolled = _currentCourse.enrolledStudents!.contains(userId));
+      _isEnrolled = _currentCourse.enrolledStudents!.contains(userId));
     }
   }
 
@@ -86,13 +84,15 @@ class _CourseDetailsState extends State<CourseDetails> {
     if (date == null) return _translations.notAvailable;
     final dt = DateTime.tryParse(date);
     if (dt == null) return date;
-    return "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}";
-  }
 
-  @override
-  void dispose() {
-    _localizationService.removeListener(_onLocaleChanged);
-    super.dispose();
+    // Format based on locale
+    if (_isRTL()) {
+      // Arabic/Islamic date format for RTL
+      return "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}";
+    } else {
+      // Default format for LTR
+      return "${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}/${dt.year}";
+    }
   }
 
   @override
@@ -100,28 +100,27 @@ class _CourseDetailsState extends State<CourseDetails> {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final isInstructor = userProvider.role == 'instructor';
     final theme = Theme.of(context);
-    final isRTL = _localizationService.isRTL();
+    final isRTL = _isRTL();
 
-    return Directionality(
-      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(_currentCourse.title ?? _translations.courseDetails),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          foregroundColor: theme.colorScheme.onBackground,
-        ),
-        bottomNavigationBar: (isInstructor || _isEnrolled)
-            ? null
-            : CartActionButton(
-                course: _currentCourse,
-                translations: _translations,
-              ),
-        body: SingleChildScrollView(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_currentCourse.title ?? _translations.courseDetails),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: theme.colorScheme.onBackground,
+      ),
+      bottomNavigationBar: (isInstructor || _isEnrolled)
+          ? null
+          : CartActionButton(
+        course: _currentCourse,
+        translations: _translations,
+      ),
+      body: Directionality(
+        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment:
-                isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Description Section
               SectionTitle(
@@ -139,6 +138,7 @@ class _CourseDetailsState extends State<CourseDetails> {
                   height: 1.6,
                 ),
                 textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
               ),
               const SizedBox(height: 25),
               const Divider(),
@@ -171,8 +171,7 @@ class _CourseDetailsState extends State<CourseDetails> {
 
               // Instructor Section
               if (_currentCourse.instructor != null)
-                _buildInstructorSection(
-                    theme, isRTL, isInstructor, userProvider),
+                _buildInstructorSection(theme, isInstructor, userProvider, isRTL),
 
               // Videos Section
               SectionTitle(
@@ -181,7 +180,7 @@ class _CourseDetailsState extends State<CourseDetails> {
                 isRTL: isRTL,
               ),
               const SizedBox(height: 10),
-              _buildVideosSection(theme, isRTL, isInstructor),
+              _buildVideosSection(theme, isInstructor, isRTL),
               const SizedBox(height: 25),
               const Divider(),
 
@@ -190,7 +189,7 @@ class _CourseDetailsState extends State<CourseDetails> {
                 icon: Icons.people_outline,
                 title: _translations.enrolledStudents,
                 value:
-                    "${_currentCourse.enrolledStudents?.length ?? 0} ${_translations.students}",
+                "${_currentCourse.enrolledStudents?.length ?? 0} ${_translations.students}",
                 isRTL: isRTL,
               ),
               const SizedBox(height: 25),
@@ -215,9 +214,13 @@ class _CourseDetailsState extends State<CourseDetails> {
               // Course Reviews Section
               const SizedBox(height: 20),
               Text(
-                "Course Reviews",
+                _translations.courseReviews,
                 style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold, color: theme.iconTheme.color),
+                  fontWeight: FontWeight.bold,
+                  color: theme.iconTheme.color,
+                ),
+                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
               ),
               const SizedBox(height: 10),
               BlocProvider(
@@ -226,11 +229,10 @@ class _CourseDetailsState extends State<CourseDetails> {
                   itemId: _currentCourse.id ?? '',
                   itemType: 'Course',
                   isInstructor: isInstructor,
-                  isEnrolled:
-                      _isEnrolled, // Only enrolled students can add reviews
+                  isEnrolled: _isEnrolled,
                   currentUserId: _getUserId(userProvider.user),
                   theme: theme,
-                  isRTL: isRTL,
+                  translations: _translations,
                 ),
               ),
               const SizedBox(height: 40),
@@ -241,11 +243,10 @@ class _CourseDetailsState extends State<CourseDetails> {
     );
   }
 
-  Widget _buildInstructorSection(ThemeData theme, bool isRTL, bool isInstructor,
-      UserProvider userProvider) {
+  Widget _buildInstructorSection(
+      ThemeData theme, bool isInstructor, UserProvider userProvider, bool isRTL) {
     return Column(
-      crossAxisAlignment:
-          isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionTitle(
           icon: Icons.person_outline,
@@ -260,12 +261,15 @@ class _CourseDetailsState extends State<CourseDetails> {
             color: theme.iconTheme.color,
           ),
           textAlign: isRTL ? TextAlign.right : TextAlign.left,
+          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
         ),
         Text(
           _currentCourse.instructor!.email ?? _translations.notAvailable,
-          style:
-              theme.textTheme.bodySmall?.copyWith(color: theme.iconTheme.color),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.iconTheme.color,
+          ),
           textAlign: isRTL ? TextAlign.right : TextAlign.left,
+          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
         ),
         const SizedBox(height: 10),
         // Instructor Reviews Expansion Tile
@@ -276,27 +280,32 @@ class _CourseDetailsState extends State<CourseDetails> {
             borderRadius: BorderRadius.circular(10),
             side: BorderSide(color: theme.dividerTheme.color!.withOpacity(0.2)),
           ),
-          child: ExpansionTile(
-            leading: Icon(Icons.star_rate_rounded, color: Colors.amber),
-            title: Text("Instructor Reviews"),
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: BlocProvider(
-                  create: (_) => sl<ReviewCubit>(),
-                  child: ReviewsSection(
-                    itemId: _currentCourse.instructor!.id ?? '',
-                    itemType: 'Instructor',
-                    isInstructor: isInstructor,
-                    isEnrolled:
-                        _isEnrolled, // Only enrolled students can add reviews
-                    currentUserId: _getUserId(userProvider.user),
-                    theme: theme,
-                    isRTL: isRTL,
+          child: Directionality(
+            textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+            child: ExpansionTile(
+              leading: Icon(Icons.star_rate_rounded, color: Colors.amber),
+              title: Text(
+                _translations.instructorReviews,
+                textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+              ),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: BlocProvider(
+                    create: (_) => sl<ReviewCubit>(),
+                    child: ReviewsSection(
+                      itemId: _currentCourse.instructor!.id ?? '',
+                      itemType: 'Instructor',
+                      isInstructor: isInstructor,
+                      isEnrolled: _isEnrolled,
+                      currentUserId: _getUserId(userProvider.user),
+                      theme: theme,
+                      translations: _translations,
+                    ),
                   ),
-                ),
-              )
-            ],
+                )
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 25),
@@ -305,11 +314,10 @@ class _CourseDetailsState extends State<CourseDetails> {
     );
   }
 
-  Widget _buildVideosSection(ThemeData theme, bool isRTL, bool isInstructor) {
+  Widget _buildVideosSection(ThemeData theme, bool isInstructor, bool isRTL) {
     if (_currentCourse.videos != null && _currentCourse.videos!.isNotEmpty) {
       return Column(
-        crossAxisAlignment:
-            isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: _currentCourse.videos!.map((video) {
           final v = video as Map<String, dynamic>;
           final videoUrl = v['url'] ?? '';
@@ -319,7 +327,6 @@ class _CourseDetailsState extends State<CourseDetails> {
             videoTitle: videoTitle,
             videoUrl: videoUrl,
             isLocked: !_isEnrolled && !isInstructor,
-            isRTL: isRTL,
             translations: _translations,
           );
         }).toList(),
@@ -333,7 +340,8 @@ class _CourseDetailsState extends State<CourseDetails> {
           _translations.noVideosAvailable,
           style: theme.textTheme.bodyMedium
               ?.copyWith(color: theme.iconTheme.color),
-          textAlign: isRTL ? TextAlign.right : TextAlign.center,
+          textAlign: isRTL ? TextAlign.center : TextAlign.center,
+          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
         ),
       ),
     );

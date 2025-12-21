@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
 /// Reviews Section Widget for CourseDetailsScreen
 class ReviewsSection extends StatefulWidget {
@@ -15,18 +16,17 @@ class ReviewsSection extends StatefulWidget {
   final bool isEnrolled; // Whether the student is enrolled in the course
   final String? currentUserId;
   final ThemeData theme;
-  final bool isRTL;
+  final generated.S translations;
 
   const ReviewsSection({
     super.key,
     required this.itemId,
     required this.itemType,
     required this.isInstructor,
-    this.isEnrolled =
-        false, // Default to false - only enrolled students can add reviews
+    this.isEnrolled = false, // Default to false - only enrolled students can add reviews
     required this.currentUserId,
     required this.theme,
-    required this.isRTL,
+    required this.translations,
   });
 
   @override
@@ -82,8 +82,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
         if (state is SubmitReviewSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  Text(_isEditing ? 'Review updated!' : 'Review submitted!'),
+              content: Text(_isEditing ? widget.translations.reviewUpdated : widget.translations.reviewSubmitted),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
             ),
@@ -127,8 +126,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
         final myReview = cubit.myReview;
 
         return Column(
-          crossAxisAlignment:
-              widget.isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Average Rating Section
             _buildAverageRatingSection(averageRating),
@@ -164,6 +162,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
   Widget _buildAverageRatingSection(AverageRatingEntity? averageRating) {
     final avg = averageRating?.average ?? 0.0;
     final count = averageRating?.count ?? 0;
+    final isRTL = Directionality.of(context) == TextDirection.rtl;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -198,14 +197,16 @@ class _ReviewsSectionState extends State<ReviewsSection> {
               fontWeight: FontWeight.bold,
               color: widget.theme.iconTheme.color,
             ),
+            textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
           ),
           const SizedBox(width: 8),
           // Count
           Text(
-            '($count reviews)',
+            '($count ${widget.translations.reviews})',
             style: widget.theme.textTheme.bodyMedium?.copyWith(
               color: widget.theme.iconTheme.color?.withOpacity(0.7),
             ),
+            textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
           ),
         ],
       ),
@@ -215,10 +216,11 @@ class _ReviewsSectionState extends State<ReviewsSection> {
   Widget _buildReviewInputSection(ReviewEntity? myReview, ReviewState state) {
     final isSubmitting = state is SubmitReviewLoading;
     final isDeleting = state is DeleteReviewLoading;
+    final isRTL = Directionality.of(context) == TextDirection.rtl;
 
     // If user already has a review and not editing, show their review with edit/delete
     if (myReview != null && !_isEditing) {
-      return _buildMyReviewCard(myReview, isDeleting);
+      return _buildMyReviewCard(myReview, isDeleting, isRTL);
     }
 
     // Otherwise show the input form
@@ -233,15 +235,16 @@ class _ReviewsSectionState extends State<ReviewsSection> {
         ),
       ),
       child: Column(
-        crossAxisAlignment:
-            widget.isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _isEditing ? 'Edit Your Review' : 'Write a Review',
+            _isEditing ? widget.translations.editReview : widget.translations.addReview,
             style: widget.theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: widget.theme.iconTheme.color,
             ),
+            textAlign: isRTL ? TextAlign.right : TextAlign.left,
+            textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
           ),
           const SizedBox(height: 16),
 
@@ -272,13 +275,15 @@ class _ReviewsSectionState extends State<ReviewsSection> {
             controller: _reviewTextController,
             maxLines: 3,
             decoration: InputDecoration(
-              hintText: 'Share your experience (optional)',
+              hintText: widget.translations.writeYourReview,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
               filled: true,
               fillColor: widget.theme.scaffoldBackgroundColor,
             ),
+            textAlign: isRTL ? TextAlign.right : TextAlign.left,
+            textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
           ),
           const SizedBox(height: 16),
 
@@ -295,7 +300,10 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text('Cancel'),
+                    child: Text(
+                      widget.translations.cancel,
+                      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+                    ),
                   ),
                 ),
               if (_isEditing) const SizedBox(width: 12),
@@ -304,15 +312,15 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                   onPressed: isSubmitting || _selectedRating == 0
                       ? null
                       : () {
-                          context.read<ReviewCubit>().submitReview(
-                                itemType: widget.itemType,
-                                itemId: widget.itemId,
-                                rating: _selectedRating,
-                                text: _reviewTextController.text.isNotEmpty
-                                    ? _reviewTextController.text
-                                    : null,
-                              );
-                        },
+                    context.read<ReviewCubit>().submitReview(
+                      itemType: widget.itemType,
+                      itemId: widget.itemId,
+                      rating: _selectedRating,
+                      text: _reviewTextController.text.isNotEmpty
+                          ? _reviewTextController.text
+                          : null,
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: widget.theme.progressIndicatorTheme.color,
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -322,20 +330,21 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                   ),
                   child: isSubmitting
                       ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
                       : Text(
-                          _isEditing ? 'Update Review' : 'Submit Review',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
+                    _isEditing ? widget.translations.editReview : widget.translations.submitReview,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+                  ),
                 ),
               ),
             ],
@@ -345,7 +354,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
     );
   }
 
-  Widget _buildMyReviewCard(ReviewEntity review, bool isDeleting) {
+  Widget _buildMyReviewCard(ReviewEntity review, bool isDeleting, bool isRTL) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -357,18 +366,19 @@ class _ReviewsSectionState extends State<ReviewsSection> {
         ),
       ),
       child: Column(
-        crossAxisAlignment:
-            widget.isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Your Review',
+                widget.translations.yourReview,
                 style: widget.theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: widget.theme.progressIndicatorTheme.color,
                 ),
+                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
               ),
               Row(
                 children: [
@@ -378,33 +388,97 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                       Icons.edit,
                       color: widget.theme.progressIndicatorTheme.color,
                     ),
-                    tooltip: 'Edit',
+                    tooltip: widget.translations.edit,
                   ),
                   IconButton(
                     onPressed: isDeleting
                         ? null
-                        : () => _showDeleteConfirmation(review),
+                        : () => _showDeleteConfirmation(review, isRTL),
                     icon: isDeleting
                         ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.delete, color: Colors.red),
-                    tooltip: 'Delete',
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                        : Icon(Icons.delete, color: Colors.red),
+                    tooltip: widget.translations.delete,
                   ),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 8),
-          _buildStarRating(review.rating ?? 0),
+          _buildStarRating(review.rating ?? 0, isRTL),
           if (review.text != null && review.text!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
               review.text!,
               style: widget.theme.textTheme.bodyMedium?.copyWith(
                 color: widget.theme.iconTheme.color,
+              ),
+              textAlign: isRTL ? TextAlign.right : TextAlign.left,
+              textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(ReviewEntity review, bool isRTL) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          widget.translations.deleteReview,
+          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        content: Text(
+          widget.translations.confirmDeleteReview,
+          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        actionsAlignment: MainAxisAlignment.start,
+        actions: [
+          if (isRTL) ...[
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                context.read<ReviewCubit>().deleteReview(
+                  reviewId: review.id!,
+                  itemType: widget.itemType,
+                  itemId: widget.itemId,
+                );
+              },
+              child: Text(
+                widget.translations.delete,
+                style: const TextStyle(color: Colors.red),
+                textDirection: TextDirection.rtl,
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                widget.translations.cancel,
+                textDirection: TextDirection.rtl,
+              ),
+            ),
+          ] else ...[
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(widget.translations.cancel),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                context.read<ReviewCubit>().deleteReview(
+                  reviewId: review.id!,
+                  itemType: widget.itemType,
+                  itemId: widget.itemId,
+                );
+              },
+              child: Text(
+                widget.translations.delete,
+                style: const TextStyle(color: Colors.red),
               ),
             ),
           ],
@@ -413,94 +487,66 @@ class _ReviewsSectionState extends State<ReviewsSection> {
     );
   }
 
-  void _showDeleteConfirmation(ReviewEntity review) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Review'),
-        content: const Text('Are you sure you want to delete your review?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              context.read<ReviewCubit>().deleteReview(
-                    reviewId: review.id!,
-                    itemType: widget.itemType,
-                    itemId: widget.itemId,
-                  );
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildReviewsListSection(List<ReviewEntity> reviews) {
+    final isRTL = Directionality.of(context) == TextDirection.rtl;
+
     if (reviews.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(40),
           child: Text(
-            'No reviews yet',
+            widget.translations.noReviewsYet,
             style: widget.theme.textTheme.bodyMedium?.copyWith(
               color: widget.theme.iconTheme.color?.withOpacity(0.6),
             ),
+            textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
           ),
         ),
       );
     }
 
     return Column(
-      crossAxisAlignment:
-          widget.isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          children: widget.isRTL
-              ? [
-                  Text(
-                    'Reviews',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: widget.theme.iconTheme.color,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.reviews_outlined,
-                    color: widget.theme.progressIndicatorTheme.color,
-                    size: 22,
-                  ),
-                ]
-              : [
-                  Icon(
-                    Icons.reviews_outlined,
-                    color: widget.theme.progressIndicatorTheme.color,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Reviews',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: widget.theme.iconTheme.color,
-                    ),
-                  ),
-                ],
+          children: [
+            if (!isRTL) ...[
+              Icon(
+                Icons.reviews_outlined,
+                color: widget.theme.progressIndicatorTheme.color,
+                size: 22,
+              ),
+              const SizedBox(width: 8),
+            ],
+            Expanded(
+              child: Text(
+                widget.translations.reviews,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: widget.theme.iconTheme.color,
+                ),
+                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+              ),
+            ),
+            if (isRTL) ...[
+              const SizedBox(width: 8),
+              Icon(
+                Icons.reviews_outlined,
+                color: widget.theme.progressIndicatorTheme.color,
+                size: 22,
+              ),
+            ],
+          ],
         ),
         const SizedBox(height: 16),
-        ...reviews.map((review) => _buildReviewItem(review)),
+        ...reviews.map((review) => _buildReviewItem(review, isRTL)),
       ],
     );
   }
 
-  Widget _buildReviewItem(ReviewEntity review) {
+  Widget _buildReviewItem(ReviewEntity review, bool isRTL) {
     final author = review.author;
     final createdAt = review.createdAt;
     String timeAgo = '';
@@ -508,7 +554,13 @@ class _ReviewsSectionState extends State<ReviewsSection> {
     if (createdAt != null) {
       final date = DateTime.tryParse(createdAt);
       if (date != null) {
-        timeAgo = timeago.format(date);
+        // Use Arabic locale for timeago if RTL
+        if (isRTL) {
+          timeago.setLocaleMessages('ar', timeago.ArMessages());
+          timeAgo = timeago.format(date, locale: 'ar');
+        } else {
+          timeAgo = timeago.format(date);
+        }
       }
     }
 
@@ -518,40 +570,39 @@ class _ReviewsSectionState extends State<ReviewsSection> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-              widget.isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Author info row
             Row(
               children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundImage: author?.profileImage != null &&
-                          author!.profileImage!.isNotEmpty
-                      ? NetworkImage(author.profileImage!)
-                      : null,
-                  backgroundColor: widget.theme.progressIndicatorTheme.color
-                      ?.withOpacity(0.2),
-                  child: author?.profileImage == null ||
-                          author!.profileImage!.isEmpty
-                      ? Icon(
-                          Icons.person,
-                          color: widget.theme.progressIndicatorTheme.color,
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 12),
+                if (!isRTL) ...[
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundImage: author?.profileImage != null &&
+                        author!.profileImage!.isNotEmpty
+                        ? NetworkImage(author.profileImage!)
+                        : null,
+                    backgroundColor: widget.theme.progressIndicatorTheme.color
+                        ?.withOpacity(0.2),
+                    child: author?.profileImage == null ||
+                        author!.profileImage!.isEmpty
+                        ? Icon(
+                      Icons.person,
+                      color: widget.theme.progressIndicatorTheme.color,
+                    )
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                ],
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: widget.isRTL
-                        ? CrossAxisAlignment.end
-                        : CrossAxisAlignment.start,
+                    crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                     children: [
                       Builder(builder: (context) {
                         // Fallback logic for Current User
-                        String displayName = author?.name ?? 'Anonymous';
-                        if ((displayName == 'Anonymous' ||
-                                displayName.isEmpty) &&
+                        String displayName = author?.name ?? widget.translations.anonymous;
+                        if ((displayName == widget.translations.anonymous ||
+                            displayName.isEmpty) &&
                             widget.currentUserId != null &&
                             author?.id == widget.currentUserId) {
                           // Try fetching from UserProvider
@@ -563,10 +614,10 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                             if (user != null) {
                               dynamic dUser = user;
                               try {
-                                displayName = dUser.name ?? 'You';
+                                displayName = dUser.name ?? widget.translations.you;
                               } catch (_) {
                                 try {
-                                  displayName = dUser['name'] ?? 'You';
+                                  displayName = dUser['name'] ?? widget.translations.you;
                                 } catch (_) {}
                               }
                             }
@@ -579,27 +630,59 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                             fontWeight: FontWeight.bold,
                             color: widget.theme.iconTheme.color,
                           ),
+                          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
                         );
                       }),
                       const SizedBox(height: 2),
-                      _buildStarRating(review.rating ?? 0),
+                      Align(
+                        alignment: isRTL ? Alignment.centerRight : Alignment.centerLeft,
+                        child: _buildStarRating(review.rating ?? 0, isRTL),
+                      ),
                     ],
                   ),
                 ),
+                if (isRTL) ...[
+                  const SizedBox(width: 12),
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundImage: author?.profileImage != null &&
+                        author!.profileImage!.isNotEmpty
+                        ? NetworkImage(author.profileImage!)
+                        : null,
+                    backgroundColor: widget.theme.progressIndicatorTheme.color
+                        ?.withOpacity(0.2),
+                    child: author?.profileImage == null ||
+                        author!.profileImage!.isEmpty
+                        ? Icon(
+                      Icons.person,
+                      color: widget.theme.progressIndicatorTheme.color,
+                    )
+                        : null,
+                  ),
+                ],
+              ],
+            ),
+            // Time and delete button row
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
                 Text(
                   timeAgo,
                   style: widget.theme.textTheme.bodySmall?.copyWith(
                     color: widget.theme.iconTheme.color?.withOpacity(0.6),
                   ),
+                  textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                  textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
                 ),
                 if (widget.currentUserId != null &&
                     author?.id == widget.currentUserId) ...[
-                  const SizedBox(width: 8),
                   IconButton(
                     icon: const Icon(Icons.delete_outline,
                         color: Colors.red, size: 20),
-                    onPressed: () => _showDeleteConfirmation(review),
-                    tooltip: 'Delete Review',
+                    onPressed: () => _showDeleteConfirmation(review, isRTL),
+                    tooltip: widget.translations.deleteReview,
                   ),
                 ],
               ],
@@ -613,7 +696,8 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                   color: widget.theme.iconTheme.color,
                   height: 1.5,
                 ),
-                textAlign: widget.isRTL ? TextAlign.right : TextAlign.left,
+                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
               ),
             ],
           ],
@@ -622,9 +706,10 @@ class _ReviewsSectionState extends State<ReviewsSection> {
     );
   }
 
-  Widget _buildStarRating(int rating) {
+  Widget _buildStarRating(int rating, bool isRTL) {
     return Row(
       mainAxisSize: MainAxisSize.min,
+      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
       children: List.generate(5, (index) {
         return Icon(
           index < rating ? Icons.star : Icons.star_border,

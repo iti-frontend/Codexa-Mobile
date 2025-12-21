@@ -224,6 +224,7 @@ class S {
   String get enrolledStudents => _translate('enrolledStudents');
   String get price => _translate('price');
   String get level => _translate('level');
+  String get selectLevel => _translate('selectLevel');
   String get updatedAt => _translate('updatedAt');
 
   // Post Details Screen (Community/Post Details)
@@ -249,6 +250,11 @@ class S {
   String get seeMoreComments => _translate('seeMoreComments');
   String get loadingComments => _translate('loadingComments');
   String get noMoreComments => _translate('noMoreComments');
+  String get addImage => _translate('addImage');
+  String get changeImage => _translate('changeImage');
+  String get charactersRemaining => _translate('charactersRemaining');
+  String get deletePost => _translate('deletePost');
+  String get confirmDeletePost => _translate('confirmDeletePost');
 
   //favorites
   String get noFavouritesYet => _translate('noFavouritesYet');
@@ -289,6 +295,37 @@ class S {
   String get tryDifferentKeywords => _translate('tryDifferentKeywords');
   String get searchForCourses => _translate('searchForCourses');
 
+  // Course Reviews
+  String get courseReviews => _translate('courseReviews');
+  String get instructorReviews => _translate('instructorReviews');
+// Reviews and Ratings
+  String get reviews => _translate('reviews');
+  String get anonymous => _translate('anonymous');
+  String get you => _translate('you');
+  String get addReview => _translate('addReview');
+  String get yourReview => _translate('yourReview');
+  String get noReviewsYet => _translate('noReviewsYet');
+  String get editReview => _translate('editReview');
+  String get deleteReview => _translate('deleteReview');
+  String get rating => _translate('rating');
+  String get review => _translate('review');
+  String get averageRating => _translate('averageRating');
+  String get stars => _translate('stars');
+  String get star => _translate('star');
+  String get reviewTitle => _translate('reviewTitle');
+  String get reviewComment => _translate('reviewComment');
+  String get submitReview => _translate('submitReview');
+  String get reviewSubmitted => _translate('reviewSubmitted');
+  String get reviewUpdated => _translate('reviewUpdated');
+  String get reviewDeleted => _translate('reviewDeleted');
+  String get confirmDeleteReview => _translate('confirmDeleteReview');
+  String get writeYourReview => _translate('writeYourReview');
+  String get selectRating => _translate('selectRating');
+  String get editYourReview => _translate('editYourReview');
+  String get writeAReview => _translate('writeAReview');
+  String get likes => _translate('likes');
+  String get beFirstToReview => _translate('beFirstToReview');
+  
   String _translate(String key) {
     switch (locale.languageCode) {
       case 'ar':
@@ -487,6 +524,7 @@ class S {
     'enrolledStudents': 'Enrolled Students',
     'price': 'Price',
     'level': 'Level',
+    'selectLevel': 'Select Level',
     'updatedAt': 'Updated At',
 
     // Post Details Screen (Community/Post Details)
@@ -512,6 +550,11 @@ class S {
     'seeMoreComments': 'See more comments',
     'loadingComments': 'Loading comments...',
     'noMoreComments': 'No more comments',
+    'addImage': 'Add Image',
+    'changeImage': 'Change Image',
+    'charactersRemaining': 'characters remaining',
+    'deletePost': 'Delete Post',
+    'confirmDeletePost': 'Do you really want to delete this post? This action cannot be undone.',
 
     //favorites
     'noFavouritesYet': 'No favourites yet',
@@ -551,6 +594,36 @@ class S {
     //search
     'tryDifferentKeywords': 'Try different keywords or check back later',
     'searchForCourses': 'Search for courses',
+
+    // course reviews
+    'courseReviews': 'Course Reviews',
+    'instructorReviews': 'Instructor Reviews',
+    'addReview': 'Add Review',
+    'yourReview': 'Your Review',
+    'noReviewsYet': 'No reviews yet',
+    'beFirstToReview': 'Be the first to review',
+    'editReview': 'Edit Review',
+    'deleteReview': 'Delete Review',
+    'rating': 'Rating',
+    'review': 'Review',
+    'reviews': 'Reviews',
+    'averageRating': 'Average Rating',
+    'stars': 'stars',
+    'star': 'star',
+    'reviewTitle': 'Review Title',
+    'reviewComment': 'Review Comment',
+    'submitReview': 'Submit Review',
+    'reviewSubmitted': 'Review submitted successfully',
+    'reviewUpdated': 'Review updated successfully',
+    'reviewDeleted': 'Review deleted successfully',
+    'confirmDeleteReview': 'Are you sure you want to delete this review?',
+    'writeYourReview': 'Write your review here...',
+    'selectRating': 'Select a rating',
+    'anonymous': 'Anonymous',
+    'you': 'You',
+    'likes': 'likes',
+    'writeAReview': 'Write a review',
+    'editYourReview': 'Edit your review',
   };
 
   static final Map<String, String> _arabicTranslations = {
@@ -741,6 +814,7 @@ class S {
     'enrolledStudents': 'الطلاب المسجلون',
     'price': 'السعر',
     'level': 'المستوى',
+    'selectLevel': 'اختر مستوي',
     'updatedAt': 'تم التحديث في',
 
     // Post Details Screen (Community/Post Details)
@@ -766,6 +840,11 @@ class S {
     'seeMoreComments': 'رؤية المزيد من التعليقات',
     'loadingComments': 'جاري تحميل التعليقات...',
     'noMoreComments': 'لا يوجد المزيد من التعليقات',
+    'addImage': 'إضافة صورة',
+    'changeImage': 'تغيير الصورة',
+    'charactersRemaining': 'حروف متبقية',
+    'deletePost': 'حذف المنشور',
+    'confirmDeletePost': 'هل أنت متأكد من حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.',
 
     //favorites
     'noFavouritesYet': 'لا توجد مفضلات بعد',
@@ -804,6 +883,36 @@ class S {
     //search
     'tryDifferentKeywords': 'جرب كلمات مفتاحية مختلفة أو تحقق لاحقاً',
     'searchForCourses': 'ابحث عن الدورات',
+
+    //course reviews
+    'courseReviews': 'تقييمات الدورة',
+    'instructorReviews': 'تقييمات المدرس',
+    'addReview': 'إضافة تقييم',
+    'yourReview': 'تقييمك',
+    'noReviewsYet': 'لا توجد تقييمات بعد',
+    'beFirstToReview': 'كن أول من يقيم',
+    'editReview': 'تعديل التقييم',
+    'deleteReview': 'حذف التقييم',
+    'rating': 'التقييم',
+    'review': 'تقييم',
+    'reviews': 'التقييمات',
+    'averageRating': 'متوسط التقييم',
+    'stars': 'نجوم',
+    'star': 'نجمة',
+    'reviewTitle': 'عنوان التقييم',
+    'reviewComment': 'تعليق التقييم',
+    'submitReview': 'إرسال التقييم',
+    'reviewSubmitted': 'تم إرسال التقييم بنجاح',
+    'reviewUpdated': 'تم تحديث التقييم بنجاح',
+    'reviewDeleted': 'تم حذف التقييم بنجاح',
+    'confirmDeleteReview': 'هل أنت متأكد من حذف هذا التقييم؟',
+    'writeYourReview': 'اكتب تقييمك هنا...',
+    'selectRating': 'اختر تقييماً',
+    'anonymous': 'مجهول',
+    'you': 'أنت',
+    'likes': 'إعجابات',
+    'writeAReview': 'اكتب تقييم',
+    'editYourReview': 'عدل تقييمك',
   };
 }
 

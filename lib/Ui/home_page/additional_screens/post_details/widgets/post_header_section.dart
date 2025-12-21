@@ -2,26 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import 'package:codexa_mobile/Domain/entities/community_entity.dart';
-import 'package:codexa_mobile/localization/localization_service.dart';
 import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
 /// Post header section showing author info, content, and image
 class PostHeaderSection extends StatelessWidget {
   final CommunityEntity post;
-  final LocalizationService localizationService;
+  final bool isRTL;
   final generated.S translations;
 
   const PostHeaderSection({
     Key? key,
     required this.post,
-    required this.localizationService,
+    required this.isRTL,
     required this.translations,
   }) : super(key: key);
 
-  String _formatTime(String? dateStr) {
+  String _formatTime(String? dateStr, BuildContext context) {
     if (dateStr == null) return '';
     try {
-      final locale = localizationService.locale.languageCode;
+      final locale = Localizations.localeOf(context).languageCode;
       if (locale == 'ar') {
         timeago.setLocaleMessages('ar', timeago.ArMessages());
         return timeago.format(DateTime.parse(dateStr), locale: 'ar');
@@ -35,24 +34,23 @@ class PostHeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isRTL = localizationService.isRTL();
     final maxImageHeight = MediaQuery.of(context).size.height * .35;
 
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
-        crossAxisAlignment:
-            isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        mainAxisAlignment: isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// Author Row
           Row(
             children: [
-              if (!isRTL) _buildAuthorAvatar(theme),
-              if (!isRTL) const SizedBox(width: 12),
+              _buildAuthorAvatar(theme),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  mainAxisAlignment: isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       post.author?.name ?? translations.unknown,
@@ -61,20 +59,22 @@ class PostHeaderSection extends StatelessWidget {
                         color: theme.iconTheme.color,
                         fontSize: 15,
                       ),
+                      textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _formatTime(post.createdAt),
+                      _formatTime(post.createdAt, context),
                       style: TextStyle(
                         color: theme.dividerTheme.color?.withOpacity(0.7),
                         fontSize: 11,
                       ),
+                      textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
                     ),
                   ],
                 ),
               ),
-              if (isRTL) const SizedBox(width: 12),
-              if (isRTL) _buildAuthorAvatar(theme),
             ],
           ),
 
@@ -90,6 +90,7 @@ class PostHeaderSection extends StatelessWidget {
                 color: theme.iconTheme.color,
               ),
               textAlign: isRTL ? TextAlign.right : TextAlign.left,
+              textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
             ),
 
           const SizedBox(height: 12),

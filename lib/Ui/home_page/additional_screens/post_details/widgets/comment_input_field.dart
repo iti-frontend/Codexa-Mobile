@@ -7,6 +7,8 @@ import 'package:codexa_mobile/Domain/entities/instructor_entity.dart';
 import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
 /// Comment input field with user avatar and send button
+/// Comment input field with user avatar and send button
+/// Avatar always left, send button always right (visual consistency)
 class CommentInputField extends StatelessWidget {
   final TextEditingController controller;
   final bool isLoading;
@@ -42,34 +44,18 @@ class CommentInputField extends StatelessWidget {
           ],
         ),
         child: Row(
-          children: isRTL
-              ? _buildRTLLayout(context, theme)
-              : _buildLTRLayout(context, theme),
+          children: [
+            // Avatar always on left (visual left)
+            _buildUserAvatar(context, theme),
+            const SizedBox(width: 10),
+            Expanded(child: _buildTextField(theme)),
+            const SizedBox(width: 10),
+            // Send button always on right (visual right)
+            _buildSendButton(theme),
+          ],
         ),
       ),
     );
-  }
-
-  List<Widget> _buildRTLLayout(BuildContext context, ThemeData theme) {
-    return [
-      // RTL layout: Send button first
-      _buildSendButton(theme),
-      const SizedBox(width: 10),
-      Expanded(child: _buildTextField(theme)),
-      const SizedBox(width: 10),
-      _buildUserAvatar(context, theme),
-    ];
-  }
-
-  List<Widget> _buildLTRLayout(BuildContext context, ThemeData theme) {
-    return [
-      // LTR layout: Avatar first
-      _buildUserAvatar(context, theme),
-      const SizedBox(width: 10),
-      Expanded(child: _buildTextField(theme)),
-      const SizedBox(width: 10),
-      _buildSendButton(theme),
-    ];
   }
 
   Widget _buildTextField(ThemeData theme) {
@@ -91,7 +77,7 @@ class CommentInputField extends StatelessWidget {
         filled: true,
         fillColor: theme.dividerColor.withOpacity(0.05),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide(
@@ -120,18 +106,18 @@ class CommentInputField extends StatelessWidget {
         ),
         child: isLoading
             ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 2,
+          ),
+        )
             : const Icon(
-                Icons.send_rounded,
-                size: 18,
-                color: Colors.white,
-              ),
+          Icons.send_rounded,
+          size: 18,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -143,7 +129,6 @@ class CommentInputField extends StatelessWidget {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final user = userProvider.user;
 
-      // Extract profileImage from different user types
       if (user is StudentEntity) {
         profileImageUrl = user.profileImage;
       } else if (user is InstructorEntity) {
@@ -151,7 +136,6 @@ class CommentInputField extends StatelessWidget {
       } else if (user is Map<String, dynamic>) {
         profileImageUrl = user['profileImage'] as String?;
       } else if (user != null) {
-        // Try dynamic access as fallback
         try {
           profileImageUrl = (user as dynamic).profileImage?.toString();
         } catch (_) {
@@ -170,9 +154,9 @@ class CommentInputField extends StatelessWidget {
           : null,
       child: (profileImageUrl == null || profileImageUrl.isEmpty)
           ? Icon(
-              Icons.person_outline,
-              color: theme.dividerTheme.color,
-            )
+        Icons.person_outline,
+        color: theme.dividerTheme.color,
+      )
           : null,
     );
   }

@@ -314,11 +314,11 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Column(
-      crossAxisAlignment:
-          isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      mainAxisAlignment: isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Level", // TODO: Add translation
+          _translations.level,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
@@ -335,7 +335,7 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          hint: Text('Select Level'),
+          hint: Text(_translations.selectLevel),
           items: _levels.map((String value) {
             return DropdownMenuItem<String>(
               value: value,
@@ -354,14 +354,17 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
 
   Widget _buildVideoSection(ThemeData theme, bool isRTL) {
     return Column(
-      crossAxisAlignment:
-          isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      mainAxisAlignment: isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           _translations.videos,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
+          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+
         ),
         const SizedBox(height: 12),
         Wrap(

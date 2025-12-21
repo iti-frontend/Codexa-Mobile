@@ -1,6 +1,7 @@
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/comment_state.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/likes_state.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
+import 'package:codexa_mobile/localization/localization_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -12,7 +13,6 @@ import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/like
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
 import 'package:provider/provider.dart';
 import 'package:codexa_mobile/generated/l10n.dart' as generated;
-import 'package:codexa_mobile/localization/localization_service.dart';
 
 // Widget imports - updated to use local widgets folder
 import 'widgets/post_header_section.dart';
@@ -36,6 +36,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
   bool _isAddingComment = false;
   late LocalizationService _localizationService;
   late generated.S _translations;
+  bool _isInitialized = false;
 
   @override
   void initState() {
@@ -44,14 +45,40 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
     _initializeLocalization();
   }
 
-  void _initializeLocalization() {
-    _localizationService = LocalizationService();
-    _translations = generated.S(_localizationService.locale);
-    _localizationService.addListener(_onLocaleChanged);
+  Future<void> _initializeLocalization() async {
+    try {
+      // Get the LocalizationService singleton instance
+      _localizationService = LocalizationService();
+
+      // Check if LocalizationService is initialized, if not initialize it
+      await _localizationService.init();
+
+      // Load translations with current locale using the generated S class
+      _translations = generated.S(_localizationService.locale);
+
+      print('✅ PostDetailsScreen initialized with locale: ${_localizationService.locale}');
+      print('📱 RTL: ${_localizationService.isRTL()}');
+
+      // Listen to locale changes
+      _localizationService.addListener(_onLocaleChanged);
+
+      setState(() {
+        _isInitialized = true;
+      });
+    } catch (e) {
+      print('❌ Error initializing localization in PostDetailsScreen: $e');
+      // Fallback to English
+      _localizationService = LocalizationService();
+      _translations = generated.S(const Locale('en'));
+      setState(() {
+        _isInitialized = true;
+      });
+    }
   }
 
   void _onLocaleChanged() {
     if (mounted) {
+      print('🔄 Language changed in PostDetailsScreen: ${_localizationService.locale}');
       setState(() {
         _translations = generated.S(_localizationService.locale);
       });
@@ -76,10 +103,10 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       final currentUser = _mapUserJsonToEntity(userJson);
 
       await context.read<CommentCubit>().addComment(
-            widget.post.id!,
-            text,
-            currentUser,
-          );
+        widget.post.id!,
+        text,
+        currentUser,
+      );
     } catch (_) {
       setState(() => _isAddingComment = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -135,6 +162,12 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final post = widget.post;
     final theme = Theme.of(context);
     final isRTL = _localizationService.isRTL();
@@ -153,7 +186,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                   SliverToBoxAdapter(
                     child: PostHeaderSection(
                       post: post,
-                      localizationService: _localizationService,
+                      isRTL: isRTL,
                       translations: _translations,
                     ),
                   ),
@@ -190,6 +223,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                           color: theme.iconTheme.color,
                         ),
                         textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
                       ),
                     ),
                   ),
@@ -229,6 +263,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
           color: theme.iconTheme.color,
           fontSize: 18,
         ),
+        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
       ),
       actions: [
         IconButton(
@@ -277,6 +312,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                       color: theme.dividerTheme.color,
                     ),
                     textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                    textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
                   ),
                 ),
               ),
@@ -285,7 +321,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
 
           return SliverList(
             delegate: SliverChildBuilderDelegate(
-              (context, i) {
+                  (context, i) {
                 final c = _comments[i];
                 final currentUserId = _getCurrentUserIdSafe(context);
                 final commentUserId = c.user?.id;
@@ -297,12 +333,12 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                   onDelete: () {
                     if (c.id != null) {
                       context.read<CommentCubit>().deleteComment(
-                            widget.post.id!,
-                            c.id!,
-                          );
+                        widget.post.id!,
+                        c.id!,
+                      );
                     }
                   },
-                  localizationService: _localizationService,
+                  isRTL: isRTL,
                   translations: _translations,
                 );
               },

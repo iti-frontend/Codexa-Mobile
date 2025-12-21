@@ -4,9 +4,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/posts_state.dart';
+import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
 class CreatePostDialog extends StatefulWidget {
-  const CreatePostDialog({Key? key}) : super(key: key);
+  final bool isRTL;
+  final generated.S translations;
+
+  const CreatePostDialog({
+    Key? key,
+    required this.isRTL,
+    required this.translations,
+  }) : super(key: key);
 
   @override
   State<CreatePostDialog> createState() => _CreatePostDialogState();
@@ -42,7 +50,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
+        SnackBar(content: Text(widget.translations.error)),
       );
     }
   }
@@ -58,7 +66,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
 
     if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please write something')),
+        SnackBar(content: Text(widget.translations.writeAComment)),
       );
       return;
     }
@@ -66,7 +74,8 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     if (content.length > maxContentLength) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Content too long (max $maxContentLength chars)')),
+          content: Text(widget.translations.somethingWentWrong),
+        ),
       );
       return;
     }
@@ -80,11 +89,11 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     }
 
     context.read<CommunityPostsCubit>().createPost(
-          content: content,
-          imageFile: imageFile,
-          linkUrl: null,
-          attachments: null,
-        );
+      content: content,
+      imageFile: imageFile,
+      linkUrl: null,
+      attachments: null,
+    );
   }
 
   @override
@@ -92,188 +101,205 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     final contentLength = _contentController.text.length;
     final remainingChars = maxContentLength - contentLength;
     final theme = Theme.of(context);
-    return BlocListener<CommunityPostsCubit, CommunityPostsState>(
-      listener: (context, state) {
-        if (state is PostOperationSuccess) {
-          setState(() => _isPosting = false);
-          Navigator.of(context).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Post created successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else if (state is PostOperationError) {
-          setState(() => _isPosting = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      },
-      child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: theme.progressIndicatorTheme.color,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Text(
-                      'Create Post',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed:
-                          _isPosting ? null : () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
+    final isRTL = widget.isRTL;
+    final translations = widget.translations;
+
+    return Directionality(
+      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+      child: BlocListener<CommunityPostsCubit, CommunityPostsState>(
+        listener: (context, state) {
+          if (state is PostOperationSuccess) {
+            setState(() => _isPosting = false);
+            Navigator.of(context).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(translations.success),
+                backgroundColor: Colors.green,
               ),
-
-              // Content area
-              Expanded(
-                child: SingleChildScrollView(
+            );
+          } else if (state is PostOperationError) {
+            setState(() => _isPosting = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+        child: Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Container(
                   padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  decoration: BoxDecoration(
+                    color: theme.progressIndicatorTheme.color,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                  ),
+                  child: Row(
                     children: [
-                      // Text input
-                      TextField(
-                        controller: _contentController,
-                        maxLines: 8,
-                        maxLength: maxContentLength,
-                        enabled: !_isPosting,
-                        decoration: InputDecoration(
-                          hintText: 'What\'s on your mind?',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: theme.progressIndicatorTheme.color ??
-                                  Colors.blueAccent,
-                              width: 2,
-                            ),
-                          ),
-                          counterText: '$remainingChars characters remaining',
+                      Text(
+                        translations.createPost,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
-                        onChanged: (_) => setState(() {}),
+                        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
                       ),
-
-                      const SizedBox(height: 16),
-
-                      // Image preview
-                      if (_selectedImage != null)
-                        Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.file(
-                                File(_selectedImage!.path),
-                                height: 200,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: IconButton(
-                                icon: const Icon(Icons.close,
-                                    color: Colors.white),
-                                onPressed: _isPosting ? null : _removeImage,
-                                style: IconButton.styleFrom(
-                                  backgroundColor: Colors.black54,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                      const SizedBox(height: 16),
-
-                      // Image picker button
-                      OutlinedButton.icon(
-                        onPressed: _isPosting ? null : _pickImage,
-                        icon: const Icon(Icons.image),
-                        label: Text(_selectedImage == null
-                            ? 'Add Image'
-                            : 'Change Image'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: theme.progressIndicatorTheme.color,
-                          side: BorderSide(
-                              color: theme.progressIndicatorTheme.color ??
-                                  Colors.blueAccent),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed:
+                        _isPosting ? null : () => Navigator.of(context).pop(),
                       ),
                     ],
                   ),
                 ),
-              ),
 
-              // Footer with Post button
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: Colors.grey.shade200)),
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isPosting ? null : _submitPost,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.progressIndicatorTheme.color,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _isPosting
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                // Content area
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Text input
+                        TextField(
+                          controller: _contentController,
+                          maxLines: 8,
+                          maxLength: maxContentLength,
+                          enabled: !_isPosting,
+                          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+                          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                          decoration: InputDecoration(
+                            hintText: translations.writeAComment,
+                            hintTextDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
                             ),
-                          )
-                        : const Text(
-                            'Post',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: theme.progressIndicatorTheme.color ??
+                                    Colors.blueAccent,
+                                width: 2,
+                              ),
+                            ),
+                            counterText: '$remainingChars ${translations.charactersRemaining}',
+                            counterStyle: TextStyle(
+                              color: contentLength > maxContentLength
+                                  ? Colors.red
+                                  : Colors.grey,
                             ),
                           ),
+                          onChanged: (_) => setState(() {}),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Image preview
+                        if (_selectedImage != null)
+                          Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.file(
+                                  File(_selectedImage!.path),
+                                  height: 200,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                top: 8,
+                                right: isRTL ? null : 8,
+                                left: isRTL ? 8 : null,
+                                child: IconButton(
+                                  icon: const Icon(Icons.close,
+                                      color: Colors.white),
+                                  onPressed: _isPosting ? null : _removeImage,
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Colors.black54,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                        const SizedBox(height: 16),
+
+                        // Image picker button
+                        OutlinedButton.icon(
+                          onPressed: _isPosting ? null : _pickImage,
+                          icon: const Icon(Icons.image),
+                          label: Text(_selectedImage == null
+                              ? translations.addImage
+                              : translations.changeImage),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: theme.progressIndicatorTheme.color,
+                            side: BorderSide(
+                                color: theme.progressIndicatorTheme.color ??
+                                    Colors.blueAccent),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+
+                // Footer with Post button
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: Colors.grey.shade200)),
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isPosting ? null : _submitPost,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.progressIndicatorTheme.color,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isPosting
+                          ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                          : Text(
+                        translations.createPost,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

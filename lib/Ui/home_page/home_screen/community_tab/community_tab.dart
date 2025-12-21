@@ -162,13 +162,13 @@ class _CommunityTabState extends State<CommunityTab> {
                               children: posts.map((post) {
                                 return SizedBox(
                                   width: 480,
-                                  child: _buildPostCard(context, post),
+                                  child: _buildPostCard(context, post,isRTL),
                                 );
                               }).toList(),
                             )
                           : Column(
                               children: posts.map((post) {
-                                return _buildPostCard(context, post);
+                                return _buildPostCard(context, post,isRTL);
                               }).toList(),
                             ),
                     ),
@@ -192,9 +192,11 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
-  Widget _buildPostCard(BuildContext context, CommunityEntity post) {
+  Widget _buildPostCard(BuildContext context, CommunityEntity post, bool isRTL) {
     return PostCard(
       post: post,
+      translations: _translations,
+      isRTL: isRTL,
       onTap: () {
         final commentCubit = context.read<CommentCubit>();
         final likeCubit = context.read<LikeCubit>();
