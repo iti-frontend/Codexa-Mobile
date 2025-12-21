@@ -142,6 +142,7 @@ class S {
   String get communityActivity => _translate('communityActivity');
   String get postsAndEngagement => _translate('postsAndEngagement');
   String get noCommunityActivityYet => _translate('noCommunityActivityYet');
+  String get noChangesDetected => _translate('noChangesDetected');
 
   // Placeholders
   String get usernamePlaceholder => _translate('usernamePlaceholder');
@@ -433,6 +434,7 @@ class S {
     'noCommunityActivityYet': 'No community posts yet',
     'errorLoadingPosts': 'Error loading posts',
     'somethingWentWrong': 'Something went wrong',
+    'noChangesDetected': 'No changes detected',
 
     // Placeholders
     'usernamePlaceholder': 'username@gmail.com',
@@ -723,6 +725,7 @@ class S {
     'postsAndEngagement': 'المشاركات والتفاعل في المجتمع',
     'noCommunityActivityYet': 'لا توجد مشاركات مجتمعية بعد',
     'errorLoadingPosts': 'خطأ في تحميل المشاركات',
+    'noChangesDetected': 'لم يتم اكتشاف أي تغييرات',
 
     // Placeholders
     'usernamePlaceholder': 'اسم المستخدم@gmail.com',

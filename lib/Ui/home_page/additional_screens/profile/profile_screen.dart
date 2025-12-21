@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:codexa_mobile/Data/constants/api_constants.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_cubit/profile_states.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/posts_state.dart';
@@ -143,7 +144,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
   /// Upload profile image to server and return the public URL or path.
   /// Returns null on failure.
-  Future<String?> _uploadProfileImage(File file) async {
+  Future<String?> _uploadProfileImage(File file,String userType) async {
     setState(() {
       _isUploadingImage = true;
     });
@@ -151,10 +152,16 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final apiManager = ApiManager(prefs: prefs);
-
+      var endpoint='';
+      if(userType=='Student'){
+        endpoint=ApiConstants.studentEndpointProfile;
+      }
+      else{
+        endpoint=ApiConstants.instructorEndpointProfile;
+      }
       // Try uploading with PUT (many APIs accept PUT for updating profile image)
       final response = await apiManager.putMultipartData(
-        '/uploads/profile',
+        endpoint,
         file: file,
         fileFieldName: 'image',
       );
@@ -410,6 +417,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         token: original.token,
         isAdmin: original.isAdmin,
       ) as T;
+      print('========='+emailController.text.trim());
       return updatedInstructor;
     }
     throw Exception('Unsupported user type');
@@ -706,7 +714,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                           if (_isEditing) ...[
                             state is ProfileLoading
                                 ? _buildLoadingState(theme, isRTL)
-                                : _buildActionButtons(theme, isRTL),
+                                : _buildActionButtons(theme, isRTL,widget.userType),
                           ]
                         ],
                       ),
@@ -1025,7 +1033,6 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     required bool enabled,
     required bool isRTL,
     TextInputType keyboardType = TextInputType.text,
-    ValueChanged<String>? onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -1046,13 +1053,18 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         controller: controller,
         enabled: enabled,
         keyboardType: keyboardType,
-        onChanged: onChanged,
         textAlign: isRTL ? TextAlign.right : TextAlign.left,
         style: theme.textTheme.bodyLarge?.copyWith(
           color: enabled
-              ? theme.dividerTheme.color
+              ? theme.dividerTheme.color ?? theme.iconTheme.color
               : theme.iconTheme.color?.withOpacity(0.5),
         ),
+        onChanged: (value) {
+          // This ensures state rebuilds when text changes
+          if (enabled && mounted) {
+            setState(() {});
+          }
+        },
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
@@ -1061,18 +1073,18 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           prefixIcon: isRTL
               ? null
               : Icon(
-                  icon,
-                  color: enabled
-                      ? theme.progressIndicatorTheme.color
-                      : theme.iconTheme.color?.withOpacity(0.3),
-                ),
+            icon,
+            color: enabled
+                ? theme.progressIndicatorTheme.color
+                : theme.iconTheme.color?.withOpacity(0.3),
+          ),
           suffixIcon: isRTL
               ? Icon(
-                  icon,
-                  color: enabled
-                      ? theme.progressIndicatorTheme.color
-                      : theme.iconTheme.color?.withOpacity(0.3),
-                )
+            icon,
+            color: enabled
+                ? theme.progressIndicatorTheme.color
+                : theme.iconTheme.color?.withOpacity(0.3),
+          )
               : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -1315,7 +1327,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     );
   }
 
-  Widget _buildActionButtons(ThemeData theme, bool isRTL) {
+  Widget _buildActionButtons(ThemeData theme, bool isRTL, String userType) {
     return Row(
       children: [
         Expanded(
@@ -1346,6 +1358,10 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 ? null
                 : () async {
                     // Validation
+                    if (!_hasChanges()) {
+                      _showErrorSnackBar(S.current.noChangesDetected);
+                      return;
+                    }
                     if (nameController.text.isEmpty) {
                       _showErrorSnackBar(S.current.enterName);
                       return;
@@ -1367,7 +1383,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                       String? uploadedUrl;
                       if (_selectedImage != null) {
                         uploadedUrl =
-                            await _uploadProfileImage(_selectedImage!);
+                            await _uploadProfileImage(_selectedImage!,userType);
                         if (uploadedUrl == null) {
                           return;
                         }
@@ -1375,6 +1391,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
                       final updatedUser =
                           _createUpdatedUser(uploadedImageUrl: uploadedUrl);
+                      _updateAuthProvider(updatedUser);
                       final cubit = context.read<ProfileCubit<T>>();
                       cubit.updateProfile(updatedUser);
                       print('🚀 updateProfile method called successfully');
@@ -1420,6 +1437,19 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     );
   }
 
+  bool _hasChanges() {
+    final originalName = widget.user is StudentEntity
+        ? (widget.user as StudentEntity).name ?? ''
+        : (widget.user as InstructorEntity).name ?? '';
+
+    final originalEmail = widget.user is StudentEntity
+        ? (widget.user as StudentEntity).email ?? ''
+        : (widget.user as InstructorEntity).email ?? '';
+
+    return nameController.text.trim() != originalName ||
+        emailController.text.trim() != originalEmail ||
+        _selectedImage != null;
+  }
   @override
   void dispose() {
     print('🗑️ Disposing ProfileScreen');
