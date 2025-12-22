@@ -42,7 +42,6 @@ class ProfileRepoImpl implements ProfileRepo {
           fileFieldName: 'profileImage',
           fields: {
             "name": student.name ?? '',
-            "email": student.email ?? '',
           },
         );
       } else {
@@ -52,7 +51,6 @@ class ProfileRepoImpl implements ProfileRepo {
           ApiConstants.studentEndpointProfile,
           body: {
             "name": student.name,
-            "email": student.email,
             "profileImage": student.profileImage,
           },
         );
@@ -129,7 +127,6 @@ class ProfileRepoImpl implements ProfileRepo {
           fileFieldName: 'profileImage',
           fields: {
             "name": instructor.name ?? '',
-            "email": instructor.email ?? '',
           },
         );
       } else {

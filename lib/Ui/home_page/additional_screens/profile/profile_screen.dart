@@ -4,6 +4,7 @@ import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_cu
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/posts_state.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -144,104 +145,142 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
   /// Upload profile image to server and return the public URL or path.
   /// Returns null on failure.
-  Future<String?> _uploadProfileImage(File file,String userType) async {
+  Future<String?> _uploadProfileImage(File file, String userType) async {
     setState(() {
       _isUploadingImage = true;
     });
 
     try {
+      print('🔄 UPLOAD PROFILE IMAGE - START');
+      print('📁 File: ${file.path}');
+      print('👤 User type: $userType');
+      print('📐 File size: ${await file.length()} bytes');
+
       final prefs = await SharedPreferences.getInstance();
       final apiManager = ApiManager(prefs: prefs);
-      var endpoint='';
-      if(userType=='Student'){
-        endpoint=ApiConstants.studentEndpointProfile;
-      }
-      else{
-        endpoint=ApiConstants.instructorEndpointProfile;
-      }
-      // Try uploading with PUT (many APIs accept PUT for updating profile image)
+
+      var endpoint = userType == 'Student'
+          ? ApiConstants.studentEndpointProfile
+          : ApiConstants.instructorEndpointProfile;
+
+      print('🔗 Endpoint: $endpoint');
+      print('🏷️ Field name: profileImage');
+
+      // Try uploading with PUT
+      print('📤 Sending multipart request...');
       final response = await apiManager.putMultipartData(
         endpoint,
         file: file,
-        fileFieldName: 'image',
+        fileFieldName: 'profileImage',
       );
 
+      print('📡 Response received:');
+      print('   Status: ${response.statusCode}');
+      print('   Headers: ${response.headers}');
+      print('   Data type: ${response.data.runtimeType}');
+      print('   Data: ${response.data}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ Upload successful!');
         final data = response.data;
         String? url;
 
-        // Try multiple common shapes returned by file upload endpoints
-        try {
-          if (data is Map) {
-            // 1) { data: { url: '...' } } or { data: { path: '...' } }
+        // Parse response
+        if (data is Map) {
+          print('🔍 Parsing Map response...');
+
+          // Check common response formats
+          if (data.containsKey('url')) {
+            url = data['url'];
+            print('   Found URL in root: $url');
+          } else if (data.containsKey('data') && data['data'] is Map) {
             final d = data['data'];
-            if (d is Map) {
-              url = d['url'] ??
-                  d['path'] ??
-                  d['filePath'] ??
-                  d['profileImage'] ??
-                  d['location'];
+            if (d.containsKey('url')) {
+              url = d['url'];
+              print('   Found URL in data.url: $url');
+            } else if (d.containsKey('profileImage')) {
+              url = d['profileImage'];
+              print('   Found URL in data.profileImage: $url');
             }
-
-            // 2) top-level url/path
-            url ??= data['url'] ??
-                data['path'] ??
-                data['filePath'] ??
-                data['profileImage'] ??
-                data['location'];
-
-            // 3) files array: { files: [{ url: '...' }] } or { files: [{ path: '...' }] }
-            if (url == null &&
-                data['files'] is List &&
-                data['files'].isNotEmpty) {
-              final f0 = data['files'][0];
-              if (f0 is Map) {
-                url =
-                    f0['url'] ?? f0['path'] ?? f0['filePath'] ?? f0['location'];
-              } else if (f0 is String) {
-                url = f0;
-              }
+          } else if (data.containsKey('student') && data['student'] is Map) {
+            final student = data['student'];
+            if (student.containsKey('profileImage')) {
+              url = student['profileImage'];
+              print('   Found URL in student.profileImage: $url');
             }
-          } else if (data is List && data.isNotEmpty) {
-            // 4) response is a list: [{ path: '...'}]
-            final first = data[0];
-            if (first is Map) {
-              url = first['url'] ??
-                  first['path'] ??
-                  first['filePath'] ??
-                  first['location'];
-            } else if (first is String) {
-              url = first;
+          } else if (data.containsKey('instructor') && data['instructor'] is Map) {
+            final instructor = data['instructor'];
+            if (instructor.containsKey('profileImage')) {
+              url = instructor['profileImage'];
+              print('   Found URL in instructor.profileImage: $url');
             }
-          } else if (data is String) {
-            // 5) response is just a string path/url
-            url = data;
           }
-        } catch (e) {
-          // parsing failed — fall through to null
-          print('⚠️ _uploadProfileImage: parsing response failed: $e');
+        } else if (data is String) {
+          print('🔍 Parsing String response...');
+          url = data;
         }
 
-        // Final normalization: if we have a leading-slash path, prefix baseUrl
         if (url != null) {
+          print('✅ Extracted URL: $url');
+
+          // Normalize URL
           if (url.startsWith('/')) {
             final base = ApiManager.baseUrl;
-            final normalizedBase =
-                base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+            final normalizedBase = base.endsWith('/')
+                ? base.substring(0, base.length - 1)
+                : base;
             url = normalizedBase + url;
+            print('📦 Normalized URL: $url');
           }
+
           return url;
+        } else {
+          print('⚠️ Could not extract URL from response');
+          print('🔍 Full response data: $data');
+          _showErrorSnackBar('Upload successful but could not get image URL');
+          return null;
+        }
+      } else {
+        print('❌ Upload failed with status: ${response.statusCode}');
+
+        // Show actual error message
+        String errorMessage = 'Upload failed (${response.statusCode})';
+        if (response.data is Map && response.data['message'] != null) {
+          errorMessage = response.data['message'];
+        } else if (response.data is String) {
+          errorMessage = response.data;
         }
 
-        // If we couldn't parse a url, but response contains a readable body, show it briefly
-        _showErrorSnackBar(S.current.somethingWentWrong);
-        return null;
-      } else {
-        _showErrorSnackBar(S.current.somethingWentWrong);
+        _showErrorSnackBar(errorMessage);
         return null;
       }
-    } catch (e) {
-      _showErrorSnackBar(S.current.somethingWentWrong);
+    } catch (e, stackTrace) {
+      print('💥 UPLOAD ERROR: $e');
+      print('📋 Stack trace: $stackTrace');
+
+      // Show specific error messages
+      if (e is DioException) {
+        print('🚨 Dio error details:');
+        print('   Type: ${e.type}');
+        print('   Message: ${e.message}');
+        print('   Response: ${e.response?.data}');
+
+        if (e.response?.statusCode == 401) {
+          _showErrorSnackBar('Authentication failed. Please login again.');
+        } else if (e.response?.statusCode == 400) {
+          final errorData = e.response?.data;
+          if (errorData is String && errorData.contains('MulterError')) {
+            _showErrorSnackBar('Image upload failed: Invalid file format');
+          } else {
+            _showErrorSnackBar('Bad request: ${errorData?['message'] ?? e.message}');
+          }
+        } else {
+          _showErrorSnackBar('Network error: ${e.message}');
+        }
+      } else {
+        _showErrorSnackBar('Upload failed: $e');
+      }
+
       return null;
     } finally {
       if (mounted) {
@@ -417,7 +456,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         token: original.token,
         isAdmin: original.isAdmin,
       ) as T;
-      print('========='+emailController.text.trim());
+
       return updatedInstructor;
     }
     throw Exception('Unsupported user type');
@@ -702,7 +741,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                             controller: emailController,
                             label: translations.email,
                             icon: Icons.email_outlined,
-                            enabled: _isEditing,
+                            enabled: false,
                             keyboardType: TextInputType.emailAddress,
                             isRTL: isRTL,
                           ),
@@ -1367,18 +1406,6 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                       return;
                     }
 
-                    if (emailController.text.isEmpty) {
-                      _showErrorSnackBar(S.current.enterEmail);
-                      return;
-                    }
-
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(emailController.text)) {
-                      print('❌ Validation failed: Invalid email format');
-                      _showErrorSnackBar(S.current.validEmail);
-                      return;
-                    }
-
                     try {
                       String? uploadedUrl;
                       if (_selectedImage != null) {
@@ -1391,7 +1418,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
                       final updatedUser =
                           _createUpdatedUser(uploadedImageUrl: uploadedUrl);
-                      _updateAuthProvider(updatedUser);
+                     // _updateAuthProvider(updatedUser);
                       final cubit = context.read<ProfileCubit<T>>();
                       cubit.updateProfile(updatedUser);
                       print('🚀 updateProfile method called successfully');
@@ -1442,12 +1469,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         ? (widget.user as StudentEntity).name ?? ''
         : (widget.user as InstructorEntity).name ?? '';
 
-    final originalEmail = widget.user is StudentEntity
-        ? (widget.user as StudentEntity).email ?? ''
-        : (widget.user as InstructorEntity).email ?? '';
 
     return nameController.text.trim() != originalName ||
-        emailController.text.trim() != originalEmail ||
         _selectedImage != null;
   }
   @override

@@ -118,71 +118,12 @@ class ApiManager {
       rethrow;
     }
   }
-
-  // POST Request with Multipart (files + fields)
-  Future<Response> postMultipartData(
-    String endPoint, {
-    File? file,
-    String fileFieldName = 'image',
-    Map<String, dynamic>? fields,
-  }) async {
-    try {
-      final formData = FormData();
-
-      print('=== MULTIPART REQUEST DEBUG ===');
-      print('Endpoint: $endPoint');
-      print('File: ${file?.path}');
-      print('File Field Name: $fileFieldName');
-      print('Fields: $fields');
-
-      // Add file if provided
-      if (file != null) {
-        formData.files.add(
-          MapEntry(
-            fileFieldName,
-            await MultipartFile.fromFile(
-              file.path,
-              filename: file.path.split('/').last,
-            ),
-          ),
-        );
-        print('Added file: ${file.path.split('/').last}');
-      }
-
-      // Add other fields
-      if (fields != null) {
-        fields.forEach((key, value) {
-          if (value != null) {
-            formData.fields.add(MapEntry(key, value.toString()));
-            print('Added field: $key = ${value.toString()}');
-          }
-        });
-      }
-
-      print('FormData fields: ${formData.fields}');
-      print('FormData files: ${formData.files.length}');
-      print('===============================');
-
-      final response = await dio.post(
-        endPoint,
-        data: formData,
-        options: Options(
-          headers: {'Content-Type': 'multipart/form-data'},
-          validateStatus: (status) => true,
-        ),
-      );
-      return response;
-    } catch (e) {
-      print('ERROR in postMultipartData: $e');
-      rethrow;
-    }
-  }
-
+  
   // PUT Request with Multipart (for profile image updates)
   Future<Response> putMultipartData(
       String endPoint, {
         File? file,
-        String fileFieldName = 'image',
+        String fileFieldName = 'profileImage',
         Map<String, dynamic>? fields,
       }) async {
     try {
