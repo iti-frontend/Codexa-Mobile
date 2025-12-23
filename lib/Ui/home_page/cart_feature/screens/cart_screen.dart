@@ -638,35 +638,37 @@ class _CartItemCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  // Course image placeholder
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: theme.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.play_circle_outline,
-                      size: 40,
-                      color: theme.progressIndicatorTheme.color,
-                    ),
+                  // Course image
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: item.coverImage?['url'] != null
+                        ? Image.network(
+                            item.coverImage!['url'] as String,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildImagePlaceholder(theme);
+                            },
+                          )
+                        : _buildImagePlaceholder(theme),
                   ),
                 ]
               : [
                   // LTR: Image first
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: theme.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.play_circle_outline,
-                      size: 40,
-                      color: theme.progressIndicatorTheme.color,
-                    ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: item.coverImage?['url'] != null
+                        ? Image.network(
+                            item.coverImage!['url'] as String,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildImagePlaceholder(theme);
+                            },
+                          )
+                        : _buildImagePlaceholder(theme),
                   ),
                   const SizedBox(width: 16),
                   // Course details
@@ -726,6 +728,22 @@ class _CartItemCard extends StatelessWidget {
                   ),
                 ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildImagePlaceholder(ThemeData theme) {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: theme.primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(
+        Icons.play_circle_outline,
+        size: 40,
+        color: theme.progressIndicatorTheme.color,
       ),
     );
   }

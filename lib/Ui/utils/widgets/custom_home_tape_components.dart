@@ -22,7 +22,8 @@ class DashboardCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             if (haveBanner && title != null) ...[
               Text(
@@ -51,6 +52,7 @@ class CourseProgressItem extends StatelessWidget {
   final bool showFavouriteButton;
   final VoidCallback? onFavouriteTap;
   final bool isRTL; // Add RTL parameter
+  final String? coverImageUrl; // Cover image URL
 
   const CourseProgressItem({
     super.key,
@@ -64,6 +66,7 @@ class CourseProgressItem extends StatelessWidget {
     this.showFavouriteButton = false,
     this.onFavouriteTap,
     this.isRTL = false, // Default to LTR
+    this.coverImageUrl,
   });
 
   @override
@@ -75,25 +78,30 @@ class CourseProgressItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
       children: [
-        Container(
-          width: 55,
-          height: 55,
-          decoration: BoxDecoration(
-            color: theme.cardTheme.color ?? Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            Icons.play_circle_outline_rounded,
-            color: theme.dividerTheme.color,
-            size: 28,
-          ),
+        // Cover image or placeholder
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: coverImageUrl != null && coverImageUrl!.isNotEmpty
+              ? Image.network(
+                  coverImageUrl!,
+                  width: 55,
+                  height: 55,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return _buildPlaceholder(theme);
+                  },
+                )
+              : _buildPlaceholder(theme),
         ),
         const SizedBox(width: 14),
         Expanded(
           child: Column(
-            crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment:
+                isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
-              if (hasCategory && categoryTitle != null && categoryTitle!.isNotEmpty)
+              if (hasCategory &&
+                  categoryTitle != null &&
+                  categoryTitle!.isNotEmpty)
                 Text(
                   categoryTitle!,
                   style: TextStyle(
@@ -112,7 +120,8 @@ class CourseProgressItem extends StatelessWidget {
                     child: Text(
                       title,
                       style: TextStyle(
-                        color: theme.iconTheme.color ?? theme.dividerTheme.color,
+                        color:
+                            theme.iconTheme.color ?? theme.dividerTheme.color,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -151,7 +160,8 @@ class CourseProgressItem extends StatelessWidget {
               if (showProgress) const SizedBox(height: 8),
               if (showProgress)
                 Column(
-                  crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                   children: [
                     LinearProgressIndicator(
                       value: progress,
@@ -178,6 +188,22 @@ class CourseProgressItem extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPlaceholder(ThemeData theme) {
+    return Container(
+      width: 55,
+      height: 55,
+      decoration: BoxDecoration(
+        color: theme.cardTheme.color ?? Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(
+        Icons.play_circle_outline_rounded,
+        color: theme.dividerTheme.color,
+        size: 28,
+      ),
     );
   }
 }
@@ -229,11 +255,13 @@ class CommunityItem extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Column(
-            crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment:
+                isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               RichText(
                 text: TextSpan(
-                  style: TextStyle(color: theme.iconTheme.color ?? theme.dividerTheme.color),
+                  style: TextStyle(
+                      color: theme.iconTheme.color ?? theme.dividerTheme.color),
                   children: [
                     TextSpan(
                       text: "$name ",
@@ -291,11 +319,13 @@ class SkillCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(5),
         child: Column(
-          crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style: TextStyle(color: theme.iconTheme.color ?? theme.dividerTheme.color),
+              style: TextStyle(
+                  color: theme.iconTheme.color ?? theme.dividerTheme.color),
               textAlign: isRTL ? TextAlign.right : TextAlign.left,
             ),
             const SizedBox(height: 6),
@@ -343,7 +373,8 @@ class StatBox extends StatelessWidget {
               Text(
                 title,
                 style: TextStyle(
-                  color: theme.iconTheme.color ?? theme.bottomNavigationBarTheme.selectedItemColor,
+                  color: theme.iconTheme.color ??
+                      theme.bottomNavigationBarTheme.selectedItemColor,
                 ),
                 textAlign: isRTL ? TextAlign.right : TextAlign.center,
               ),

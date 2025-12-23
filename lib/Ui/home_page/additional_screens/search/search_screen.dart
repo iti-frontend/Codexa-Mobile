@@ -122,6 +122,7 @@ class SearchCoursesScreen extends SearchDelegate {
                   categoryTitle: course.category ?? _translations.noCategory,
                   hasCategory: true,
                   title: course.title ?? _translations.untitledCourse,
+                  coverImageUrl: course.coverImage?['url'] as String?,
                   isRTL: _isRTL,
                 ),
               ),

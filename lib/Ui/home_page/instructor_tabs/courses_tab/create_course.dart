@@ -5,6 +5,7 @@ import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_co
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:codexa_mobile/localization/localization_service.dart';
@@ -36,6 +37,11 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
 
   // Video files selected
   List<File> selectedVideos = [];
+  // Existing videos from course (for edit mode)
+  List<Map<String, dynamic>> existingVideos = [];
+  // Cover image
+  File? selectedCoverImage;
+  String? existingCoverImageUrl;
   bool _isLoading = false;
 
   @override
@@ -56,6 +62,18 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
     if (_selectedLevel != null && !_levels.contains(_selectedLevel)) {
       // Handle case where level from backend might not match hardcoded list
       _levels.add(_selectedLevel!);
+    }
+
+    // Initialize existing videos if editing
+    if (widget.course?.videos != null) {
+      existingVideos = List<Map<String, dynamic>>.from(
+        widget.course!.videos!.map((v) => v as Map<String, dynamic>),
+      );
+    }
+
+    // Initialize existing cover image if editing
+    if (widget.course?.coverImage != null) {
+      existingCoverImageUrl = widget.course!.coverImage!['url'] as String?;
     }
   }
 
@@ -109,6 +127,14 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
             }
           } else if (state is CourseOperationSuccess) {
             _finishSuccess(state.message);
+          } else if (state is VideoDeletedSuccess) {
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.green,
+              ),
+            );
           } else if (state is InstructorCoursesError) {
             _finishError(state.message);
           } else if (state is CourseOperationError) {
@@ -187,6 +213,10 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
                           keyboardType: TextInputType.number,
                           theme: theme,
                           isRTL: isRTL),
+                      const SizedBox(height: 15),
+
+                      // Cover Image Section
+                      _buildCoverImageSection(theme, isRTL),
                       const SizedBox(height: 15),
 
                       // Videos Upload Section
@@ -314,7 +344,8 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Column(
-      mainAxisAlignment: isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+      mainAxisAlignment:
+          isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -352,9 +383,144 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
     );
   }
 
+  Widget _buildCoverImageSection(ThemeData theme, bool isRTL) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _translations.coverImage,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+        ),
+        const SizedBox(height: 12),
+
+        // Display selected or existing cover image
+        if (selectedCoverImage != null) ...[
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.file(
+                  selectedCoverImage!,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: CircleAvatar(
+                  backgroundColor: Colors.red,
+                  radius: 16,
+                  child: IconButton(
+                    icon:
+                        const Icon(Icons.close, size: 16, color: Colors.white),
+                    padding: EdgeInsets.zero,
+                    onPressed: () => setState(() => selectedCoverImage = null),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ] else if (existingCoverImageUrl != null &&
+            existingCoverImageUrl!.isNotEmpty) ...[
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  existingCoverImageUrl!,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      height: 180,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: theme.dividerColor.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(child: CircularProgressIndicator()),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 180,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: theme.dividerColor.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                          child: Icon(Icons.broken_image, size: 48)),
+                    );
+                  },
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: CircleAvatar(
+                  backgroundColor: _getButtonColor(theme),
+                  radius: 16,
+                  child: IconButton(
+                    icon: const Icon(Icons.edit, size: 16, color: Colors.white),
+                    padding: EdgeInsets.zero,
+                    onPressed: _pickCoverImage,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        // Select cover image button
+        if (selectedCoverImage == null && existingCoverImageUrl == null)
+          ElevatedButton.icon(
+            icon: const Icon(Icons.image),
+            label: Text(_translations.selectCoverImage),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _getButtonColor(theme).withOpacity(0.15),
+              foregroundColor: _getButtonColor(theme),
+            ),
+            onPressed: _pickCoverImage,
+          )
+        else if (selectedCoverImage == null)
+          TextButton.icon(
+            icon: const Icon(Icons.refresh),
+            label: Text(_translations.changeCoverImage),
+            onPressed: _pickCoverImage,
+          ),
+      ],
+    );
+  }
+
+  Future<void> _pickCoverImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      maxHeight: 800,
+      imageQuality: 85,
+    );
+    if (image != null) {
+      setState(() {
+        selectedCoverImage = File(image.path);
+      });
+    }
+  }
+
   Widget _buildVideoSection(ThemeData theme, bool isRTL) {
     return Column(
-      mainAxisAlignment: isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+      mainAxisAlignment:
+          isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -364,21 +530,103 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
           ),
           textAlign: isRTL ? TextAlign.right : TextAlign.left,
           textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: selectedVideos
-              .map((file) => Chip(
-                    label: Text(file.path.split('/').last),
-                    onDeleted: () =>
-                        setState(() => selectedVideos.remove(file)),
-                  ))
-              .toList(),
-        ),
-        const SizedBox(height: 14),
+
+        // Existing videos from backend (edit mode)
+        if (existingVideos.isNotEmpty) ...[
+          Text(
+            _translations.existingVideos,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.hintColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...existingVideos.map((video) {
+            final videoTitle = video['title'] ?? 'Untitled';
+            final videoId = video['_id'] ?? video['id'] ?? '';
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: Icon(
+                  Icons.video_library,
+                  color: _getButtonColor(theme),
+                ),
+                title: Text(
+                  videoTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    // Show confirmation dialog
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(_translations.deleteVideo),
+                        content: Text(_translations.confirmDeleteVideo),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: Text(_translations.cancel),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              // Remove from local list
+                              setState(() {
+                                existingVideos.removeWhere(
+                                    (v) => (v['_id'] ?? v['id']) == videoId);
+                              });
+                              // Call API to delete
+                              if (widget.course?.id != null &&
+                                  videoId.isNotEmpty) {
+                                widget.cubit.deleteVideo(
+                                  widget.course!.id!,
+                                  videoId,
+                                );
+                              }
+                            },
+                            child: Text(
+                              _translations.delete,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 16),
+        ],
+
+        // Newly selected videos (pending upload)
+        if (selectedVideos.isNotEmpty) ...[
+          Text(
+            _translations.newVideos,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.hintColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: selectedVideos
+                .map((file) => Chip(
+                      label: Text(file.path.split('/').last),
+                      onDeleted: () =>
+                          setState(() => selectedVideos.remove(file)),
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: 14),
+        ],
+
         ElevatedButton.icon(
           icon: const Icon(Icons.upload_file),
           label: Text(_translations.selectVideos),

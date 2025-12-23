@@ -218,4 +218,29 @@ class CourseInstructorRepoImpl implements CourseInstructorRepo {
       return Left(Failures(errorMessage: e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failures, void>> deleteVideo(
+      String courseId, String videoId) async {
+    if (courseId.isEmpty || videoId.isEmpty) {
+      return Left(Failures(errorMessage: 'Course ID or Video ID is empty'));
+    }
+
+    try {
+      final response = await apiManager.deleteData(
+        ApiConstants.courseInstructorVideoById(courseId, videoId),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return const Right(null);
+      } else {
+        return Left(Failures(
+          errorMessage:
+              response.data?['message']?.toString() ?? 'Failed to delete video',
+        ));
+      }
+    } catch (e) {
+      return Left(Failures(errorMessage: e.toString()));
+    }
+  }
 }

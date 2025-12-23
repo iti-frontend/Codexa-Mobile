@@ -302,6 +302,7 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
             title: course.title ?? _translations.untitled,
             isFavourite: course.isFavourite ?? false,
             showFavouriteButton: true,
+            coverImageUrl: course.coverImage?['url'] as String?,
             onFavouriteTap: () {
               if (course.id != null) {
                 context

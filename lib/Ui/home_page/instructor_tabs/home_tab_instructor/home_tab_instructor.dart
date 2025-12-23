@@ -1,6 +1,5 @@
 import 'package:codexa_mobile/Domain/entities/community_entity.dart';
 import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
-import 'package:codexa_mobile/Domain/entities/student_entity.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/posts_state.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/create_course.dart';
@@ -9,7 +8,6 @@ import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_co
 import 'package:codexa_mobile/Ui/utils/widgets/custom_button.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_course_progress_instructor.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/custom_home_tape_components.dart';
-import 'package:codexa_mobile/Ui/utils/widgets/recent_activity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -30,21 +28,6 @@ class ActivityItemModel {
     required this.message,
     required this.timestamp,
     required this.profileImage,
-  });
-}
-
-// Model for recent enrollment displayed in instructor home tab
-class EnrollmentActivityModel {
-  final String studentName;
-  final String? studentImage; // URL or asset path
-  final String courseTitle;
-  final DateTime? enrolledAt; // Nullable to handle missing timestamps
-
-  EnrollmentActivityModel({
-    required this.studentName,
-    this.studentImage,
-    required this.courseTitle,
-    this.enrolledAt,
   });
 }
 
@@ -109,9 +92,6 @@ class _HomeTabInstructorState extends State<HomeTabInstructor> {
           final lastTwoCourses = courses.length >= 2
               ? courses.sublist(courses.length - 2)
               : courses;
-
-          // Recent enrollments list
-          final recentEnrollments = _getRecentEnrollments(courses);
 
           return SafeArea(
             child: SingleChildScrollView(
@@ -188,40 +168,6 @@ class _HomeTabInstructorState extends State<HomeTabInstructor> {
                     },
                   ),
                   const SizedBox(height: 25),
-                  // Recent Activity (Enrollments)
-                  DashboardCard(
-                    title: _translations.recentActivity,
-                    child: recentEnrollments.isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              _translations.noRecentEnrollments,
-                              style: TextStyle(color: theme.iconTheme.color),
-                            ),
-                          )
-                        : Column(
-                            children: recentEnrollments.map((activity) {
-                              // Determine time display - show "Recently" if timestamp is missing
-                              final timeDisplay = activity.enrolledAt != null
-                                  ? _formatTimeAgo(activity.enrolledAt!)
-                                  : _translations.recently;
-
-                              return Column(
-                                children: [
-                                  RecentActivityItem(
-                                    action: _translations.enrolledIn,
-                                    avatarImg: activity.studentImage,
-                                    name: activity.studentName,
-                                    subject: activity.courseTitle,
-                                    timeAgo: timeDisplay,
-                                  ),
-                                  const SizedBox(height: 20),
-                                ],
-                              );
-                            }).toList(),
-                          ),
-                  ),
-                  const SizedBox(height: 10),
                   // Community Activity (global feed)
                   DashboardCard(
                     title: _translations.communityActivity,
@@ -303,77 +249,6 @@ class _HomeTabInstructorState extends State<HomeTabInstructor> {
       return _translations.enrolledIn;
     }
     return action;
-  }
-
-  // Helper to extract recent enrollments from courses list
-  List<EnrollmentActivityModel> _getRecentEnrollments(
-      List<CourseEntity> courses) {
-    final List<EnrollmentActivityModel> enrollments = [];
-
-    for (var course in courses) {
-      final enrolledStudents = course.enrolledStudents ?? [];
-
-      for (var studentData in enrolledStudents) {
-        StudentEntity? student;
-        DateTime? enrolledAt;
-
-        // Parse student data from API
-        if (studentData is Map<String, dynamic>) {
-          // Skip if student has no name
-          if (studentData['name'] == null ||
-              studentData['name'].toString().isEmpty) {
-            continue;
-          }
-
-          student = StudentEntity(
-            id: studentData['_id'],
-            name: studentData['name'],
-            email: studentData['email'],
-            profileImage: studentData['profileImage'],
-            role: studentData['role'],
-            isAdmin: studentData['isAdmin'],
-            isActive: studentData['isActive'],
-            emailVerified: studentData['emailVerified'],
-            authProvider: studentData['authProvider'],
-            token: studentData['token'],
-          );
-
-          // Try to get enrollment timestamp from student data
-          if (studentData['enrolledAt'] != null) {
-            enrolledAt =
-                DateTime.tryParse(studentData['enrolledAt'].toString());
-          }
-        } else if (studentData is StudentEntity) {
-          student = studentData;
-        }
-
-        // Only add valid students with names
-        if (student != null &&
-            student.name != null &&
-            student.name!.isNotEmpty) {
-          // Use enrollment timestamp, or fallback to course updatedAt, then createdAt
-          enrolledAt ??= DateTime.tryParse(course.updatedAt ?? '') ??
-              DateTime.tryParse(course.createdAt ?? '');
-
-          enrollments.add(EnrollmentActivityModel(
-            studentName: student.name!,
-            studentImage: student.profileImage,
-            courseTitle: course.title ?? _translations.course,
-            enrolledAt: enrolledAt, // Can be null, will show "Recently"
-          ));
-        }
-      }
-    }
-
-    // Sort by most recent first (treat null as now for sorting)
-    enrollments.sort((a, b) {
-      final aTime = a.enrolledAt ?? DateTime.now();
-      final bTime = b.enrolledAt ?? DateTime.now();
-      return bTime.compareTo(aTime);
-    });
-
-    // Return last 3 enrollments
-    return enrollments.take(3).toList();
   }
 
   // Helper to aggregate community posts and comments

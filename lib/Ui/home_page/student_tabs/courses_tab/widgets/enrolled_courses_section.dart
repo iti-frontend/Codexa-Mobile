@@ -32,7 +32,7 @@ class EnrolledCoursesSection extends StatelessWidget {
         _buildSectionTitle(theme),
         const SizedBox(height: 16),
         SizedBox(
-          height: 180,
+          height: 260,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             reverse: isRTL,
@@ -112,6 +112,7 @@ class _EnrolledCourseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final coverImageUrl = course.coverImage?['url'] as String?;
 
     return GestureDetector(
       onTap: () {
@@ -139,54 +140,107 @@ class _EnrolledCourseCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment:
-                isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-            children: [
-              // Category badge
-              if (course.category != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.progressIndicatorTheme.color,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    course.category!,
-                    style: TextStyle(
-                      color: theme.iconTheme.color,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: isRTL ? TextAlign.right : TextAlign.left,
+        child: Column(
+          crossAxisAlignment:
+              isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            // Cover Image
+            if (coverImageUrl != null && coverImageUrl.isNotEmpty)
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+                child: Image.network(
+                  coverImageUrl,
+                  height: 80,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 80,
+                      width: double.infinity,
+                      color:
+                          theme.progressIndicatorTheme.color?.withOpacity(0.2),
+                      child: Icon(
+                        Icons.image,
+                        size: 32,
+                        color: theme.progressIndicatorTheme.color,
+                      ),
+                    );
+                  },
+                ),
+              )
+            else
+              Container(
+                height: 80,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: theme.progressIndicatorTheme.color?.withOpacity(0.2),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
                   ),
                 ),
-              const SizedBox(height: 12),
-              // Course title
-              Text(
-                course.title ?? translations.untitledCourse,
-                style: TextStyle(
-                  color: theme.iconTheme.color,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                child: Icon(
+                  Icons.school,
+                  size: 32,
+                  color: theme.progressIndicatorTheme.color,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: isRTL ? TextAlign.right : TextAlign.left,
               ),
-              const SizedBox(height: 8),
-              // Instructor name
-              _buildInstructorRow(theme),
-              const Spacer(),
-              // Continue learning button
-              _buildContinueButton(theme),
-            ],
-          ),
+            // Content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment:
+                      isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  children: [
+                    // Category badge
+                    if (course.category != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.progressIndicatorTheme.color,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          course.category!,
+                          style: TextStyle(
+                            color: theme.iconTheme.color,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                        ),
+                      ),
+                    const SizedBox(height: 6),
+                    // Course title
+                    Text(
+                      course.title ?? translations.untitledCourse,
+                      style: TextStyle(
+                        color: theme.iconTheme.color,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                    ),
+                    const SizedBox(height: 4),
+                    // Instructor name
+                    _buildInstructorRow(theme),
+                    const Spacer(),
+                    // Continue learning button
+                    _buildContinueButton(theme),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

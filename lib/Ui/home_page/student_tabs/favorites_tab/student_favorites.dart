@@ -283,6 +283,8 @@ class _FavouritesViewState extends State<FavouritesView> {
                                           _translations.untitledCourse,
                                       isFavourite: course.isFavourite ?? true,
                                       showFavouriteButton: true,
+                                      coverImageUrl:
+                                          course.coverImage?['url'] as String?,
                                       onFavouriteTap: () {
                                         if (course.id != null) {
                                           context
