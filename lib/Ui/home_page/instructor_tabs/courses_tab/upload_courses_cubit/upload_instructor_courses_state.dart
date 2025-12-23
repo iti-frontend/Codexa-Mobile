@@ -30,3 +30,8 @@ class CourseOperationError extends InstructorCoursesState {
   final String message;
   CourseOperationError(this.message);
 }
+
+class VideoDeletedSuccess extends InstructorCoursesState {
+  final String message;
+  VideoDeletedSuccess(this.message);
+}

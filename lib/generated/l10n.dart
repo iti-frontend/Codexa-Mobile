@@ -227,6 +227,13 @@ class S {
   String get level => _translate('level');
   String get selectLevel => _translate('selectLevel');
   String get updatedAt => _translate('updatedAt');
+  String get existingVideos => _translate('existingVideos');
+  String get newVideos => _translate('newVideos');
+  String get deleteVideo => _translate('deleteVideo');
+  String get confirmDeleteVideo => _translate('confirmDeleteVideo');
+  String get coverImage => _translate('coverImage');
+  String get selectCoverImage => _translate('selectCoverImage');
+  String get changeCoverImage => _translate('changeCoverImage');
 
   // Post Details Screen (Community/Post Details)
   String get post => _translate('post');
@@ -326,7 +333,7 @@ class S {
   String get writeAReview => _translate('writeAReview');
   String get likes => _translate('likes');
   String get beFirstToReview => _translate('beFirstToReview');
-  
+
   String _translate(String key) {
     switch (locale.languageCode) {
       case 'ar':
@@ -528,6 +535,13 @@ class S {
     'level': 'Level',
     'selectLevel': 'Select Level',
     'updatedAt': 'Updated At',
+    'existingVideos': 'Existing Videos',
+    'newVideos': 'New Videos (pending upload)',
+    'deleteVideo': 'Delete Video',
+    'confirmDeleteVideo': 'Are you sure you want to delete this video?',
+    'coverImage': 'Cover Image',
+    'selectCoverImage': 'Select Cover Image',
+    'changeCoverImage': 'Change Cover Image',
 
     // Post Details Screen (Community/Post Details)
     'post': 'Post',
@@ -556,7 +570,8 @@ class S {
     'changeImage': 'Change Image',
     'charactersRemaining': 'characters remaining',
     'deletePost': 'Delete Post',
-    'confirmDeletePost': 'Do you really want to delete this post? This action cannot be undone.',
+    'confirmDeletePost':
+        'Do you really want to delete this post? This action cannot be undone.',
 
     //favorites
     'noFavouritesYet': 'No favourites yet',
@@ -819,6 +834,13 @@ class S {
     'level': 'المستوى',
     'selectLevel': 'اختر مستوي',
     'updatedAt': 'تم التحديث في',
+    'existingVideos': 'الفيديوهات الحالية',
+    'newVideos': 'فيديوهات جديدة (قيد الرفع)',
+    'deleteVideo': 'حذف الفيديو',
+    'confirmDeleteVideo': 'هل أنت متأكد من حذف هذا الفيديو؟',
+    'coverImage': 'صورة الغلاف',
+    'selectCoverImage': 'اختر صورة الغلاف',
+    'changeCoverImage': 'تغيير صورة الغلاف',
 
     // Post Details Screen (Community/Post Details)
     'post': 'منشور',
@@ -847,7 +869,8 @@ class S {
     'changeImage': 'تغيير الصورة',
     'charactersRemaining': 'حروف متبقية',
     'deletePost': 'حذف المنشور',
-    'confirmDeletePost': 'هل أنت متأكد من حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.',
+    'confirmDeletePost':
+        'هل أنت متأكد من حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.',
 
     //favorites
     'noFavouritesYet': 'لا توجد مفضلات بعد',

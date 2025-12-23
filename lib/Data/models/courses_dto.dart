@@ -17,6 +17,7 @@ class CoursesDto extends CourseEntity {
     super.updatedAt,
     super.v,
     super.isFavourite,
+    super.coverImage,
   });
 
   factory CoursesDto.fromJson(Map<String, dynamic> json) {
@@ -45,6 +46,7 @@ class CoursesDto extends CourseEntity {
           ? json['__v'] as int
           : int.tryParse('${json['__v']}'),
       isFavourite: json['isFavourite'] as bool?,
+      coverImage: json['coverImage'] as Map<String, dynamic>?,
     );
   }
 
@@ -66,6 +68,7 @@ class CoursesDto extends CourseEntity {
       'updatedAt': updatedAt,
       '__v': v,
       'isFavourite': isFavourite,
+      'coverImage': coverImage,
     };
   }
 }

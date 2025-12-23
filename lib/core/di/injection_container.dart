@@ -39,6 +39,7 @@ import 'package:codexa_mobile/Domain/usecases/courses/delete_course_usecase.dart
 import 'package:codexa_mobile/Domain/usecases/courses/get_courses_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/update_course_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/update_course_videos_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/courses/delete_video_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/profile/update_student_profile_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/profile/update_instructor_profile_usecase.dart';
 import 'package:codexa_mobile/Domain/usecases/reviews/create_or_update_review_usecase.dart';
@@ -195,6 +196,8 @@ void _registerCoursesUseCases() {
       () => DeleteCourseUseCase(sl<CourseInstructorRepo>()));
   sl.registerLazySingleton(
       () => UploadVideosUseCase(sl<CourseInstructorRepo>()));
+  sl.registerLazySingleton(
+      () => DeleteVideoUseCase(sl<CourseInstructorRepo>()));
 }
 
 void _registerCommunityUseCases() {
@@ -281,6 +284,7 @@ void _registerCubits() {
       updateCourseUseCase: sl<UpdateCourseUseCase>(),
       deleteCourseUseCase: sl<DeleteCourseUseCase>(),
       uploadVideosUseCase: sl<UploadVideosUseCase>(),
+      deleteVideoUseCase: sl<DeleteVideoUseCase>(),
     ),
   );
 

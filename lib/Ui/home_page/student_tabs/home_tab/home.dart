@@ -126,6 +126,7 @@ class _HomeStudentTabState extends State<HomeStudentTab> {
                                 _translations.unknownInstructor,
                             title: course.title ?? _translations.untitledCourse,
                             progress: _calculateProgress(course),
+                            coverImageUrl: course.coverImage?['url'] as String?,
                           ),
                           const SizedBox(height: 12),
                         ],
@@ -292,27 +293,93 @@ class _HomeStudentTabState extends State<HomeStudentTab> {
                     return Center(child: Text(_translations.noCoursesFound));
                   }
                   final randomCourse = (courses..shuffle()).first;
+                  final coverImageUrl =
+                      randomCourse.coverImage?['url'] as String?;
                   return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Cover Image
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: coverImageUrl != null && coverImageUrl.isNotEmpty
+                            ? Image.network(
+                                coverImageUrl,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      color: theme.progressIndicatorTheme.color
+                                          ?.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      Icons.school,
+                                      size: 32,
+                                      color: theme.progressIndicatorTheme.color,
+                                    ),
+                                  );
+                                },
+                              )
+                            : Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: theme.progressIndicatorTheme.color
+                                      ?.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  Icons.school,
+                                  size: 32,
+                                  color: theme.progressIndicatorTheme.color,
+                                ),
+                              ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Title
                             Text(
                               randomCourse.title ?? _translations.unknownCourse,
                               style: TextStyle(
                                 color: theme.iconTheme.color,
                                 fontWeight: FontWeight.bold,
+                                fontSize: 16,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              randomCourse.description ??
-                                  _translations.noDescriptionAvailable,
-                              style: TextStyle(color: theme.iconTheme.color),
+                            const SizedBox(height: 6),
+                            // Instructor Name
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.person_outline,
+                                  size: 16,
+                                  color: theme.dividerTheme.color,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    randomCourse.instructor?.name ??
+                                        _translations.unknownInstructor,
+                                    style: TextStyle(
+                                      color: theme.dividerTheme.color,
+                                      fontSize: 13,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 10),
                             ElevatedButton(
                               onPressed: () {
                                 Navigator.push(

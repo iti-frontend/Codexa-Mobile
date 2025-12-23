@@ -15,6 +15,7 @@ class CourseEntity {
   final String? updatedAt;
   final int? v;
   final bool? isFavourite;
+  final Map<String, dynamic>? coverImage;
 
   CourseEntity({
     this.id,
@@ -31,6 +32,7 @@ class CourseEntity {
     this.updatedAt,
     this.v,
     this.isFavourite,
+    this.coverImage,
   });
 
   CourseEntity copyWith({
@@ -48,6 +50,7 @@ class CourseEntity {
     String? updatedAt,
     int? v,
     bool? isFavourite,
+    Map<String, dynamic>? coverImage,
   }) {
     return CourseEntity(
       id: id ?? this.id,
@@ -64,6 +67,7 @@ class CourseEntity {
       updatedAt: updatedAt ?? this.updatedAt,
       v: v ?? this.v,
       isFavourite: isFavourite ?? this.isFavourite,
+      coverImage: coverImage ?? this.coverImage,
     );
   }
 }
