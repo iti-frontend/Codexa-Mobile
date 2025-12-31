@@ -1,7 +1,7 @@
 import 'package:codexa_mobile/Domain/entities/community_entity.dart';
 import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/posts_state.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_cubit/courses_student_states.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/courses_details.dart';
@@ -13,6 +13,8 @@ import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:codexa_mobile/localization/localization_service.dart';
 import 'package:codexa_mobile/generated/l10n.dart' as generated;
+import 'package:codexa_mobile/Ui/utils/widgets/course_card_skeleton.dart';
+import 'package:codexa_mobile/Ui/utils/widgets/skeleton_shimmer.dart';
 
 class ActivityItemModel {
   final String userName;
@@ -94,7 +96,7 @@ class _HomeStudentTabState extends State<HomeStudentTab> {
             child: BlocBuilder<StudentCoursesCubit, StudentCoursesState>(
               builder: (context, state) {
                 if (state is StudentCoursesLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const DashboardContentSkeleton(itemCount: 3);
                 } else if (state is StudentCoursesLoaded) {
                   final courses = state.courses;
 
@@ -120,10 +122,11 @@ class _HomeStudentTabState extends State<HomeStudentTab> {
                       return Column(
                         children: [
                           CourseProgressItem(
-                            instructorName:
-                            course.instructor?.name ?? _translations.unknownInstructor,
+                            instructorName: course.instructor?.name ??
+                                _translations.unknownInstructor,
                             title: course.title ?? _translations.untitledCourse,
                             progress: _calculateProgress(course),
+                            coverImageUrl: course.coverImage?['url'] as String?,
                           ),
                           const SizedBox(height: 12),
                         ],
@@ -142,7 +145,7 @@ class _HomeStudentTabState extends State<HomeStudentTab> {
             child: BlocBuilder<CommunityPostsCubit, CommunityPostsState>(
               builder: (context, state) {
                 if (state is CommunityPostsLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const DashboardContentSkeleton(itemCount: 5);
                 } else if (state is CommunityPostsLoaded) {
                   final allActivities = _aggregateActivities(state.posts);
 
@@ -219,8 +222,7 @@ class _HomeStudentTabState extends State<HomeStudentTab> {
                           courses.where((c) => c.title == title).first.level;
                       return SkillCard(
                         title: title!,
-                        level: level ??
-                            "",
+                        level: level ?? "",
                         progress: progress,
                       );
                     }).toList(),
@@ -272,7 +274,11 @@ class _HomeStudentTabState extends State<HomeStudentTab> {
             child: BlocBuilder<StudentCoursesCubit, StudentCoursesState>(
               builder: (context, state) {
                 if (state is StudentCoursesLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const DelayedLoadingIndicator(
+                    delay: Duration(milliseconds: 350),
+                    placeholder: DashboardContentSkeleton(itemCount: 1),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
                 } else if (state is StudentCoursesError) {
                   return Center(
                     child: Text(
@@ -287,27 +293,93 @@ class _HomeStudentTabState extends State<HomeStudentTab> {
                     return Center(child: Text(_translations.noCoursesFound));
                   }
                   final randomCourse = (courses..shuffle()).first;
+                  final coverImageUrl =
+                      randomCourse.coverImage?['url'] as String?;
                   return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Cover Image
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: coverImageUrl != null && coverImageUrl.isNotEmpty
+                            ? Image.network(
+                                coverImageUrl,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      color: theme.progressIndicatorTheme.color
+                                          ?.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      Icons.school,
+                                      size: 32,
+                                      color: theme.progressIndicatorTheme.color,
+                                    ),
+                                  );
+                                },
+                              )
+                            : Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: theme.progressIndicatorTheme.color
+                                      ?.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  Icons.school,
+                                  size: 32,
+                                  color: theme.progressIndicatorTheme.color,
+                                ),
+                              ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Title
                             Text(
                               randomCourse.title ?? _translations.unknownCourse,
                               style: TextStyle(
                                 color: theme.iconTheme.color,
                                 fontWeight: FontWeight.bold,
+                                fontSize: 16,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              randomCourse.description ??
-                                  _translations.noDescriptionAvailable,
-                              style: TextStyle(color: theme.iconTheme.color),
+                            const SizedBox(height: 6),
+                            // Instructor Name
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.person_outline,
+                                  size: 16,
+                                  color: theme.dividerTheme.color,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    randomCourse.instructor?.name ??
+                                        _translations.unknownInstructor,
+                                    style: TextStyle(
+                                      color: theme.dividerTheme.color,
+                                      fontSize: 13,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 10),
                             ElevatedButton(
                               onPressed: () {
                                 Navigator.push(

@@ -28,7 +28,7 @@ class S {
     if (inherited == null) {
       throw FlutterError(
           'S.of() called with a context that does not contain S. '
-              'Make sure your widget is wrapped in MaterialApp or Localizations widget.');
+          'Make sure your widget is wrapped in MaterialApp or Localizations widget.');
     }
     return inherited.localizations;
   }
@@ -142,6 +142,7 @@ class S {
   String get communityActivity => _translate('communityActivity');
   String get postsAndEngagement => _translate('postsAndEngagement');
   String get noCommunityActivityYet => _translate('noCommunityActivityYet');
+  String get noChangesDetected => _translate('noChangesDetected');
 
   // Placeholders
   String get usernamePlaceholder => _translate('usernamePlaceholder');
@@ -166,7 +167,8 @@ class S {
   String get recentActivity => _translate('recentActivity');
   String get noRecentEnrollments => _translate('noRecentEnrollments');
   String get recently => _translate('recently');
-  String get enrolledIn => _translate('enrolledIn');  String get noCommunityActivity => _translate('noCommunityActivity');
+  String get enrolledIn => _translate('enrolledIn');
+  String get noCommunityActivity => _translate('noCommunityActivity');
   String get failedToLoadActivity => _translate('failedToLoadActivity');
   String get posted => _translate('posted');
   String get commentedOn => _translate('commentedOn');
@@ -178,7 +180,8 @@ class S {
   String get unknownInstructor => _translate('unknownInstructor');
   String get untitledCourse => _translate('untitledCourse');
   String get skillDevelopment => _translate('skillDevelopment');
-  String get enrollInCoursesToDevelopSkills => _translate('enrollInCoursesToDevelopSkills');
+  String get enrollInCoursesToDevelopSkills =>
+      _translate('enrollInCoursesToDevelopSkills');
   String get learners => _translate('learners');
   String get companies => _translate('companies');
   String get recommendedForYou => _translate('recommendedForYou');
@@ -222,7 +225,15 @@ class S {
   String get enrolledStudents => _translate('enrolledStudents');
   String get price => _translate('price');
   String get level => _translate('level');
+  String get selectLevel => _translate('selectLevel');
   String get updatedAt => _translate('updatedAt');
+  String get existingVideos => _translate('existingVideos');
+  String get newVideos => _translate('newVideos');
+  String get deleteVideo => _translate('deleteVideo');
+  String get confirmDeleteVideo => _translate('confirmDeleteVideo');
+  String get coverImage => _translate('coverImage');
+  String get selectCoverImage => _translate('selectCoverImage');
+  String get changeCoverImage => _translate('changeCoverImage');
 
   // Post Details Screen (Community/Post Details)
   String get post => _translate('post');
@@ -247,6 +258,11 @@ class S {
   String get seeMoreComments => _translate('seeMoreComments');
   String get loadingComments => _translate('loadingComments');
   String get noMoreComments => _translate('noMoreComments');
+  String get addImage => _translate('addImage');
+  String get changeImage => _translate('changeImage');
+  String get charactersRemaining => _translate('charactersRemaining');
+  String get deletePost => _translate('deletePost');
+  String get confirmDeletePost => _translate('confirmDeletePost');
 
   //favorites
   String get noFavouritesYet => _translate('noFavouritesYet');
@@ -267,10 +283,56 @@ class S {
   String get paymentFeatureComingSoon => _translate('paymentFeatureComingSoon');
   String get proceedToPayment => _translate('proceedToPayment');
 
+  // Payment
+  String get securePayment => _translate('securePayment');
+  String get loadingPaymentPage => _translate('loadingPaymentPage');
+  String get cancelPayment => _translate('cancelPayment');
+  String get cancelPaymentConfirmation =>
+      _translate('cancelPaymentConfirmation');
+  String get yes => _translate('yes');
+  String get no => _translate('no');
+  String get paymentSuccessful => _translate('paymentSuccessful');
+  String get paymentFailed => _translate('paymentFailed');
+  String get paymentCancelled => _translate('paymentCancelled');
+  String get verifyingPayment => _translate('verifyingPayment');
+  String get enrolledSuccessfully => _translate('enrolledSuccessfully');
+  String get viewMyCourses => _translate('viewMyCourses');
+  String get paymentError => _translate('paymentError');
+
   //search
   String get tryDifferentKeywords => _translate('tryDifferentKeywords');
   String get searchForCourses => _translate('searchForCourses');
 
+  // Course Reviews
+  String get courseReviews => _translate('courseReviews');
+  String get instructorReviews => _translate('instructorReviews');
+// Reviews and Ratings
+  String get reviews => _translate('reviews');
+  String get anonymous => _translate('anonymous');
+  String get you => _translate('you');
+  String get addReview => _translate('addReview');
+  String get yourReview => _translate('yourReview');
+  String get noReviewsYet => _translate('noReviewsYet');
+  String get editReview => _translate('editReview');
+  String get deleteReview => _translate('deleteReview');
+  String get rating => _translate('rating');
+  String get review => _translate('review');
+  String get averageRating => _translate('averageRating');
+  String get stars => _translate('stars');
+  String get star => _translate('star');
+  String get reviewTitle => _translate('reviewTitle');
+  String get reviewComment => _translate('reviewComment');
+  String get submitReview => _translate('submitReview');
+  String get reviewSubmitted => _translate('reviewSubmitted');
+  String get reviewUpdated => _translate('reviewUpdated');
+  String get reviewDeleted => _translate('reviewDeleted');
+  String get confirmDeleteReview => _translate('confirmDeleteReview');
+  String get writeYourReview => _translate('writeYourReview');
+  String get selectRating => _translate('selectRating');
+  String get editYourReview => _translate('editYourReview');
+  String get writeAReview => _translate('writeAReview');
+  String get likes => _translate('likes');
+  String get beFirstToReview => _translate('beFirstToReview');
 
   String _translate(String key) {
     switch (locale.languageCode) {
@@ -379,6 +441,7 @@ class S {
     'noCommunityActivityYet': 'No community posts yet',
     'errorLoadingPosts': 'Error loading posts',
     'somethingWentWrong': 'Something went wrong',
+    'noChangesDetected': 'No changes detected',
 
     // Placeholders
     'usernamePlaceholder': 'username@gmail.com',
@@ -470,7 +533,15 @@ class S {
     'enrolledStudents': 'Enrolled Students',
     'price': 'Price',
     'level': 'Level',
+    'selectLevel': 'Select Level',
     'updatedAt': 'Updated At',
+    'existingVideos': 'Existing Videos',
+    'newVideos': 'New Videos (pending upload)',
+    'deleteVideo': 'Delete Video',
+    'confirmDeleteVideo': 'Are you sure you want to delete this video?',
+    'coverImage': 'Cover Image',
+    'selectCoverImage': 'Select Cover Image',
+    'changeCoverImage': 'Change Cover Image',
 
     // Post Details Screen (Community/Post Details)
     'post': 'Post',
@@ -495,6 +566,12 @@ class S {
     'seeMoreComments': 'See more comments',
     'loadingComments': 'Loading comments...',
     'noMoreComments': 'No more comments',
+    'addImage': 'Add Image',
+    'changeImage': 'Change Image',
+    'charactersRemaining': 'characters remaining',
+    'deletePost': 'Delete Post',
+    'confirmDeletePost':
+        'Do you really want to delete this post? This action cannot be undone.',
 
     //favorites
     'noFavouritesYet': 'No favourites yet',
@@ -515,10 +592,55 @@ class S {
     'paymentFeatureComingSoon': 'Payment feature coming soon!',
     'proceedToPayment': 'Proceed to Payment',
 
+    // Payment
+    'securePayment': 'Secure Payment',
+    'loadingPaymentPage': 'Loading payment page...',
+    'cancelPayment': 'Cancel Payment',
+    'cancelPaymentConfirmation':
+        'Are you sure you want to cancel this payment?',
+    'yes': 'Yes',
+    'no': 'No',
+    'paymentSuccessful': 'Payment Successful!',
+    'paymentFailed': 'Payment Failed',
+    'paymentCancelled': 'Payment was cancelled',
+    'verifyingPayment': 'Verifying payment...',
+    'enrolledSuccessfully': 'You are now enrolled in the courses!',
+    'viewMyCourses': 'View My Courses',
+    'paymentError': 'Payment error occurred',
+
     //search
     'tryDifferentKeywords': 'Try different keywords or check back later',
     'searchForCourses': 'Search for courses',
 
+    // course reviews
+    'courseReviews': 'Course Reviews',
+    'instructorReviews': 'Instructor Reviews',
+    'addReview': 'Add Review',
+    'yourReview': 'Your Review',
+    'noReviewsYet': 'No reviews yet',
+    'beFirstToReview': 'Be the first to review',
+    'editReview': 'Edit Review',
+    'deleteReview': 'Delete Review',
+    'rating': 'Rating',
+    'review': 'Review',
+    'reviews': 'Reviews',
+    'averageRating': 'Average Rating',
+    'stars': 'stars',
+    'star': 'star',
+    'reviewTitle': 'Review Title',
+    'reviewComment': 'Review Comment',
+    'submitReview': 'Submit Review',
+    'reviewSubmitted': 'Review submitted successfully',
+    'reviewUpdated': 'Review updated successfully',
+    'reviewDeleted': 'Review deleted successfully',
+    'confirmDeleteReview': 'Are you sure you want to delete this review?',
+    'writeYourReview': 'Write your review here...',
+    'selectRating': 'Select a rating',
+    'anonymous': 'Anonymous',
+    'you': 'You',
+    'likes': 'likes',
+    'writeAReview': 'Write a review',
+    'editYourReview': 'Edit your review',
   };
 
   static final Map<String, String> _arabicTranslations = {
@@ -618,6 +740,7 @@ class S {
     'postsAndEngagement': 'المشاركات والتفاعل في المجتمع',
     'noCommunityActivityYet': 'لا توجد مشاركات مجتمعية بعد',
     'errorLoadingPosts': 'خطأ في تحميل المشاركات',
+    'noChangesDetected': 'لم يتم اكتشاف أي تغييرات',
 
     // Placeholders
     'usernamePlaceholder': 'اسم المستخدم@gmail.com',
@@ -709,7 +832,15 @@ class S {
     'enrolledStudents': 'الطلاب المسجلون',
     'price': 'السعر',
     'level': 'المستوى',
+    'selectLevel': 'اختر مستوي',
     'updatedAt': 'تم التحديث في',
+    'existingVideos': 'الفيديوهات الحالية',
+    'newVideos': 'فيديوهات جديدة (قيد الرفع)',
+    'deleteVideo': 'حذف الفيديو',
+    'confirmDeleteVideo': 'هل أنت متأكد من حذف هذا الفيديو؟',
+    'coverImage': 'صورة الغلاف',
+    'selectCoverImage': 'اختر صورة الغلاف',
+    'changeCoverImage': 'تغيير صورة الغلاف',
 
     // Post Details Screen (Community/Post Details)
     'post': 'منشور',
@@ -734,6 +865,12 @@ class S {
     'seeMoreComments': 'رؤية المزيد من التعليقات',
     'loadingComments': 'جاري تحميل التعليقات...',
     'noMoreComments': 'لا يوجد المزيد من التعليقات',
+    'addImage': 'إضافة صورة',
+    'changeImage': 'تغيير الصورة',
+    'charactersRemaining': 'حروف متبقية',
+    'deletePost': 'حذف المنشور',
+    'confirmDeletePost':
+        'هل أنت متأكد من حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.',
 
     //favorites
     'noFavouritesYet': 'لا توجد مفضلات بعد',
@@ -754,10 +891,54 @@ class S {
     'paymentFeatureComingSoon': 'ميزة الدفع قريباً!',
     'proceedToPayment': 'تابع للدفع',
 
+    // Payment
+    'securePayment': 'دفع آمن',
+    'loadingPaymentPage': 'جاري تحميل صفحة الدفع...',
+    'cancelPayment': 'إلغاء الدفع',
+    'cancelPaymentConfirmation': 'هل أنت متأكد من إلغاء هذا الدفع؟',
+    'yes': 'نعم',
+    'no': 'لا',
+    'paymentSuccessful': 'تم الدفع بنجاح!',
+    'paymentFailed': 'فشل الدفع',
+    'paymentCancelled': 'تم إلغاء الدفع',
+    'verifyingPayment': 'جاري التحقق من الدفع...',
+    'enrolledSuccessfully': 'أنت مسجل الآن في الدورات!',
+    'viewMyCourses': 'عرض دوراتي',
+    'paymentError': 'حدث خطأ في الدفع',
+
     //search
     'tryDifferentKeywords': 'جرب كلمات مفتاحية مختلفة أو تحقق لاحقاً',
     'searchForCourses': 'ابحث عن الدورات',
 
+    //course reviews
+    'courseReviews': 'تقييمات الدورة',
+    'instructorReviews': 'تقييمات المدرس',
+    'addReview': 'إضافة تقييم',
+    'yourReview': 'تقييمك',
+    'noReviewsYet': 'لا توجد تقييمات بعد',
+    'beFirstToReview': 'كن أول من يقيم',
+    'editReview': 'تعديل التقييم',
+    'deleteReview': 'حذف التقييم',
+    'rating': 'التقييم',
+    'review': 'تقييم',
+    'reviews': 'التقييمات',
+    'averageRating': 'متوسط التقييم',
+    'stars': 'نجوم',
+    'star': 'نجمة',
+    'reviewTitle': 'عنوان التقييم',
+    'reviewComment': 'تعليق التقييم',
+    'submitReview': 'إرسال التقييم',
+    'reviewSubmitted': 'تم إرسال التقييم بنجاح',
+    'reviewUpdated': 'تم تحديث التقييم بنجاح',
+    'reviewDeleted': 'تم حذف التقييم بنجاح',
+    'confirmDeleteReview': 'هل أنت متأكد من حذف هذا التقييم؟',
+    'writeYourReview': 'اكتب تقييمك هنا...',
+    'selectRating': 'اختر تقييماً',
+    'anonymous': 'مجهول',
+    'you': 'أنت',
+    'likes': 'إعجابات',
+    'writeAReview': 'اكتب تقييم',
+    'editYourReview': 'عدل تقييمك',
   };
 }
 

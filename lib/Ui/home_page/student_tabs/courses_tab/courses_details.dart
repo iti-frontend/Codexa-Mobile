@@ -1,7 +1,4 @@
 import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
-import 'package:codexa_mobile/Ui/home_page/additional_screens/video_player_course.dart';
-import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/cart_feature/cubit/cart_state.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/reviews_cubit/review_cubit.dart';
 import 'package:codexa_mobile/Ui/home_page/student_tabs/courses_tab/widgets/reviews_section.dart';
 import 'package:codexa_mobile/Ui/utils/provider_ui/auth_provider.dart';
@@ -12,6 +9,11 @@ import 'package:provider/provider.dart';
 import 'package:codexa_mobile/localization/localization_service.dart';
 import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
+// Widget imports
+import 'widgets/course_detail_items.dart';
+import 'widgets/video_item_card.dart';
+import 'widgets/cart_action_button.dart';
+
 class CourseDetailsWrapper extends StatelessWidget {
   final CourseEntity course;
 
@@ -19,11 +21,7 @@ class CourseDetailsWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Provide ReviewCubit for this screen
-    return BlocProvider(
-      create: (_) => sl<ReviewCubit>(),
-      child: CourseDetails(course: course),
-    );
+    return CourseDetails(course: course);
   }
 }
 
@@ -39,7 +37,7 @@ class CourseDetails extends StatefulWidget {
 class _CourseDetailsState extends State<CourseDetails> {
   late CourseEntity _currentCourse;
   bool _isEnrolled = false;
-  late LocalizationService _localizationService;
+  late Locale _currentLocale;
   late generated.S _translations;
 
   @override
@@ -51,17 +49,15 @@ class _CourseDetailsState extends State<CourseDetails> {
   }
 
   void _initializeLocalization() {
-    _localizationService = LocalizationService();
-    _translations = generated.S(_localizationService.locale);
-    _localizationService.addListener(_onLocaleChanged);
+    // Get locale directly from LocalizationService
+    final localizationService = LocalizationService();
+    _currentLocale = localizationService.locale;
+    _translations = generated.S(_currentLocale);
   }
 
-  void _onLocaleChanged() {
-    if (mounted) {
-      setState(() {
-        _translations = generated.S(_localizationService.locale);
-      });
-    }
+  // Check if current locale is RTL
+  bool _isRTL() {
+    return _currentLocale.languageCode == 'ar';
   }
 
   void _checkEnrollmentStatus() {
@@ -70,7 +66,7 @@ class _CourseDetailsState extends State<CourseDetails> {
 
     if (userId != null && _currentCourse.enrolledStudents != null) {
       setState(() =>
-          _isEnrolled = _currentCourse.enrolledStudents!.contains(userId));
+      _isEnrolled = _currentCourse.enrolledStudents!.contains(userId));
     }
   }
 
@@ -88,13 +84,15 @@ class _CourseDetailsState extends State<CourseDetails> {
     if (date == null) return _translations.notAvailable;
     final dt = DateTime.tryParse(date);
     if (dt == null) return date;
-    return "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}";
-  }
 
-  @override
-  void dispose() {
-    _localizationService.removeListener(_onLocaleChanged);
-    super.dispose();
+    // Format based on locale
+    if (_isRTL()) {
+      // Arabic/Islamic date format for RTL
+      return "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}";
+    } else {
+      // Default format for LTR
+      return "${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}/${dt.year}";
+    }
   }
 
   @override
@@ -102,25 +100,34 @@ class _CourseDetailsState extends State<CourseDetails> {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final isInstructor = userProvider.role == 'instructor';
     final theme = Theme.of(context);
-    final isRTL = _localizationService.isRTL();
+    final isRTL = _isRTL();
 
-    return Directionality(
-      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(_currentCourse.title ?? _translations.courseDetails),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          foregroundColor: theme.colorScheme.onBackground,
-        ),
-        body: SingleChildScrollView(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_currentCourse.title ?? _translations.courseDetails),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: theme.colorScheme.onBackground,
+      ),
+      bottomNavigationBar: (isInstructor || _isEnrolled)
+          ? null
+          : CartActionButton(
+        course: _currentCourse,
+        translations: _translations,
+      ),
+      body: Directionality(
+        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment:
-                isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _sectionTitle(Icons.article_outlined, _translations.description,
-                  theme, isRTL),
+              // Description Section
+              SectionTitle(
+                icon: Icons.article_outlined,
+                title: _translations.description,
+                isRTL: isRTL,
+              ),
               const SizedBox(height: 10),
               Text(
                 _currentCourse.description?.isNotEmpty == true
@@ -131,223 +138,102 @@ class _CourseDetailsState extends State<CourseDetails> {
                   height: 1.6,
                 ),
                 textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
               ),
               const SizedBox(height: 25),
               const Divider(),
-              _buildDetailItem(
-                  Icons.category_outlined,
-                  _translations.category,
-                  _currentCourse.category ?? _translations.noCategory,
-                  theme,
-                  isRTL),
+
+              // Detail Items
+              DetailItem(
+                icon: Icons.category_outlined,
+                title: _translations.category,
+                value: _currentCourse.category ?? _translations.noCategory,
+                isRTL: isRTL,
+              ),
               const SizedBox(height: 20),
-              _buildDetailItem(Icons.attach_money_outlined, _translations.price,
-                  "\$${_currentCourse.price ?? 0}", theme, isRTL,
-                  valueColor: theme.progressIndicatorTheme.color),
+              DetailItem(
+                icon: Icons.attach_money_outlined,
+                title: _translations.price,
+                value: "\$${_currentCourse.price ?? 0}",
+                valueColor: theme.progressIndicatorTheme.color,
+                isRTL: isRTL,
+              ),
               const SizedBox(height: 20),
-              _buildDetailItem(
-                  Icons.stacked_bar_chart,
-                  _translations.level,
-                  _currentCourse.level ?? _translations.notAvailable,
-                  theme,
-                  isRTL,
-                  valueColor: theme.iconTheme.color),
+              DetailItem(
+                icon: Icons.stacked_bar_chart,
+                title: _translations.level,
+                value: _currentCourse.level ?? _translations.notAvailable,
+                valueColor: theme.iconTheme.color,
+                isRTL: isRTL,
+              ),
               const SizedBox(height: 25),
               const Divider(),
+
+              // Instructor Section
               if (_currentCourse.instructor != null)
-                Column(
-                  crossAxisAlignment:
-                      isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                  children: [
-                    _sectionTitle(Icons.person_outline,
-                        _translations.instructor, theme, isRTL),
-                    const SizedBox(height: 10),
-                    Text(
-                      _currentCourse.instructor!.name ??
-                          _translations.notAvailable,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.iconTheme.color,
-                      ),
-                      textAlign: isRTL ? TextAlign.right : TextAlign.left,
-                    ),
-                    Text(
-                      _currentCourse.instructor!.email ??
-                          _translations.notAvailable,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: theme.iconTheme.color),
-                      textAlign: isRTL ? TextAlign.right : TextAlign.left,
-                    ),
-                    const SizedBox(height: 25),
-                    const Divider(),
-                  ],
-                ),
-              _sectionTitle(Icons.play_circle_outline, _translations.videos,
-                  theme, isRTL),
-              const SizedBox(height: 10),
-              if (_currentCourse.videos != null &&
-                  _currentCourse.videos!.isNotEmpty)
-                Column(
-                  crossAxisAlignment:
-                      isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                  children: _currentCourse.videos!.map((video) {
-                    final v = video as Map<String, dynamic>;
-                    final videoUrl = v['url'] ?? '';
-                    final videoTitle =
-                        v['title'] ?? _translations.untitledVideo;
+                _buildInstructorSection(theme, isInstructor, userProvider, isRTL),
 
-                    return _buildVideoItem(
-                      videoTitle: videoTitle,
-                      videoUrl: videoUrl,
-                      isLocked: !_isEnrolled && !isInstructor,
-                      theme: theme,
-                      isRTL: isRTL,
-                    );
-                  }).toList(),
-                )
-              else
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    child: Text(
-                      _translations.noVideosAvailable,
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(color: theme.iconTheme.color),
-                      textAlign: isRTL ? TextAlign.right : TextAlign.center,
-                    ),
-                  ),
-                ),
+              // Videos Section
+              SectionTitle(
+                icon: Icons.play_circle_outline,
+                title: _translations.videos,
+                isRTL: isRTL,
+              ),
+              const SizedBox(height: 10),
+              _buildVideosSection(theme, isInstructor, isRTL),
               const SizedBox(height: 25),
               const Divider(),
-              _buildDetailItem(
-                  Icons.people_outline,
-                  _translations.enrolledStudents,
-                  "${_currentCourse.enrolledStudents?.length ?? 0} ${_translations.students}",
-                  theme,
-                  isRTL),
+
+              // Enrolled Students
+              DetailItem(
+                icon: Icons.people_outline,
+                title: _translations.enrolledStudents,
+                value:
+                "${_currentCourse.enrolledStudents?.length ?? 0} ${_translations.students}",
+                isRTL: isRTL,
+              ),
               const SizedBox(height: 25),
-              _buildDetailItem(
-                  Icons.access_time_outlined,
-                  _translations.createdAt,
-                  formatDate(_currentCourse.createdAt),
-                  theme,
-                  isRTL),
+
+              // Dates
+              DetailItem(
+                icon: Icons.access_time_outlined,
+                title: _translations.createdAt,
+                value: formatDate(_currentCourse.createdAt),
+                isRTL: isRTL,
+              ),
               const SizedBox(height: 10),
-              _buildDetailItem(Icons.update, _translations.updatedAt,
-                  formatDate(_currentCourse.updatedAt), theme, isRTL),
-              if (!isInstructor && !_isEnrolled) ...[
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: double.infinity,
-                  child: BlocConsumer<CartCubit, CartState>(
-                    listener: (context, state) {
-                      if (state is AddToCartSuccess) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: Colors.green,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      } else if (state is AddToCartError) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: Colors.red,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      } else if (state is RemoveFromCartSuccess) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: Colors.orange,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      } else if (state is RemoveFromCartError) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: Colors.red,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    },
-                    builder: (context, state) {
-                      final cubit = context.read<CartCubit>();
-                      final isInCart = cubit.currentCart?.items?.any(
-                              (item) => item.courseId == _currentCourse.id) ??
-                          false;
-                      final isLoading = state is CartLoading;
-
-                      return ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isInCart
-                              ? Colors.red.shade400
-                              : theme.progressIndicatorTheme.color,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                        onPressed: isLoading
-                            ? null
-                            : () {
-                                if (isInCart) {
-                                  cubit.removeFromCart(_currentCourse.id!);
-                                } else {
-                                  cubit.addToCart(_currentCourse.id!);
-                                }
-                              },
-                        child: isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                    color: Colors.white, strokeWidth: 2),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    isInCart
-                                        ? Icons.remove_shopping_cart
-                                        : Icons.add_shopping_cart,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    isInCart
-                                        ? _translations.removeFromCart
-                                        : _translations.addToCart,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.3,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-
-              // Reviews Section
+              DetailItem(
+                icon: Icons.update,
+                title: _translations.updatedAt,
+                value: formatDate(_currentCourse.updatedAt),
+                isRTL: isRTL,
+              ),
               const SizedBox(height: 30),
               const Divider(),
+
+              // Course Reviews Section
               const SizedBox(height: 20),
-              ReviewsSection(
-                itemId: _currentCourse.id ?? '',
-                itemType: 'Course',
-                isInstructor: isInstructor,
-                currentUserId: _getUserId(userProvider.user),
-                theme: theme,
-                isRTL: isRTL,
+              Text(
+                _translations.courseReviews,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.iconTheme.color,
+                ),
+                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+              ),
+              const SizedBox(height: 10),
+              BlocProvider(
+                create: (_) => sl<ReviewCubit>(),
+                child: ReviewsSection(
+                  itemId: _currentCourse.id ?? '',
+                  itemType: 'Course',
+                  isInstructor: isInstructor,
+                  isEnrolled: _isEnrolled,
+                  currentUserId: _getUserId(userProvider.user),
+                  theme: theme,
+                  translations: _translations,
+                ),
               ),
               const SizedBox(height: 40),
             ],
@@ -357,200 +243,106 @@ class _CourseDetailsState extends State<CourseDetails> {
     );
   }
 
-  Widget _buildVideoItem({
-    required String videoTitle,
-    required String videoUrl,
-    required bool isLocked,
-    required ThemeData theme,
-    required bool isRTL,
-  }) {
-    return Card(
-      elevation: isLocked ? 0 : 2,
-      color: isLocked
-          ? theme.dividerTheme.color?.withOpacity(0.1)
-          : theme.cardTheme.color,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: isLocked
-              ? theme.dividerTheme.color?.withOpacity(0.2)
-              : theme.progressIndicatorTheme.color?.withOpacity(0.1),
-          child: Icon(
-            isLocked ? Icons.lock_outline : Icons.play_arrow_rounded,
-            color: isLocked
-                ? theme.dividerTheme.color
-                : theme.progressIndicatorTheme.color,
+  Widget _buildInstructorSection(
+      ThemeData theme, bool isInstructor, UserProvider userProvider, bool isRTL) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionTitle(
+          icon: Icons.person_outline,
+          title: _translations.instructor,
+          isRTL: isRTL,
+        ),
+        const SizedBox(height: 10),
+        Text(
+          _currentCourse.instructor!.name ?? _translations.notAvailable,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.iconTheme.color,
+          ),
+          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        Text(
+          _currentCourse.instructor!.email ?? _translations.notAvailable,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.iconTheme.color,
+          ),
+          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        const SizedBox(height: 10),
+        // Instructor Reviews Expansion Tile
+        Card(
+          elevation: 0,
+          color: theme.dividerTheme.color?.withOpacity(0.05),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(color: theme.dividerTheme.color!.withOpacity(0.2)),
+          ),
+          child: Directionality(
+            textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+            child: ExpansionTile(
+              leading: Icon(Icons.star_rate_rounded, color: Colors.amber),
+              title: Text(
+                _translations.instructorReviews,
+                textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+              ),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: BlocProvider(
+                    create: (_) => sl<ReviewCubit>(),
+                    child: ReviewsSection(
+                      itemId: _currentCourse.instructor!.id ?? '',
+                      itemType: 'Instructor',
+                      isInstructor: isInstructor,
+                      isEnrolled: _isEnrolled,
+                      currentUserId: _getUserId(userProvider.user),
+                      theme: theme,
+                      translations: _translations,
+                    ),
+                  ),
+                )
+              ],
+            ),
           ),
         ),
-        title: Text(
-          videoTitle,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(color: theme.iconTheme.color),
-          textAlign: isRTL ? TextAlign.right : TextAlign.left,
-        ),
-        subtitle: isLocked
-            ? Text(
-                _translations.enrollToUnlock,
-                style: TextStyle(
-                  fontStyle: FontStyle.italic,
-                  color: theme.iconTheme.color?.withOpacity(0.6),
-                ),
-                textAlign: isRTL ? TextAlign.right : TextAlign.left,
-              )
-            : null,
-        trailing: isLocked
-            ? Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: theme.progressIndicatorTheme.color?.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color:
-                        theme.progressIndicatorTheme.color?.withOpacity(0.3) ??
-                            Colors.blue,
-                  ),
-                ),
-                child: Text(
-                  _translations.locked,
-                  style: TextStyle(
-                    color: theme.progressIndicatorTheme.color,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              )
-            : ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.progressIndicatorTheme.color,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: () {
-                  if (videoUrl.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(_translations.videoUrlEmpty)),
-                    );
-                    return;
-                  }
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => VideoPlayerScreen(url: videoUrl),
-                    ),
-                  );
-                },
-                child: Text(
-                  _translations.watch,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-      ),
+        const SizedBox(height: 25),
+        const Divider(),
+      ],
     );
   }
 
-  Widget _sectionTitle(
-      IconData icon, String title, ThemeData theme, bool isRTL) {
-    return Row(
-      children: isRTL
-          ? [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: theme.iconTheme.color,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
-            ]
-          : [
-              Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: theme.iconTheme.color,
-                ),
-              ),
-            ],
-    );
-  }
-
-  Widget _buildDetailItem(
-      IconData icon, String title, String value, ThemeData theme, bool isRTL,
-      {Color? valueColor}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
+  Widget _buildVideosSection(ThemeData theme, bool isInstructor, bool isRTL) {
+    if (_currentCourse.videos != null && _currentCourse.videos!.isNotEmpty) {
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-        children: isRTL
-            ? [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: theme.iconTheme.color,
-                        ),
-                        textAlign: TextAlign.right,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: valueColor ?? theme.iconTheme.color,
-                          height: 1.4,
-                        ),
-                        textAlign: TextAlign.right,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
-              ]
-            : [
-                Icon(icon, color: theme.progressIndicatorTheme.color, size: 22),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: theme.iconTheme.color,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: valueColor ?? theme.iconTheme.color,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+        children: _currentCourse.videos!.map((video) {
+          final v = video as Map<String, dynamic>;
+          final videoUrl = v['url'] ?? '';
+          final videoTitle = v['title'] ?? _translations.untitledVideo;
+
+          return VideoItemCard(
+            videoTitle: videoTitle,
+            videoUrl: videoUrl,
+            isLocked: !_isEnrolled && !isInstructor,
+            translations: _translations,
+          );
+        }).toList(),
+      );
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Text(
+          _translations.noVideosAvailable,
+          style: theme.textTheme.bodyMedium
+              ?.copyWith(color: theme.iconTheme.color),
+          textAlign: isRTL ? TextAlign.center : TextAlign.center,
+          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
       ),
     );
   }

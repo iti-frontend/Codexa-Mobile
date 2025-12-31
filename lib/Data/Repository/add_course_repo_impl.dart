@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:codexa_mobile/Data/constants/api_constants.dart';
@@ -21,7 +22,10 @@ class CourseInstructorRepoImpl implements CourseInstructorRepo {
         'description': course.description,
         'category': course.category,
         'price': course.price ?? 0,
+        // Videos are typically uploaded separately or might be empty here
         'videos': course.videos ?? [],
+        if (course.level != null)
+          'level': course.level, // Add level if available
       };
 
       final response = await apiManager.postData(
@@ -30,7 +34,38 @@ class CourseInstructorRepoImpl implements CourseInstructorRepo {
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        return Right(course);
+        // Parse the Created Course from response to get the ID
+        var data = response.data;
+
+        // Ensure data is decocoded if it's a String (some backends return stringified JSON)
+        if (data is String) {
+          try {
+            data = jsonDecode(data);
+          } catch (e) {
+            // If decoding fails, it might be a plain string message or error
+            return Left(
+                Failures(errorMessage: 'Invalid server response format'));
+          }
+        }
+
+        // Check if data is wrapped in 'data' key or is directly the object
+        final courseData =
+            (data is Map && data.containsKey('data')) ? data['data'] : data;
+
+        if (courseData is! Map<String, dynamic>) {
+          // Fallback: If we still don't have a Map, look for an 'id' or just return failure
+          // Or maybe cast it if it's Map<dynamic, dynamic>
+          if (courseData is Map) {
+            return Right(
+                CoursesDto.fromJson(Map<String, dynamic>.from(courseData)));
+          }
+          return Left(Failures(
+              errorMessage:
+                  'Unexpected response format: ${courseData.runtimeType}'));
+        }
+
+        final createdCourse = CoursesDto.fromJson(courseData);
+        return Right(createdCourse);
       } else {
         return Left(Failures(
           errorMessage:
@@ -177,6 +212,31 @@ class CourseInstructorRepoImpl implements CourseInstructorRepo {
         return Left(Failures(
           errorMessage: response.data?['message']?.toString() ??
               'Failed to upload course videos',
+        ));
+      }
+    } catch (e) {
+      return Left(Failures(errorMessage: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failures, void>> deleteVideo(
+      String courseId, String videoId) async {
+    if (courseId.isEmpty || videoId.isEmpty) {
+      return Left(Failures(errorMessage: 'Course ID or Video ID is empty'));
+    }
+
+    try {
+      final response = await apiManager.deleteData(
+        ApiConstants.courseInstructorVideoById(courseId, videoId),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return const Right(null);
+      } else {
+        return Left(Failures(
+          errorMessage:
+              response.data?['message']?.toString() ?? 'Failed to delete video',
         ));
       }
     } catch (e) {

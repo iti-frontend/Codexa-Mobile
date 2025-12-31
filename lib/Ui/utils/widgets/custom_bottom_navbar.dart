@@ -75,7 +75,8 @@ class CustomBottomNavBar extends StatelessWidget {
       margin: const EdgeInsets.all(10),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.bottomNavigationBarTheme.backgroundColor ?? theme.cardColor,
+        color:
+            theme.bottomNavigationBarTheme.backgroundColor ?? theme.cardColor,
         border: Border(
           top: BorderSide(
             width: 0.1,
@@ -90,12 +91,12 @@ class CustomBottomNavBar extends StatelessWidget {
         children: List.generate(items.length, (index) {
           final isActive = selectedIndex == index;
           final iconData =
-          isActive ? items[index]['activeIcon'] : items[index]['icon'];
+              isActive ? items[index]['activeIcon'] : items[index]['icon'];
 
           final color = isActive
               ? themeProvider.currentTheme == ThemeMode.light
-              ? AppColorsLight.accentBlue
-              : AppColorsDark.accentGreen
+                  ? AppColorsLight.accentBlue
+                  : AppColorsDark.accentBlue
               : theme.iconTheme.color;
 
           return GestureDetector(

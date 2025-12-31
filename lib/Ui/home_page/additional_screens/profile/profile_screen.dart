@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'package:codexa_mobile/Data/constants/api_constants.dart';
 import 'package:codexa_mobile/Ui/home_page/additional_screens/profile/profile_cubit/profile_states.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_cubit/posts_cubit.dart';
-import 'package:codexa_mobile/Ui/home_page/instructor_tabs/community_tab/community_tab_states/posts_state.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/cubits/posts_cubit.dart';
+import 'package:codexa_mobile/Ui/home_page/home_screen/community_tab/states/posts_state.dart';
 import 'package:codexa_mobile/Ui/utils/widgets/post_card.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -143,98 +145,142 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
 
   /// Upload profile image to server and return the public URL or path.
   /// Returns null on failure.
-  Future<String?> _uploadProfileImage(File file) async {
+  Future<String?> _uploadProfileImage(File file, String userType) async {
     setState(() {
       _isUploadingImage = true;
     });
 
     try {
+      print('🔄 UPLOAD PROFILE IMAGE - START');
+      print('📁 File: ${file.path}');
+      print('👤 User type: $userType');
+      print('📐 File size: ${await file.length()} bytes');
+
       final prefs = await SharedPreferences.getInstance();
       final apiManager = ApiManager(prefs: prefs);
 
-      // Try uploading with PUT (many APIs accept PUT for updating profile image)
+      var endpoint = userType == 'Student'
+          ? ApiConstants.studentEndpointProfile
+          : ApiConstants.instructorEndpointProfile;
+
+      print('🔗 Endpoint: $endpoint');
+      print('🏷️ Field name: profileImage');
+
+      // Try uploading with PUT
+      print('📤 Sending multipart request...');
       final response = await apiManager.putMultipartData(
-        '/uploads/profile',
+        endpoint,
         file: file,
-        fileFieldName: 'image',
+        fileFieldName: 'profileImage',
       );
 
+      print('📡 Response received:');
+      print('   Status: ${response.statusCode}');
+      print('   Headers: ${response.headers}');
+      print('   Data type: ${response.data.runtimeType}');
+      print('   Data: ${response.data}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ Upload successful!');
         final data = response.data;
         String? url;
 
-        // Try multiple common shapes returned by file upload endpoints
-        try {
-          if (data is Map) {
-            // 1) { data: { url: '...' } } or { data: { path: '...' } }
+        // Parse response
+        if (data is Map) {
+          print('🔍 Parsing Map response...');
+
+          // Check common response formats
+          if (data.containsKey('url')) {
+            url = data['url'];
+            print('   Found URL in root: $url');
+          } else if (data.containsKey('data') && data['data'] is Map) {
             final d = data['data'];
-            if (d is Map) {
-              url = d['url'] ??
-                  d['path'] ??
-                  d['filePath'] ??
-                  d['profileImage'] ??
-                  d['location'];
+            if (d.containsKey('url')) {
+              url = d['url'];
+              print('   Found URL in data.url: $url');
+            } else if (d.containsKey('profileImage')) {
+              url = d['profileImage'];
+              print('   Found URL in data.profileImage: $url');
             }
-
-            // 2) top-level url/path
-            url ??= data['url'] ??
-                data['path'] ??
-                data['filePath'] ??
-                data['profileImage'] ??
-                data['location'];
-
-            // 3) files array: { files: [{ url: '...' }] } or { files: [{ path: '...' }] }
-            if (url == null &&
-                data['files'] is List &&
-                data['files'].isNotEmpty) {
-              final f0 = data['files'][0];
-              if (f0 is Map) {
-                url =
-                    f0['url'] ?? f0['path'] ?? f0['filePath'] ?? f0['location'];
-              } else if (f0 is String) {
-                url = f0;
-              }
+          } else if (data.containsKey('student') && data['student'] is Map) {
+            final student = data['student'];
+            if (student.containsKey('profileImage')) {
+              url = student['profileImage'];
+              print('   Found URL in student.profileImage: $url');
             }
-          } else if (data is List && data.isNotEmpty) {
-            // 4) response is a list: [{ path: '...'}]
-            final first = data[0];
-            if (first is Map) {
-              url = first['url'] ??
-                  first['path'] ??
-                  first['filePath'] ??
-                  first['location'];
-            } else if (first is String) {
-              url = first;
+          } else if (data.containsKey('instructor') && data['instructor'] is Map) {
+            final instructor = data['instructor'];
+            if (instructor.containsKey('profileImage')) {
+              url = instructor['profileImage'];
+              print('   Found URL in instructor.profileImage: $url');
             }
-          } else if (data is String) {
-            // 5) response is just a string path/url
-            url = data;
           }
-        } catch (e) {
-          // parsing failed — fall through to null
-          print('⚠️ _uploadProfileImage: parsing response failed: $e');
+        } else if (data is String) {
+          print('🔍 Parsing String response...');
+          url = data;
         }
 
-        // Final normalization: if we have a leading-slash path, prefix baseUrl
         if (url != null) {
+          print('✅ Extracted URL: $url');
+
+          // Normalize URL
           if (url.startsWith('/')) {
             final base = ApiManager.baseUrl;
-            final normalizedBase =
-            base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+            final normalizedBase = base.endsWith('/')
+                ? base.substring(0, base.length - 1)
+                : base;
             url = normalizedBase + url;
+            print('📦 Normalized URL: $url');
           }
+
           return url;
+        } else {
+          print('⚠️ Could not extract URL from response');
+          print('🔍 Full response data: $data');
+          _showErrorSnackBar('Upload successful but could not get image URL');
+          return null;
+        }
+      } else {
+        print('❌ Upload failed with status: ${response.statusCode}');
+
+        // Show actual error message
+        String errorMessage = 'Upload failed (${response.statusCode})';
+        if (response.data is Map && response.data['message'] != null) {
+          errorMessage = response.data['message'];
+        } else if (response.data is String) {
+          errorMessage = response.data;
         }
 
-        // If we couldn't parse a url, but response contains a readable body, show it briefly
-        _showErrorSnackBar(S.current.somethingWentWrong);
-        return null;
-      } else {
-        _showErrorSnackBar(S.current.somethingWentWrong);
+        _showErrorSnackBar(errorMessage);
         return null;
       }
-    } catch (e) {
-      _showErrorSnackBar(S.current.somethingWentWrong);
+    } catch (e, stackTrace) {
+      print('💥 UPLOAD ERROR: $e');
+      print('📋 Stack trace: $stackTrace');
+
+      // Show specific error messages
+      if (e is DioException) {
+        print('🚨 Dio error details:');
+        print('   Type: ${e.type}');
+        print('   Message: ${e.message}');
+        print('   Response: ${e.response?.data}');
+
+        if (e.response?.statusCode == 401) {
+          _showErrorSnackBar('Authentication failed. Please login again.');
+        } else if (e.response?.statusCode == 400) {
+          final errorData = e.response?.data;
+          if (errorData is String && errorData.contains('MulterError')) {
+            _showErrorSnackBar('Image upload failed: Invalid file format');
+          } else {
+            _showErrorSnackBar('Bad request: ${errorData?['message'] ?? e.message}');
+          }
+        } else {
+          _showErrorSnackBar('Network error: ${e.message}');
+        }
+      } else {
+        _showErrorSnackBar('Upload failed: $e');
+      }
+
       return null;
     } finally {
       if (mounted) {
@@ -410,6 +456,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         token: original.token,
         isAdmin: original.isAdmin,
       ) as T;
+
       return updatedInstructor;
     }
     throw Exception('Unsupported user type');
@@ -539,9 +586,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 ? Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
-                crossAxisAlignment: isRTL
-                    ? CrossAxisAlignment.end
-                    : CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start, // Always use start
                 children: [
                   // Profile image section
                   _buildProfileImageSection(theme, isRTL),
@@ -551,9 +596,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
-                        crossAxisAlignment: isRTL
-                            ? CrossAxisAlignment.end
-                            : CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start, // Always use start
                         children: [
                           // Selected image info
                           if (_isEditing && _selectedImage != null) ...[
@@ -564,8 +607,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                                     ?.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color:
-                                  theme.progressIndicatorTheme.color
+                                  color: theme
+                                      .progressIndicatorTheme.color
                                       ?.withOpacity(0.3) ??
                                       Colors.blue,
                                 ),
@@ -589,8 +632,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                                         Text(
                                           translations
                                               .newImageSelected,
-                                          style: theme.textTheme
-                                              .bodyMedium
+                                          style: theme
+                                              .textTheme.bodyMedium
                                               ?.copyWith(
                                             fontWeight:
                                             FontWeight.w600,
@@ -604,11 +647,11 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                                           _selectedImage!.path
                                               .split('/')
                                               .last,
-                                          style: theme.textTheme
-                                              .bodySmall
+                                          style: theme
+                                              .textTheme.bodySmall
                                               ?.copyWith(
-                                            color: theme.iconTheme
-                                                .color
+                                            color: theme
+                                                .iconTheme.color
                                                 ?.withOpacity(0.7),
                                           ),
                                           overflow:
@@ -639,8 +682,8 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                                         Text(
                                           translations
                                               .newImageSelected,
-                                          style: theme.textTheme
-                                              .bodyMedium
+                                          style: theme
+                                              .textTheme.bodyMedium
                                               ?.copyWith(
                                             fontWeight:
                                             FontWeight.w600,
@@ -654,11 +697,11 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                                           _selectedImage!.path
                                               .split('/')
                                               .last,
-                                          style: theme.textTheme
-                                              .bodySmall
+                                          style: theme
+                                              .textTheme.bodySmall
                                               ?.copyWith(
-                                            color: theme.iconTheme
-                                                .color
+                                            color: theme
+                                                .iconTheme.color
                                                 ?.withOpacity(0.7),
                                           ),
                                           overflow:
@@ -698,7 +741,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                             controller: emailController,
                             label: translations.email,
                             icon: Icons.email_outlined,
-                            enabled: _isEditing,
+                            enabled: false,
                             keyboardType: TextInputType.emailAddress,
                             isRTL: isRTL,
                           ),
@@ -710,7 +753,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                           if (_isEditing) ...[
                             state is ProfileLoading
                                 ? _buildLoadingState(theme, isRTL)
-                                : _buildActionButtons(theme, isRTL),
+                                : _buildActionButtons(theme, isRTL,widget.userType),
                           ]
                         ],
                       ),
@@ -725,9 +768,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                   Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
-                      crossAxisAlignment: isRTL
-                          ? CrossAxisAlignment.end
-                          : CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start, // Always use start
                       children: [
                         _buildProfileImageSection(theme, isRTL),
                         const SizedBox(height: 32),
@@ -758,7 +799,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                   ),
                   const SizedBox(height: 32),
                   // Community Activity Section
-                  _buildCommunityActivitySection(theme, isRTL),
+                  _buildCommunityActivitySection(theme, isRTL,translations),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -881,28 +922,26 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
       ),
       trailing: isSelected
           ? Icon(
-        Icons.check_circle,
-        color: theme.progressIndicatorTheme.color,
-        size: 20,
-      )
+              Icons.check_circle,
+              color: theme.progressIndicatorTheme.color,
+              size: 20,
+            )
           : null,
       onTap: () => _changeLanguage(languageCode),
     );
   }
 
   /// Build Community Activity Section
-  Widget _buildCommunityActivitySection(ThemeData theme, bool isRTL) {
+  Widget _buildCommunityActivitySection(ThemeData theme, bool isRTL, S translations) {
     final currentUserId = _getCurrentUserId();
 
     return Column(
-      crossAxisAlignment:
-      isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch, // Use stretch instead of start/end
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
-            crossAxisAlignment:
-            isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch, // Use stretch for consistency
             children: [
               Text(
                 S.current.communityActivity,
@@ -910,7 +949,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                   fontWeight: FontWeight.bold,
                   color: theme.textTheme.bodyLarge?.color,
                 ),
-                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                textAlign: TextAlign.start, // Always start for both RTL and LTR
               ),
               const SizedBox(height: 8),
               Text(
@@ -918,7 +957,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
                 ),
-                textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                textAlign: TextAlign.start, // Always start for both RTL and LTR
               ),
             ],
           ),
@@ -927,9 +966,12 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
           builder: (context, state) {
             if (state is CommunityPostsLoading) {
               return Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    theme.progressIndicatorTheme.color ?? Colors.blueAccent,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.progressIndicatorTheme.color ?? Colors.blueAccent,
+                    ),
                   ),
                 ),
               );
@@ -949,25 +991,22 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: theme.dividerColor),
                     ),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.post_add,
-                            size: 48,
-                            color: theme.iconTheme.color?.withOpacity(0.3),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.post_add,
+                          size: 48,
+                          color: theme.iconTheme.color?.withOpacity(0.3),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          S.current.noCommunityActivityYet,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            S.current.noCommunityActivityYet,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.textTheme.bodyMedium?.color
-                                  ?.withOpacity(0.6),
-                            ),
-                            textAlign: isRTL ? TextAlign.right : TextAlign.center,
-                          ),
-                        ],
-                      ),
+                          textAlign: TextAlign.center, // Center for both RTL and LTR
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -980,7 +1019,10 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                 padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
                 itemBuilder: (context, index) {
                   final post = userPosts[index];
-                  return PostCard(post: post);
+                  return Directionality(
+                    textDirection: _localizationService.textDirection,
+                    child: PostCard(post: post,isRTL:isRTL,translations: translations,),
+                  );
                 },
               );
             } else if (state is CommunityPostsError) {
@@ -999,7 +1041,7 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: Colors.red,
                       ),
-                      textAlign: isRTL ? TextAlign.right : TextAlign.center,
+                      textAlign: TextAlign.center, // Center for both RTL and LTR
                     ),
                   ),
                 ),
@@ -1030,7 +1072,6 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     required bool enabled,
     required bool isRTL,
     TextInputType keyboardType = TextInputType.text,
-    ValueChanged<String>? onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -1051,13 +1092,18 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
         controller: controller,
         enabled: enabled,
         keyboardType: keyboardType,
-        onChanged: onChanged,
         textAlign: isRTL ? TextAlign.right : TextAlign.left,
         style: theme.textTheme.bodyLarge?.copyWith(
           color: enabled
-              ? theme.dividerTheme.color
+              ? theme.dividerTheme.color ?? theme.iconTheme.color
               : theme.iconTheme.color?.withOpacity(0.5),
         ),
+        onChanged: (value) {
+          // This ensures state rebuilds when text changes
+          if (enabled && mounted) {
+            setState(() {});
+          }
+        },
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
@@ -1110,77 +1156,86 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   Widget _buildProfileImageSection(ThemeData theme, bool isRTL) {
     return Column(
       children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: theme.colorScheme.surfaceVariant,
-                border: Border.all(
-                  color: theme.progressIndicatorTheme.color?.withOpacity(0.2) ??
-                      Colors.blue.withOpacity(0.2),
-                  width: 3,
+        // Fixed size container to ensure proper constraints
+        SizedBox(
+          width: 120,
+          height: 120,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Profile image container
+              Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: theme.colorScheme.surfaceVariant,
+                  border: Border.all(
+                    color: theme.progressIndicatorTheme.color?.withOpacity(0.2) ??
+                        Colors.blue.withOpacity(0.2),
+                    width: 3,
+                  ),
                 ),
+                child: _getProfileImageWidget(theme),
               ),
-              child: _getProfileImageWidget(theme),
-            ),
 
-            // Camera icon
-            if (_isEditing)
-              Positioned(
-                bottom: 4,
-                right: isRTL ? null : 4,
-                left: isRTL ? 4 : null,
-                child: GestureDetector(
-                  onTap: _showImageSourceDialog,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: theme.progressIndicatorTheme.color,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+              // Camera icon - Using Align with AlignmentDirectional for proper RTL
+              if (_isEditing)
+                Align(
+                  alignment: AlignmentDirectional.bottomEnd, // Automatically handles RTL
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: GestureDetector(
+                      onTap: _showImageSourceDialog,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: theme.progressIndicatorTheme.color,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 2,
+                          ),
                         ),
-                      ],
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 2,
+                        child: Icon(
+                          Icons.camera_alt,
+                          color: theme.iconTheme.color,
+                          size: 16,
+                        ),
                       ),
-                    ),
-                    child: Icon(
-                      Icons.camera_alt,
-                      color: theme.iconTheme.color,
-                      size: 16,
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 16),
+        // User name - centered for both RTL and LTR
         Text(
           _isEditing ? S.current.profilePreview : _userName,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             color: theme.iconTheme.color,
           ),
-          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+          textAlign: TextAlign.center,
         ),
         if (_isEditing) ...[
           const SizedBox(height: 4),
+          // Instruction text - centered for both RTL and LTR
           Text(
             S.current.tapToChangePhoto,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.iconTheme.color?.withOpacity(0.6),
             ),
-            textAlign: isRTL ? TextAlign.right : TextAlign.left,
+            textAlign: TextAlign.center,
           ),
         ],
       ],
@@ -1188,6 +1243,14 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   }
 
   Widget _getProfileImageWidget(ThemeData theme) {
+    // Wrap the entire image widget in Directionality to ensure proper RTL context
+    return Directionality(
+      textDirection: TextDirection.ltr, // Images should always be LTR regardless of app language
+      child: _getImageContent(theme),
+    );
+  }
+
+  Widget _getImageContent(ThemeData theme) {
     // ... keep existing image loading logic unchanged
     if (_selectedImage != null) {
       return ClipOval(
@@ -1293,14 +1356,17 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
   }
 
   Widget _buildDefaultProfileIcon(ThemeData theme) {
-    return Icon(
-      Icons.person,
-      size: 48,
-      color: theme.iconTheme.color,
+    return Directionality(
+      textDirection: TextDirection.ltr, // Icons should always be LTR
+      child: Icon(
+        Icons.person,
+        size: 48,
+        color: theme.iconTheme.color,
+      ),
     );
   }
 
-  Widget _buildActionButtons(ThemeData theme, bool isRTL) {
+  Widget _buildActionButtons(ThemeData theme, bool isRTL, String userType) {
     return Row(
       children: [
         Expanded(
@@ -1330,43 +1396,36 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
             onPressed: _isUploadingImage
                 ? null
                 : () async {
-              // Validation
-              if (nameController.text.isEmpty) {
-                _showErrorSnackBar(S.current.enterName);
-                return;
-              }
+                    // Validation
+                    if (!_hasChanges()) {
+                      _showErrorSnackBar(S.current.noChangesDetected);
+                      return;
+                    }
+                    if (nameController.text.isEmpty) {
+                      _showErrorSnackBar(S.current.enterName);
+                      return;
+                    }
 
-              if (emailController.text.isEmpty) {
-                _showErrorSnackBar(S.current.enterEmail);
-                return;
-              }
+                    try {
+                      String? uploadedUrl;
+                      if (_selectedImage != null) {
+                        uploadedUrl =
+                            await _uploadProfileImage(_selectedImage!,userType);
+                        if (uploadedUrl == null) {
+                          return;
+                        }
+                      }
 
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                  .hasMatch(emailController.text)) {
-                print('❌ Validation failed: Invalid email format');
-                _showErrorSnackBar(S.current.validEmail);
-                return;
-              }
-
-              try {
-                String? uploadedUrl;
-                if (_selectedImage != null) {
-                  uploadedUrl =
-                  await _uploadProfileImage(_selectedImage!);
-                  if (uploadedUrl == null) {
-                    return;
-                  }
-                }
-
-                final updatedUser =
-                _createUpdatedUser(uploadedImageUrl: uploadedUrl);
-                final cubit = context.read<ProfileCubit<T>>();
-                cubit.updateProfile(updatedUser);
-                print('🚀 updateProfile method called successfully');
-              } catch (e) {
-                _showErrorSnackBar('${S.current.error}: $e');
-              }
-            },
+                      final updatedUser =
+                          _createUpdatedUser(uploadedImageUrl: uploadedUrl);
+                     // _updateAuthProvider(updatedUser);
+                      final cubit = context.read<ProfileCubit<T>>();
+                      cubit.updateProfile(updatedUser);
+                      print('🚀 updateProfile method called successfully');
+                    } catch (e) {
+                      _showErrorSnackBar('${S.current.error}: $e');
+                    }
+                  },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -1405,6 +1464,15 @@ class _ProfileScreenState<T> extends State<ProfileScreen<T>> {
     );
   }
 
+  bool _hasChanges() {
+    final originalName = widget.user is StudentEntity
+        ? (widget.user as StudentEntity).name ?? ''
+        : (widget.user as InstructorEntity).name ?? '';
+
+
+    return nameController.text.trim() != originalName ||
+        _selectedImage != null;
+  }
   @override
   void dispose() {
     print('🗑️ Disposing ProfileScreen');

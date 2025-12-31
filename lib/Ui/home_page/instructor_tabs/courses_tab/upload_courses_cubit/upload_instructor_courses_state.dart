@@ -21,7 +21,17 @@ class CourseOperationSuccess extends InstructorCoursesState {
   CourseOperationSuccess(this.message);
 }
 
+class CourseCreatedSuccess extends InstructorCoursesState {
+  final CourseEntity course;
+  CourseCreatedSuccess(this.course);
+}
+
 class CourseOperationError extends InstructorCoursesState {
   final String message;
   CourseOperationError(this.message);
+}
+
+class VideoDeletedSuccess extends InstructorCoursesState {
+  final String message;
+  VideoDeletedSuccess(this.message);
 }

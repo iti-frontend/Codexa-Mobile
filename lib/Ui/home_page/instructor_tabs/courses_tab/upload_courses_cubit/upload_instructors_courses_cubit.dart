@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
 import 'package:codexa_mobile/Domain/failures.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/update_course_videos_usecase.dart';
+import 'package:codexa_mobile/Domain/usecases/courses/delete_video_usecase.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:codexa_mobile/Domain/usecases/courses/add_course_usecase.dart';
@@ -17,13 +18,15 @@ class InstructorCoursesCubit extends Cubit<InstructorCoursesState> {
   final UpdateCourseUseCase updateCourseUseCase;
   final DeleteCourseUseCase deleteCourseUseCase;
   final UploadVideosUseCase uploadVideosUseCase;
+  final DeleteVideoUseCase deleteVideoUseCase;
 
   InstructorCoursesCubit(
       {required this.getCoursesUseCase,
       required this.addCourseUseCase,
       required this.updateCourseUseCase,
       required this.deleteCourseUseCase,
-      required this.uploadVideosUseCase})
+      required this.uploadVideosUseCase,
+      required this.deleteVideoUseCase})
       : super(InstructorCoursesInitial());
 
   Future<void> fetchCourses() async {
@@ -40,9 +43,12 @@ class InstructorCoursesCubit extends Cubit<InstructorCoursesState> {
     final result = await addCourseUseCase(course);
     result.fold(
       (failure) => emit(CourseOperationError(failure.errorMessage)),
-      (_) => emit(CourseOperationSuccess('Course added successfully')),
+      (newCourse) {
+        emit(CourseCreatedSuccess(newCourse));
+        // Also emit Generic Success message if needed, but the UI should listen to CourseCreatedSuccess
+        fetchCourses(); // Refresh list in background
+      },
     );
-    await fetchCourses();
   }
 
   Future<void> updateCourse(CourseEntity course) async {
@@ -78,6 +84,22 @@ class InstructorCoursesCubit extends Cubit<InstructorCoursesState> {
       (failure) => emit(CourseOperationError(failure.errorMessage)),
       (_) => emit(CourseOperationSuccess('Videos uploaded successfully')),
     );
+    await fetchCourses();
     return result;
+  }
+
+  Future<void> deleteVideo(String courseId, String videoId) async {
+    emit(InstructorCoursesLoading());
+    final result = await deleteVideoUseCase(courseId, videoId);
+    result.fold(
+      (failure) => emit(CourseOperationError(failure.errorMessage)),
+      (_) => emit(VideoDeletedSuccess('Video deleted successfully')),
+    );
+    await fetchCourses();
+  }
+
+  /// Reset cubit state - call this on logout
+  void reset() {
+    emit(InstructorCoursesInitial());
   }
 }

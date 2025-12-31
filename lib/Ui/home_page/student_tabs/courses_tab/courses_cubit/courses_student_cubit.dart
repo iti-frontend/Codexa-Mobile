@@ -186,4 +186,11 @@ class StudentCoursesCubit extends Cubit<StudentCoursesState> {
         '🟢 Emitting StudentCoursesLoaded with ${filteredCourses.length} courses');
     emit(StudentCoursesLoaded(List.from(filteredCourses)));
   }
+
+  /// Reset cubit state - call this on logout
+  void reset() {
+    allCourses.clear();
+    filteredCourses.clear();
+    emit(StudentCoursesInitial());
+  }
 }

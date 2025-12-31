@@ -12,4 +12,5 @@ abstract class CourseInstructorRepo {
   Future<Either<Failures, CourseEntity>> deleteCourse(String id);
   Future<Either<Failures, List<String>>> uploadVideos(
       String id, List<File> files);
+  Future<Either<Failures, void>> deleteVideo(String courseId, String videoId);
 }

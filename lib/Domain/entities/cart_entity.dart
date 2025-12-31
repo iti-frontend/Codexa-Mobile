@@ -14,6 +14,7 @@ class CartItemEntity {
   final String? description;
   final double? price;
   final String? category;
+  final Map<String, dynamic>? coverImage;
 
   CartItemEntity({
     this.courseId,
@@ -21,5 +22,6 @@ class CartItemEntity {
     this.description,
     this.price,
     this.category,
+    this.coverImage,
   });
 }

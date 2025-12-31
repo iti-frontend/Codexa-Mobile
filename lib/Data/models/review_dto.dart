@@ -23,15 +23,18 @@ class ReviewDto extends ReviewEntity {
         );
 
   factory ReviewDto.fromJson(dynamic json) {
-    if (json == null) return ReviewDto();
+    if (json == null || json is! Map) return ReviewDto();
+
+    // Check for 'author' or 'user' key
+    final authorJson = (json['author'] != null && json['author'] is Map)
+        ? json['author']
+        : ((json['user'] != null && json['user'] is Map) ? json['user'] : null);
 
     return ReviewDto(
       id: json['_id'],
       itemId: json['itemId'],
       itemType: json['itemType'],
-      author: json['author'] != null
-          ? ReviewAuthorDto.fromJson(json['author'])
-          : null,
+      author: authorJson != null ? ReviewAuthorDto.fromJson(authorJson) : null,
       rating: json['rating'],
       text: json['text'],
       createdAt: json['createdAt'],
@@ -66,11 +69,12 @@ class ReviewAuthorDto extends ReviewAuthorEntity {
         );
 
   factory ReviewAuthorDto.fromJson(dynamic json) {
-    if (json == null) return ReviewAuthorDto();
+    if (json == null || json is! Map) return ReviewAuthorDto();
 
     return ReviewAuthorDto(
       id: json['_id'],
-      name: json['name'],
+      // Fallback strategies for name
+      name: json['name'] ?? json['username'] ?? json['fullName'],
       profileImage: json['profileImage'],
     );
   }
@@ -95,7 +99,7 @@ class AverageRatingDto extends AverageRatingEntity {
         );
 
   factory AverageRatingDto.fromJson(dynamic json) {
-    if (json == null) return AverageRatingDto();
+    if (json == null || json is! Map) return AverageRatingDto();
 
     return AverageRatingDto(
       average: (json['average'] as num?)?.toDouble(),
@@ -126,13 +130,13 @@ class ReviewsListDto {
   });
 
   factory ReviewsListDto.fromJson(dynamic json) {
-    if (json == null) return ReviewsListDto();
+    if (json == null || json is! Map) return ReviewsListDto();
 
     return ReviewsListDto(
       total: json['total'],
       page: json['page'],
       pageSize: json['pageSize'],
-      items: json['items'] != null
+      items: json['items'] != null && json['items'] is List
           ? List<ReviewDto>.from(
               json['items'].map((x) => ReviewDto.fromJson(x)))
           : null,

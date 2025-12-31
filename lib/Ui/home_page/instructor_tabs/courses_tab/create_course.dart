@@ -1,10 +1,13 @@
 import 'dart:io';
 
 import 'package:codexa_mobile/Domain/entities/courses_entity.dart';
+import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructor_courses_state.dart';
 import 'package:codexa_mobile/Ui/home_page/instructor_tabs/courses_tab/upload_courses_cubit/upload_instructors_courses_cubit.dart';
 import 'package:codexa_mobile/Ui/utils/theme/app_colors.dart';
-import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:codexa_mobile/localization/localization_service.dart';
 import 'package:codexa_mobile/generated/l10n.dart' as generated;
 
@@ -26,11 +29,20 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
 
+  String? _selectedLevel;
+  final List<String> _levels = ['Beginner', 'Intermediate', 'Advanced'];
+
   late LocalizationService _localizationService;
   late generated.S _translations;
 
   // Video files selected
   List<File> selectedVideos = [];
+  // Existing videos from course (for edit mode)
+  List<Map<String, dynamic>> existingVideos = [];
+  // Cover image
+  File? selectedCoverImage;
+  String? existingCoverImageUrl;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -44,6 +56,25 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
         TextEditingController(text: widget.course?.description ?? '');
     _priceController =
         TextEditingController(text: widget.course?.price?.toString() ?? '');
+
+    // Initialize level if editing
+    _selectedLevel = widget.course?.level;
+    if (_selectedLevel != null && !_levels.contains(_selectedLevel)) {
+      // Handle case where level from backend might not match hardcoded list
+      _levels.add(_selectedLevel!);
+    }
+
+    // Initialize existing videos if editing
+    if (widget.course?.videos != null) {
+      existingVideos = List<Map<String, dynamic>>.from(
+        widget.course!.videos!.map((v) => v as Map<String, dynamic>),
+      );
+    }
+
+    // Initialize existing cover image if editing
+    if (widget.course?.coverImage != null) {
+      existingCoverImageUrl = widget.course!.coverImage!['url'] as String?;
+    }
   }
 
   void _initializeLocalization() {
@@ -70,255 +101,552 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
     super.dispose();
   }
 
-  /// Get button color based on theme mode
-  /// Light: Brown-ish (using AppColorsLight palette)
-  /// Dark: Green (AppColorsDark.accentGreen)
   Color _getButtonColor(ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
-    if (isDark) {
-      return AppColorsDark.accentGreen;
-    } else {
-      return AppColorsLight.accentBlue; // Using blue as brown alternative
-    }
+    return isDark ? AppColorsDark.accentBlue : AppColorsLight.accentBlue;
   }
 
   @override
   Widget build(BuildContext context) {
-    final cubit = widget.cubit;
     final theme = Theme.of(context);
     final isRTL = _localizationService.isRTL();
 
-    // Wrap the entire Scaffold with Directionality for proper RTL/LTR
     return Directionality(
       textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(widget.course == null
-              ? _translations.createCourse
-              : _translations.editCourse),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          foregroundColor: theme.iconTheme.color,
-          leading: IconButton(
-            icon: Icon(isRTL ? Icons.arrow_forward : Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              children: [
-                // Title
-                _buildInputField(
-                    controller: _titleController,
-                    label: _translations.title,
-                    icon: Icons.title,
-                    validator: (val) =>
-                    val == null || val.isEmpty ? _translations.enterTitle : null,
-                    theme: theme,
-                    isRTL: isRTL),
-                const SizedBox(height: 15),
-
-                // Category
-                _buildInputField(
-                    controller: _categoryController,
-                    label: _translations.category,
-                    icon: Icons.category_outlined,
-                    theme: theme,
-                    isRTL: isRTL),
-                const SizedBox(height: 15),
-
-                // Description
-                _buildInputField(
-                    controller: _descriptionController,
-                    label: _translations.description,
-                    icon: Icons.article_outlined,
-                    maxLines: 4,
-                    theme: theme,
-                    isRTL: isRTL),
-                const SizedBox(height: 15),
-
-                // Price
-                _buildInputField(
-                    controller: _priceController,
-                    label: _translations.priceDollar,
-                    icon: Icons.attach_money_outlined,
-                    validator: (val) {
-                      if (val == null || val.isEmpty) return _translations.enterPrice;
-                      if (double.tryParse(val) == null)
-                        return _translations.enterValidNumber;
-                      return null;
-                    },
-                    keyboardType: TextInputType.number,
-                    theme: theme,
-                    isRTL: isRTL),
-                const SizedBox(height: 15),
-
-                // Videos Upload
-                Text(
-                  _translations.videos,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.textTheme.bodyLarge?.color,
-                  ),
-                  textAlign: isRTL ? TextAlign.right : TextAlign.left,
+      child: BlocListener<InstructorCoursesCubit, InstructorCoursesState>(
+        bloc: widget.cubit,
+        listener: (context, state) {
+          if (state is InstructorCoursesLoading) {
+            setState(() => _isLoading = true);
+          } else if (state is CourseCreatedSuccess) {
+            // Course Created! Now Upload Videos if any
+            if (selectedVideos.isNotEmpty) {
+              _uploadVideos(state.course.id!);
+            } else {
+              _finishSuccess('Course created successfully');
+            }
+          } else if (state is CourseOperationSuccess) {
+            _finishSuccess(state.message);
+          } else if (state is VideoDeletedSuccess) {
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } else if (state is InstructorCoursesError) {
+            _finishError(state.message);
+          } else if (state is CourseOperationError) {
+            _finishError(state.message);
+          }
+        },
+        child: Stack(
+          children: [
+            Scaffold(
+              appBar: AppBar(
+                title: Text(widget.course == null
+                    ? _translations.createCourse
+                    : _translations.editCourse),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                foregroundColor: theme.iconTheme.color,
+                leading: IconButton(
+                  icon: Icon(isRTL ? Icons.arrow_forward : Icons.arrow_back),
+                  onPressed: () => Navigator.pop(context),
                 ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: selectedVideos
-                      .map((file) => Container(
-                    decoration: BoxDecoration(
-                      color: _getButtonColor(theme).withOpacity(0.15),
-                      border: Border.all(
-                        color: _getButtonColor(theme).withOpacity(0.3),
-                        width: 1,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Chip(
-                      label: Text(
-                        file.path.split('/').last,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodyMedium?.color,
+              ),
+              body: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    children: [
+                      // Title
+                      _buildInputField(
+                          controller: _titleController,
+                          label: _translations.title,
+                          icon: Icons.title,
+                          validator: (val) => val == null || val.isEmpty
+                              ? _translations.enterTitle
+                              : null,
+                          theme: theme,
+                          isRTL: isRTL),
+                      const SizedBox(height: 15),
+
+                      // Category
+                      _buildInputField(
+                          controller: _categoryController,
+                          label: _translations.category,
+                          icon: Icons.category_outlined,
+                          theme: theme,
+                          isRTL: isRTL),
+                      const SizedBox(height: 15),
+
+                      // Level Dropdown
+                      _buildDropdownField(theme, isRTL),
+                      const SizedBox(height: 15),
+
+                      // Description
+                      _buildInputField(
+                          controller: _descriptionController,
+                          label: _translations.description,
+                          icon: Icons.article_outlined,
+                          maxLines: 4,
+                          theme: theme,
+                          isRTL: isRTL),
+                      const SizedBox(height: 15),
+
+                      // Price
+                      _buildInputField(
+                          controller: _priceController,
+                          label: _translations.priceDollar,
+                          icon: Icons.attach_money_outlined,
+                          validator: (val) {
+                            if (val == null || val.isEmpty)
+                              return _translations.enterPrice;
+                            if (double.tryParse(val) == null)
+                              return _translations.enterValidNumber;
+                            return null;
+                          },
+                          keyboardType: TextInputType.number,
+                          theme: theme,
+                          isRTL: isRTL),
+                      const SizedBox(height: 15),
+
+                      // Cover Image Section
+                      _buildCoverImageSection(theme, isRTL),
+                      const SizedBox(height: 15),
+
+                      // Videos Upload Section
+                      _buildVideoSection(theme, isRTL),
+                      const SizedBox(height: 32),
+
+                      // Submit Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _getButtonColor(theme),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: _isLoading ? null : _onSubmit,
+                          child: Text(
+                            widget.course == null
+                                ? _translations.createCourse
+                                : _translations.updateCourse,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
-                      deleteIcon: Icon(
-                        Icons.close,
-                        color: _getButtonColor(theme),
-                        size: 18,
-                      ),
-                      onDeleted: () {
-                        setState(() => selectedVideos.remove(file));
-                      },
-                      backgroundColor: Colors.transparent,
-                      side: BorderSide.none,
-                    ),
-                  ))
-                      .toList(),
-                ),
-                const SizedBox(height: 14),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.upload_file),
-                  label: Text(_translations.selectVideos),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _getButtonColor(theme).withOpacity(0.15),
-                    foregroundColor: _getButtonColor(theme),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: _getButtonColor(theme).withOpacity(0.3),
-                        width: 1.5,
-                      ),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: () async {
-                    final result = await FilePicker.platform.pickFiles(
-                      type: FileType.video,
-                      allowMultiple: true,
-                    );
-                    if (result != null) {
-                      setState(() {
-                        selectedVideos.addAll(
-                          result.paths.map((path) => File(path!)),
-                        );
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 32),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _getButtonColor(theme),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 4,
-                      shadowColor: _getButtonColor(theme).withOpacity(0.4),
-                    ),
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        List<String> videoUrls =
-                            (widget.course?.videos?.cast<String>()) ?? [];
-                        if (selectedVideos.isNotEmpty) {
-                          final result = await cubit.uploadVideos(
-                              widget.course!.id ?? '', selectedVideos);
-                          result.fold(
-                                (failure) {
-                              final messenger =
-                              ScaffoldMessenger.maybeOf(context);
-                              if (messenger != null) {
-                                messenger.showSnackBar(
-                                  SnackBar(
-                                    content: Text(failure.errorMessage),
-                                    backgroundColor: Colors.red.shade400,
-                                  ),
-                                );
-                              }
-                            },
-                                (urls) async {
-                              videoUrls = urls;
-                              await cubit.uploadVideosUseCase(
-                                  widget.course!.id ?? '', selectedVideos);
-                            },
-                          );
-                        }
-
-                        final newCourse = CourseEntity(
-                          id: widget.course?.id,
-                          title: _titleController.text.trim(),
-                          category: _categoryController.text.trim(),
-                          description: _descriptionController.text.trim(),
-                          price: _priceController.text.isNotEmpty
-                              ? int.parse(_priceController.text.trim())
-                              : 0,
-                          videos: videoUrls,
-                          enrolledStudents: widget.course?.enrolledStudents ?? [],
-                          instructor: widget.course?.instructor,
-                          createdAt: widget.course?.createdAt,
-                          updatedAt: widget.course?.updatedAt,
-                          v: widget.course?.v,
-                        );
-
-                        if (widget.course == null) {
-                          cubit.addCourse(newCourse);
-                        } else {
-                          cubit.updateCourse(newCourse);
-                        }
-
-                        Navigator.pop(context);
-                      }
-                    },
-                    child: Text(
-                      widget.course == null
-                          ? _translations.createCourse
-                          : _translations.updateCourse,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
+            if (_isLoading) _buildLoadingOverlay(theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onSubmit() {
+    if (_formKey.currentState!.validate()) {
+      final newCourseData = CourseEntity(
+        id: widget.course?.id,
+        title: _titleController.text.trim(),
+        category: _categoryController.text.trim(),
+        description: _descriptionController.text.trim(),
+        price: _priceController.text.isNotEmpty
+            ? int.parse(_priceController.text.trim())
+            : 0,
+        level: _selectedLevel,
+        videos: widget.course?.videos ?? [], // Existing videos
+        enrolledStudents: widget.course?.enrolledStudents ?? [],
+      );
+
+      if (widget.course == null) {
+        // Create Mode
+        widget.cubit.addCourse(newCourseData);
+        // Video upload will trigger in listener after CourseCreatedSuccess
+      } else {
+        // Edit Mode
+        if (selectedVideos.isNotEmpty) {
+          _uploadVideos(widget.course!.id!);
+        }
+        widget.cubit.updateCourse(newCourseData);
+      }
+    }
+  }
+
+  void _uploadVideos(String courseId) {
+    // Show a specific "Uploading" state if desired, but general loading is fine
+    widget.cubit.uploadVideos(courseId, selectedVideos);
+  }
+
+  void _finishSuccess(String message) {
+    setState(() => _isLoading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+      ),
+    );
+    Navigator.pop(context);
+  }
+
+  void _finishError(String message) {
+    setState(() => _isLoading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  Widget _buildLoadingOverlay(ThemeData theme) {
+    return Container(
+      color: Colors.black.withOpacity(0.5),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: _getButtonColor(theme)),
+              const SizedBox(height: 16),
+              Text(
+                "Processing...",
+                style: theme.textTheme.bodyMedium,
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDropdownField(ThemeData theme, bool isRTL) {
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Column(
+      mainAxisAlignment:
+          isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _translations.level,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _selectedLevel,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.white.withOpacity(0.8),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          hint: Text(_translations.selectLevel),
+          items: _levels.map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          onChanged: (val) {
+            setState(() {
+              _selectedLevel = val;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCoverImageSection(ThemeData theme, bool isRTL) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _translations.coverImage,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+        ),
+        const SizedBox(height: 12),
+
+        // Display selected or existing cover image
+        if (selectedCoverImage != null) ...[
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.file(
+                  selectedCoverImage!,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: CircleAvatar(
+                  backgroundColor: Colors.red,
+                  radius: 16,
+                  child: IconButton(
+                    icon:
+                        const Icon(Icons.close, size: 16, color: Colors.white),
+                    padding: EdgeInsets.zero,
+                    onPressed: () => setState(() => selectedCoverImage = null),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ] else if (existingCoverImageUrl != null &&
+            existingCoverImageUrl!.isNotEmpty) ...[
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  existingCoverImageUrl!,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      height: 180,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: theme.dividerColor.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(child: CircularProgressIndicator()),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 180,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: theme.dividerColor.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                          child: Icon(Icons.broken_image, size: 48)),
+                    );
+                  },
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: CircleAvatar(
+                  backgroundColor: _getButtonColor(theme),
+                  radius: 16,
+                  child: IconButton(
+                    icon: const Icon(Icons.edit, size: 16, color: Colors.white),
+                    padding: EdgeInsets.zero,
+                    onPressed: _pickCoverImage,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        // Select cover image button
+        if (selectedCoverImage == null && existingCoverImageUrl == null)
+          ElevatedButton.icon(
+            icon: const Icon(Icons.image),
+            label: Text(_translations.selectCoverImage),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _getButtonColor(theme).withOpacity(0.15),
+              foregroundColor: _getButtonColor(theme),
+            ),
+            onPressed: _pickCoverImage,
+          )
+        else if (selectedCoverImage == null)
+          TextButton.icon(
+            icon: const Icon(Icons.refresh),
+            label: Text(_translations.changeCoverImage),
+            onPressed: _pickCoverImage,
+          ),
+      ],
+    );
+  }
+
+  Future<void> _pickCoverImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      maxHeight: 800,
+      imageQuality: 85,
+    );
+    if (image != null) {
+      setState(() {
+        selectedCoverImage = File(image.path);
+      });
+    }
+  }
+
+  Widget _buildVideoSection(ThemeData theme, bool isRTL) {
+    return Column(
+      mainAxisAlignment:
+          isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _translations.videos,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        const SizedBox(height: 12),
+
+        // Existing videos from backend (edit mode)
+        if (existingVideos.isNotEmpty) ...[
+          Text(
+            _translations.existingVideos,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.hintColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...existingVideos.map((video) {
+            final videoTitle = video['title'] ?? 'Untitled';
+            final videoId = video['_id'] ?? video['id'] ?? '';
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: Icon(
+                  Icons.video_library,
+                  color: _getButtonColor(theme),
+                ),
+                title: Text(
+                  videoTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    // Show confirmation dialog
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(_translations.deleteVideo),
+                        content: Text(_translations.confirmDeleteVideo),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: Text(_translations.cancel),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              // Remove from local list
+                              setState(() {
+                                existingVideos.removeWhere(
+                                    (v) => (v['_id'] ?? v['id']) == videoId);
+                              });
+                              // Call API to delete
+                              if (widget.course?.id != null &&
+                                  videoId.isNotEmpty) {
+                                widget.cubit.deleteVideo(
+                                  widget.course!.id!,
+                                  videoId,
+                                );
+                              }
+                            },
+                            child: Text(
+                              _translations.delete,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 16),
+        ],
+
+        // Newly selected videos (pending upload)
+        if (selectedVideos.isNotEmpty) ...[
+          Text(
+            _translations.newVideos,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.hintColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: selectedVideos
+                .map((file) => Chip(
+                      label: Text(file.path.split('/').last),
+                      onDeleted: () =>
+                          setState(() => selectedVideos.remove(file)),
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: 14),
+        ],
+
+        ElevatedButton.icon(
+          icon: const Icon(Icons.upload_file),
+          label: Text(_translations.selectVideos),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _getButtonColor(theme).withOpacity(0.15),
+            foregroundColor: _getButtonColor(theme),
+          ),
+          onPressed: () async {
+            final result = await FilePicker.platform.pickFiles(
+              type: FileType.video,
+              allowMultiple: true,
+            );
+            if (result != null) {
+              setState(() {
+                selectedVideos.addAll(result.paths.map((path) => File(path!)));
+              });
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -335,42 +663,45 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Column(
-      crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment:
+          isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         Row(
           children: isRTL
               ? [
-            Text(
-              label,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            if (icon != null) const SizedBox(width: 8),
-            if (icon != null)
-              Icon(
-                icon,
-                color: theme.colorScheme.primary,
-                size: 22,
-              ),
-          ]
+                  Text(
+                    label,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (icon != null) const SizedBox(width: 8),
+                  if (icon != null)
+                    Icon(
+                      icon,
+                      color: isDark
+                          ? AppColorsDark.accentBlue
+                          : AppColorsLight.accentBlue,
+                      size: 22,
+                    ),
+                ]
               : [
-            if (icon != null)
-              Icon(
-                icon,
-                color: theme.colorScheme.primary,
-                size: 22,
-              ),
-            if (icon != null) const SizedBox(width: 8),
-            Text(
-              label,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-          ],
+                  if (icon != null)
+                    Icon(
+                      icon,
+                      color: isDark
+                          ? AppColorsDark.accentBlue
+                          : AppColorsLight.accentBlue,
+                      size: 22,
+                    ),
+                  if (icon != null) const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -380,9 +711,6 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
           keyboardType: keyboardType,
           textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
           textAlign: isRTL ? TextAlign.right : TextAlign.left,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.textTheme.bodyMedium?.color,
-          ),
           decoration: InputDecoration(
             filled: true,
             fillColor: isDark
@@ -392,46 +720,9 @@ class _AddEditCourseScreenState extends State<AddEditCourseScreen> {
               horizontal: 16,
               vertical: 14,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.grey.withOpacity(0.2),
-                width: 1,
-              ),
+            border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: theme.colorScheme.primary ?? Colors.blueAccent,
-                width: 2,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: Colors.red.shade400,
-                width: 1,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: Colors.red.shade400,
-                width: 2,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            errorStyle: TextStyle(
-              color: Colors.red.shade400,
-              fontSize: 12,
-            ),
-            hintStyle: TextStyle(
-              color: isDark
-                  ? Colors.white.withOpacity(0.5)
-                  : Colors.grey.withOpacity(0.7),
-            ),
-            alignLabelWithHint: true,
           ),
         ),
       ],
