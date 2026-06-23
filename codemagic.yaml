@@ -7,8 +7,7 @@ workflows:
       xcode: 16.2
       cocoapods: default
       vars:
-        ENV_FILE_CONTENTS: # API_BASE_URL=https://codexa-api-production.up.railway.app/api
-          API_BASE_URL=http://192.168.1.3:5000/api
+        ENV_FILE_CONTENTS: API_BASE_URL=https://codexa-api-production.up.railway.app/api
           FIREBASE_API_KEY=AIzaSyD...
           FIREBASE_AUTH_DOMAIN=codexa-api.firebaseapp.com
           FIREBASE_PROJECT_ID=codexa-api
