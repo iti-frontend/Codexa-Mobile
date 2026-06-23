@@ -6,10 +6,23 @@ workflows:
       flutter: 3.29.0
       xcode: 16.2
       cocoapods: default
+      vars:
+        ENV_FILE_CONTENTS: # API_BASE_URL=https://codexa-api-production.up.railway.app/api
+          API_BASE_URL=http://192.168.1.3:5000/api
+          FIREBASE_API_KEY=AIzaSyD...
+          FIREBASE_AUTH_DOMAIN=codexa-api.firebaseapp.com
+          FIREBASE_PROJECT_ID=codexa-api
+          FIREBASE_STORAGE_BUCKET=codexa-api.appspot.com
+          FIREBASE_MESSAGING_SENDER_ID=9248017139
+          FIREBASE_APP_ID=1:9248017139:web:bc49869e074c55bbad8586
+          FIREBASE_MEASUREMENT_ID=G-E5KYDYBKQX
     scripts:
       - name: Disable Swift Package Manager
         script: |
           flutter config --no-enable-swift-package-manager
+      - name: Create .env file
+        script: |
+          echo "$ENV_FILE_CONTENTS" > $CM_BUILD_DIR/.env
       - name: Get Flutter packages
         script: |
           flutter pub get
